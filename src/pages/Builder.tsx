@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -83,12 +84,18 @@ const Builder = () => {
 
       setResumeData({
         id: data.id,
-        title: data.title,
-        personal: data.personal_info || {},
-        experience: data.experience || [],
-        education: data.education || [],
-        skills: data.skills || [],
-        certifications: data.certifications || []
+        title: data.title || 'Untitled Resume',
+        personal: (data.personal_info as any) || {
+          fullName: '',
+          email: '',
+          phone: '',
+          location: '',
+          summary: ''
+        },
+        experience: (data.experience as any[]) || [],
+        education: (data.education as any[]) || [],
+        skills: (data.skills as string[]) || [],
+        certifications: (data.certifications as any[]) || []
       });
       setSelectedTemplate(data.template_id || 0);
     } catch (error) {
