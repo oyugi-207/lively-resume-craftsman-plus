@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,7 +18,6 @@ import {
   Award, 
   Download, 
   Save, 
-  Eye,
   Plus,
   Trash2,
   ArrowLeft,
@@ -28,13 +26,20 @@ import {
   Sun,
   Upload,
   Target,
-  FileText
+  Brain,
+  BarChart3,
+  Settings,
+  Zap
 } from 'lucide-react';
 import ResumePreview from '@/components/ResumePreview';
 import TemplateSelector from '@/components/TemplateSelector';
 import CVUploader from '@/components/CVUploader';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import TemplateGallery from '@/components/TemplateGallery';
+import AnalyticsDashboard from '@/components/AnalyticsDashboard';
+import AIEnhancements from '@/components/AIEnhancements';
+import PersonalizationPanel from '@/components/PersonalizationPanel';
+import IntegrationHub from '@/components/IntegrationHub';
 
 const Builder = () => {
   const { user } = useAuth();
@@ -50,6 +55,7 @@ const Builder = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [branding, setBranding] = useState<any>({});
 
   const [resumeData, setResumeData] = useState({
     id: '',
@@ -153,6 +159,16 @@ const Builder = () => {
         setResumeData(prev => ({ ...prev, id: data.id }));
       }
 
+      // Track analytics
+      if (resumeId) {
+        await supabase.from('cv_analytics').insert({
+          resume_id: resumeId,
+          user_id: user.id,
+          event_type: 'save',
+          event_data: { template_id: selectedTemplate }
+        });
+      }
+
       toast({
         title: "Success",
         description: "Resume saved successfully"
@@ -180,13 +196,21 @@ const Builder = () => {
     }
   }, [resumeData, selectedTemplate, loading, resumeId]);
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
+    if (resumeId) {
+      await supabase.from('cv_analytics').insert({
+        resume_id: resumeId,
+        user_id: user?.id,
+        event_type: 'download',
+        event_data: { template_id: selectedTemplate }
+      });
+    }
+
     toast({
       title: "Download Started",
       description: "Your PDF will be ready shortly"
     });
     
-    // Simple implementation - in a real app, you'd use a PDF generation library
     window.print();
   };
 
@@ -210,6 +234,42 @@ const Builder = () => {
     toast({
       title: "ATS Analysis Complete",
       description: `Your resume scored ${suggestions.score}% ATS compatibility`
+    });
+  };
+
+  const handleAISuggestion = (suggestion: any) => {
+    // Apply AI suggestion to resume data
+    switch (suggestion.section) {
+      case 'personal':
+        if (suggestion.suggestion_type === 'grammar') {
+          setResumeData(prev => ({
+            ...prev,
+            personal: { ...prev.personal, summary: suggestion.suggested_text }
+          }));
+        }
+        break;
+      case 'skills':
+        if (suggestion.suggestion_type === 'keywords') {
+          const newSkills = suggestion.suggested_text.split(',').map((s: string) => s.trim());
+          setResumeData(prev => ({
+            ...prev,
+            skills: [...new Set([...prev.skills, ...newSkills])]
+          }));
+        }
+        break;
+      // Add more cases as needed
+    }
+  };
+
+  const handleDataImport = (data: any, source: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      ...data
+    }));
+    
+    toast({
+      title: `${source.charAt(0).toUpperCase() + source.slice(1)} Import Complete`,
+      description: "Your resume has been updated with imported data"
     });
   };
 
@@ -371,36 +431,49 @@ const Builder = () => {
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800 shadow-sm">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-6 mb-6">
-                  <TabsTrigger value="upload" className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
+                <TabsList className="grid w-full grid-cols-9 mb-6">
+                  <TabsTrigger value="upload" className="flex items-center gap-1">
+                    <Upload className="w-3 h-3" />
                     Upload
                   </TabsTrigger>
-                  <TabsTrigger value="personal" className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
+                  <TabsTrigger value="personal" className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
                     Personal
                   </TabsTrigger>
-                  <TabsTrigger value="experience" className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4" />
+                  <TabsTrigger value="experience" className="flex items-center gap-1">
+                    <Briefcase className="w-3 h-3" />
                     Experience
                   </TabsTrigger>
-                  <TabsTrigger value="education" className="flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4" />
+                  <TabsTrigger value="education" className="flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3" />
                     Education
                   </TabsTrigger>
-                  <TabsTrigger value="skills" className="flex items-center gap-2">
-                    <Award className="w-4 h-4" />
+                  <TabsTrigger value="skills" className="flex items-center gap-1">
+                    <Award className="w-3 h-3" />
                     Skills
                   </TabsTrigger>
-                  <TabsTrigger value="ats" className="flex items-center gap-2">
-                    <Target className="w-4 h-4" />
+                  <TabsTrigger value="ats" className="flex items-center gap-1">
+                    <Target className="w-3 h-3" />
                     ATS
+                  </TabsTrigger>
+                  <TabsTrigger value="ai" className="flex items-center gap-1">
+                    <Brain className="w-3 h-3" />
+                    AI
+                  </TabsTrigger>
+                  <TabsTrigger value="analytics" className="flex items-center gap-1">
+                    <BarChart3 className="w-3 h-3" />
+                    Analytics
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="flex items-center gap-1">
+                    <Settings className="w-3 h-3" />
+                    Settings
                   </TabsTrigger>
                 </TabsList>
 
                 {/* CV Upload Tab */}
                 <TabsContent value="upload" className="space-y-4">
                   <CVUploader onParsed={handleCVParsed} />
+                  <IntegrationHub onDataImport={handleDataImport} />
                 </TabsContent>
 
                 {/* Personal Information Tab */}
@@ -670,25 +743,35 @@ const Builder = () => {
                 <TabsContent value="ats" className="space-y-4">
                   <ATSOptimizer resumeData={resumeData} onOptimize={handleATSOptimize} />
                 </TabsContent>
+
+                {/* AI Enhancements Tab */}
+                <TabsContent value="ai" className="space-y-4">
+                  <AIEnhancements resumeData={resumeData} onApplySuggestion={handleAISuggestion} />
+                </TabsContent>
+
+                {/* Analytics Tab */}
+                <TabsContent value="analytics" className="space-y-4">
+                  <AnalyticsDashboard resumeId={resumeId} />
+                </TabsContent>
+
+                {/* Settings Tab */}
+                <TabsContent value="settings" className="space-y-4">
+                  <PersonalizationPanel onBrandingChange={setBranding} />
+                </TabsContent>
               </Tabs>
             </Card>
           </div>
 
           {/* Preview Panel */}
           <div className="sticky top-24">
-            <ResumePreview data={resumeData} template={selectedTemplate} />
+            <ResumePreview 
+              data={resumeData} 
+              template={selectedTemplate}
+              branding={branding}
+            />
           </div>
         </div>
       </div>
-
-      {/* Template Selector Modal */}
-      {showTemplates && (
-        <TemplateSelector
-          selectedTemplate={selectedTemplate}
-          onSelectTemplate={setSelectedTemplate}
-          onClose={() => setShowTemplates(false)}
-        />
-      )}
 
       {/* Template Gallery Modal */}
       {showTemplateGallery && (

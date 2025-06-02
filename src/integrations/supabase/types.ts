@@ -9,6 +9,174 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_suggestions: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          is_applied: boolean | null
+          original_text: string | null
+          resume_id: string | null
+          section: string | null
+          suggested_text: string | null
+          suggestion_type: string
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          is_applied?: boolean | null
+          original_text?: string | null
+          resume_id?: string | null
+          section?: string | null
+          suggested_text?: string | null
+          suggestion_type: string
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          is_applied?: boolean | null
+          original_text?: string | null
+          resume_id?: string | null
+          section?: string | null
+          suggested_text?: string | null
+          suggestion_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_suggestions_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          template_data: Json
+          updated_at: string
+          usage_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          template_data: Json
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          template_data?: Json
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      cv_analytics: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          resume_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          resume_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          resume_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_analytics_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_applications: {
+        Row: {
+          application_date: string
+          company_name: string
+          created_at: string
+          id: string
+          job_url: string | null
+          notes: string | null
+          position_title: string
+          resume_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          application_date?: string
+          company_name: string
+          created_at?: string
+          id?: string
+          job_url?: string | null
+          notes?: string | null
+          position_title: string
+          resume_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          application_date?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          job_url?: string | null
+          notes?: string | null
+          position_title?: string
+          resume_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -78,6 +246,72 @@ export type Database = {
           title?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      skill_market_data: {
+        Row: {
+          demand_score: number | null
+          growth_trend: string | null
+          id: string
+          industry_relevance: Json | null
+          last_updated: string
+          salary_range: Json | null
+          skill_name: string
+        }
+        Insert: {
+          demand_score?: number | null
+          growth_trend?: string | null
+          id?: string
+          industry_relevance?: Json | null
+          last_updated?: string
+          salary_range?: Json | null
+          skill_name: string
+        }
+        Update: {
+          demand_score?: number | null
+          growth_trend?: string | null
+          id?: string
+          industry_relevance?: Json | null
+          last_updated?: string
+          salary_range?: Json | null
+          skill_name?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          ai_suggestions_enabled: boolean | null
+          auto_formatting_enabled: boolean | null
+          brand_colors: Json | null
+          created_at: string
+          default_font: string | null
+          id: string
+          social_links: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_suggestions_enabled?: boolean | null
+          auto_formatting_enabled?: boolean | null
+          brand_colors?: Json | null
+          created_at?: string
+          default_font?: string | null
+          id?: string
+          social_links?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_suggestions_enabled?: boolean | null
+          auto_formatting_enabled?: boolean | null
+          brand_colors?: Json | null
+          created_at?: string
+          default_font?: string | null
+          id?: string
+          social_links?: Json | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
