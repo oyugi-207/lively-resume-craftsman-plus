@@ -55,7 +55,6 @@ const Builder = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [branding, setBranding] = useState<any>({});
 
   const [resumeData, setResumeData] = useState({
     id: '',
@@ -431,11 +430,7 @@ const Builder = () => {
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800 shadow-sm">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-9 mb-6">
-                  <TabsTrigger value="upload" className="flex items-center gap-1">
-                    <Upload className="w-3 h-3" />
-                    Upload
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-6 mb-6">
                   <TabsTrigger value="personal" className="flex items-center gap-1">
                     <User className="w-3 h-3" />
                     Personal
@@ -452,14 +447,6 @@ const Builder = () => {
                     <Award className="w-3 h-3" />
                     Skills
                   </TabsTrigger>
-                  <TabsTrigger value="ats" className="flex items-center gap-1">
-                    <Target className="w-3 h-3" />
-                    ATS
-                  </TabsTrigger>
-                  <TabsTrigger value="ai" className="flex items-center gap-1">
-                    <Brain className="w-3 h-3" />
-                    AI
-                  </TabsTrigger>
                   <TabsTrigger value="analytics" className="flex items-center gap-1">
                     <BarChart3 className="w-3 h-3" />
                     Analytics
@@ -470,14 +457,9 @@ const Builder = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                {/* CV Upload Tab */}
-                <TabsContent value="upload" className="space-y-4">
-                  <CVUploader onParsed={handleCVParsed} />
-                  <IntegrationHub onDataImport={handleDataImport} />
-                </TabsContent>
-
                 {/* Personal Information Tab */}
                 <TabsContent value="personal" className="space-y-4">
+                  <CVUploader onParsed={handleCVParsed} />
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="fullName" className="dark:text-gray-200">Full Name</Label>
@@ -527,6 +509,7 @@ const Builder = () => {
                       placeholder="Write a compelling summary of your professional background..."
                     />
                   </div>
+                  <IntegrationHub onDataImport={handleDataImport} />
                 </TabsContent>
 
                 {/* Experience Tab */}
@@ -609,6 +592,7 @@ const Builder = () => {
                     <Plus className="w-4 h-4 mr-2" />
                     Add Experience
                   </Button>
+                  <AIEnhancements resumeData={resumeData} onApplySuggestion={handleAISuggestion} />
                 </TabsContent>
 
                 {/* Education Tab */}
@@ -737,16 +721,7 @@ const Builder = () => {
                       </Button>
                     </div>
                   </div>
-                </TabsContent>
-
-                {/* ATS Optimization Tab */}
-                <TabsContent value="ats" className="space-y-4">
                   <ATSOptimizer resumeData={resumeData} onOptimize={handleATSOptimize} />
-                </TabsContent>
-
-                {/* AI Enhancements Tab */}
-                <TabsContent value="ai" className="space-y-4">
-                  <AIEnhancements resumeData={resumeData} onApplySuggestion={handleAISuggestion} />
                 </TabsContent>
 
                 {/* Analytics Tab */}
@@ -756,7 +731,7 @@ const Builder = () => {
 
                 {/* Settings Tab */}
                 <TabsContent value="settings" className="space-y-4">
-                  <PersonalizationPanel onBrandingChange={setBranding} />
+                  <PersonalizationPanel onBrandingChange={() => {}} />
                 </TabsContent>
               </Tabs>
             </Card>
@@ -767,7 +742,6 @@ const Builder = () => {
             <ResumePreview 
               data={resumeData} 
               template={selectedTemplate}
-              branding={branding}
             />
           </div>
         </div>
