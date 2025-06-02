@@ -25,10 +25,16 @@ import {
   ArrowLeft,
   Palette,
   Moon,
-  Sun
+  Sun,
+  Upload,
+  Target,
+  FileText
 } from 'lucide-react';
 import ResumePreview from '@/components/ResumePreview';
 import TemplateSelector from '@/components/TemplateSelector';
+import CVUploader from '@/components/CVUploader';
+import ATSOptimizer from '@/components/ATSOptimizer';
+import TemplateGallery from '@/components/TemplateGallery';
 
 const Builder = () => {
   const { user } = useAuth();
@@ -40,6 +46,7 @@ const Builder = () => {
   
   const [activeTab, setActiveTab] = useState('personal');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,7 +149,6 @@ const Builder = () => {
         
         if (error) throw error;
         
-        // Update URL with new resume ID
         navigate(`/builder?id=${data.id}`, { replace: true });
         setResumeData(prev => ({ ...prev, id: data.id }));
       }
@@ -173,6 +179,39 @@ const Builder = () => {
       return () => clearTimeout(timer);
     }
   }, [resumeData, selectedTemplate, loading, resumeId]);
+
+  const downloadPDF = () => {
+    toast({
+      title: "Download Started",
+      description: "Your PDF will be ready shortly"
+    });
+    
+    // Simple implementation - in a real app, you'd use a PDF generation library
+    window.print();
+  };
+
+  const handleCVParsed = (data: any) => {
+    setResumeData(prev => ({
+      ...prev,
+      personal: data.personal || prev.personal,
+      experience: data.experience || prev.experience,
+      education: data.education || prev.education,
+      skills: data.skills || prev.skills,
+      certifications: data.certifications || prev.certifications
+    }));
+    
+    toast({
+      title: "CV Imported Successfully",
+      description: "Your information has been populated in the form"
+    });
+  };
+
+  const handleATSOptimize = (suggestions: any) => {
+    toast({
+      title: "ATS Analysis Complete",
+      description: `Your resume scored ${suggestions.score}% ATS compatibility`
+    });
+  };
 
   const updatePersonalInfo = (field: string, value: string) => {
     setResumeData(prev => ({
@@ -300,11 +339,11 @@ const Builder = () => {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => setShowTemplates(true)}
+              onClick={() => setShowTemplateGallery(true)}
               className="border-gray-300 dark:border-gray-600"
             >
               <Palette className="w-4 h-4 mr-2" />
-              Templates
+              Templates ({selectedTemplate + 1})
             </Button>
             <Button 
               variant="outline" 
@@ -315,7 +354,10 @@ const Builder = () => {
               <Save className="w-4 h-4 mr-2" />
               {saving ? 'Saving...' : 'Save'}
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button 
+              onClick={downloadPDF}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               <Download className="w-4 h-4 mr-2" />
               Download PDF
             </Button>
@@ -329,7 +371,11 @@ const Builder = () => {
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800 shadow-sm">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsList className="grid w-full grid-cols-6 mb-6">
+                  <TabsTrigger value="upload" className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload
+                  </TabsTrigger>
                   <TabsTrigger value="personal" className="flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Personal
@@ -346,7 +392,16 @@ const Builder = () => {
                     <Award className="w-4 h-4" />
                     Skills
                   </TabsTrigger>
+                  <TabsTrigger value="ats" className="flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    ATS
+                  </TabsTrigger>
                 </TabsList>
+
+                {/* CV Upload Tab */}
+                <TabsContent value="upload" className="space-y-4">
+                  <CVUploader onParsed={handleCVParsed} />
+                </TabsContent>
 
                 {/* Personal Information Tab */}
                 <TabsContent value="personal" className="space-y-4">
@@ -610,6 +665,11 @@ const Builder = () => {
                     </div>
                   </div>
                 </TabsContent>
+
+                {/* ATS Optimization Tab */}
+                <TabsContent value="ats" className="space-y-4">
+                  <ATSOptimizer resumeData={resumeData} onOptimize={handleATSOptimize} />
+                </TabsContent>
               </Tabs>
             </Card>
           </div>
@@ -628,6 +688,39 @@ const Builder = () => {
           onSelectTemplate={setSelectedTemplate}
           onClose={() => setShowTemplates(false)}
         />
+      )}
+
+      {/* Template Gallery Modal */}
+      {showTemplateGallery && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Choose Template ({selectedTemplate + 1} of 20+ templates)
+              </h2>
+              <Button
+                variant="ghost"
+                onClick={() => setShowTemplateGallery(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+              <TemplateGallery
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={(templateId) => {
+                  setSelectedTemplate(templateId);
+                  setShowTemplateGallery(false);
+                  toast({
+                    title: "Template Updated",
+                    description: `Switched to template ${templateId + 1}`
+                  });
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
