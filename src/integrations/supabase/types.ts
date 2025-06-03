@@ -56,6 +56,53 @@ export type Database = {
           },
         ]
       }
+      cover_letters: {
+        Row: {
+          company_name: string | null
+          content: string
+          created_at: string
+          id: string
+          position_title: string | null
+          resume_id: string | null
+          template_id: number | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          position_title?: string | null
+          resume_id?: string | null
+          template_id?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          position_title?: string | null
+          resume_id?: string | null
+          template_id?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_letters_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_templates: {
         Row: {
           created_at: string
@@ -211,8 +258,11 @@ export type Database = {
           education: Json
           experience: Json
           id: string
+          interests: Json | null
           is_public: boolean | null
+          languages: Json | null
           personal_info: Json
+          projects: Json | null
           skills: Json
           template_id: number
           title: string
@@ -225,8 +275,11 @@ export type Database = {
           education?: Json
           experience?: Json
           id?: string
+          interests?: Json | null
           is_public?: boolean | null
+          languages?: Json | null
           personal_info?: Json
+          projects?: Json | null
           skills?: Json
           template_id?: number
           title?: string
@@ -239,8 +292,11 @@ export type Database = {
           education?: Json
           experience?: Json
           id?: string
+          interests?: Json | null
           is_public?: boolean | null
+          languages?: Json | null
           personal_info?: Json
+          projects?: Json | null
           skills?: Json
           template_id?: number
           title?: string
@@ -276,6 +332,36 @@ export type Database = {
           last_updated?: string
           salary_range?: Json | null
           skill_name?: string
+        }
+        Relationships: []
+      }
+      template_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level: string
+          name: string
+          template_data: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level: string
+          name: string
+          template_data: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: string
+          name?: string
+          template_data?: Json
         }
         Relationships: []
       }

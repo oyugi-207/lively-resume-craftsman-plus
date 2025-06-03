@@ -29,7 +29,11 @@ import {
   Brain,
   BarChart3,
   Settings,
-  Zap
+  Zap,
+  Globe,
+  Heart,
+  FolderOpen,
+  FileText
 } from 'lucide-react';
 import ResumePreview from '@/components/ResumePreview';
 import TemplateSelector from '@/components/TemplateSelector';
@@ -69,7 +73,10 @@ const Builder = () => {
     experience: [] as any[],
     education: [] as any[],
     skills: [] as string[],
-    certifications: [] as any[]
+    certifications: [] as any[],
+    languages: [] as any[],
+    interests: [] as string[],
+    projects: [] as any[]
   });
 
   useEffect(() => {
@@ -107,7 +114,10 @@ const Builder = () => {
         experience: (data.experience as any[]) || [],
         education: (data.education as any[]) || [],
         skills: (data.skills as string[]) || [],
-        certifications: (data.certifications as any[]) || []
+        certifications: (data.certifications as any[]) || [],
+        languages: (data.languages as any[]) || [],
+        interests: (data.interests as string[]) || [],
+        projects: (data.projects as any[]) || []
       });
       setSelectedTemplate(data.template_id || 0);
     } catch (error) {
@@ -135,7 +145,10 @@ const Builder = () => {
         experience: resumeData.experience,
         education: resumeData.education,
         skills: resumeData.skills,
-        certifications: resumeData.certifications
+        certifications: resumeData.certifications,
+        languages: resumeData.languages,
+        interests: resumeData.interests,
+        projects: resumeData.projects
       };
 
       if (resumeId) {
@@ -220,7 +233,10 @@ const Builder = () => {
       experience: data.experience || prev.experience,
       education: data.education || prev.education,
       skills: data.skills || prev.skills,
-      certifications: data.certifications || prev.certifications
+      certifications: data.certifications || prev.certifications,
+      languages: data.languages || prev.languages,
+      interests: data.interests || prev.interests,
+      projects: data.projects || prev.projects
     }));
     
     toast({
@@ -359,6 +375,116 @@ const Builder = () => {
     }));
   };
 
+  // Languages functions
+  const addLanguage = () => {
+    const newLang = {
+      id: Date.now(),
+      language: '',
+      proficiency: 'Beginner'
+    };
+    setResumeData(prev => ({
+      ...prev,
+      languages: [...prev.languages, newLang]
+    }));
+  };
+
+  const updateLanguage = (id: number, field: string, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      languages: prev.languages.map(lang => 
+        lang.id === id ? { ...lang, [field]: value } : lang
+      )
+    }));
+  };
+
+  const removeLanguage = (id: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      languages: prev.languages.filter(lang => lang.id !== id)
+    }));
+  };
+
+  // Projects functions
+  const addProject = () => {
+    const newProject = {
+      id: Date.now(),
+      name: '',
+      description: '',
+      technologies: '',
+      link: '',
+      startDate: '',
+      endDate: ''
+    };
+    setResumeData(prev => ({
+      ...prev,
+      projects: [...prev.projects, newProject]
+    }));
+  };
+
+  const updateProject = (id: number, field: string, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      projects: prev.projects.map(project => 
+        project.id === id ? { ...project, [field]: value } : project
+      )
+    }));
+  };
+
+  const removeProject = (id: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      projects: prev.projects.filter(project => project.id !== id)
+    }));
+  };
+
+  // Interests functions
+  const addInterest = (interest: string) => {
+    if (interest.trim() && !resumeData.interests.includes(interest.trim())) {
+      setResumeData(prev => ({
+        ...prev,
+        interests: [...prev.interests, interest.trim()]
+      }));
+    }
+  };
+
+  const removeInterest = (interestToRemove: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      interests: prev.interests.filter(interest => interest !== interestToRemove)
+    }));
+  };
+
+  // Certifications functions
+  const addCertification = () => {
+    const newCert = {
+      id: Date.now(),
+      name: '',
+      issuer: '',
+      date: '',
+      credentialId: ''
+    };
+    setResumeData(prev => ({
+      ...prev,
+      certifications: [...prev.certifications, newCert]
+    }));
+  };
+
+  const updateCertification = (id: number, field: string, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      certifications: prev.certifications.map(cert => 
+        cert.id === id ? { ...cert, [field]: value } : cert
+      )
+    }));
+  };
+
+  const removeCertification = (id: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      certifications: prev.certifications.filter(cert => cert.id !== id)
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -430,7 +556,7 @@ const Builder = () => {
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800 shadow-sm">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-6 mb-6">
+                <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6">
                   <TabsTrigger value="personal" className="flex items-center gap-1">
                     <User className="w-3 h-3" />
                     Personal
@@ -447,13 +573,21 @@ const Builder = () => {
                     <Award className="w-3 h-3" />
                     Skills
                   </TabsTrigger>
-                  <TabsTrigger value="analytics" className="flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" />
-                    Analytics
+                  <TabsTrigger value="projects" className="flex items-center gap-1">
+                    <FolderOpen className="w-3 h-3" />
+                    Projects
                   </TabsTrigger>
-                  <TabsTrigger value="settings" className="flex items-center gap-1">
-                    <Settings className="w-3 h-3" />
-                    Settings
+                  <TabsTrigger value="languages" className="flex items-center gap-1">
+                    <Globe className="w-3 h-3" />
+                    Languages
+                  </TabsTrigger>
+                  <TabsTrigger value="interests" className="flex items-center gap-1">
+                    <Heart className="w-3 h-3" />
+                    Interests
+                  </TabsTrigger>
+                  <TabsTrigger value="certifications" className="flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    Certificates
                   </TabsTrigger>
                 </TabsList>
 
@@ -510,6 +644,252 @@ const Builder = () => {
                     />
                   </div>
                   <IntegrationHub onDataImport={handleDataImport} />
+                </TabsContent>
+
+                {/* Projects Tab */}
+                <TabsContent value="projects" className="space-y-6">
+                  {resumeData.projects.map((project) => (
+                    <Card key={project.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900 dark:text-white">Project</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeProject(project.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <Label className="dark:text-gray-200">Project Name</Label>
+                          <Input
+                            value={project.name}
+                            onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Technologies</Label>
+                          <Input
+                            value={project.technologies}
+                            onChange={(e) => updateProject(project.id, 'technologies', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="React, Node.js, MongoDB"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Project Link</Label>
+                          <Input
+                            value={project.link}
+                            onChange={(e) => updateProject(project.id, 'link', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="https://github.com/..."
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="dark:text-gray-200">Start Date</Label>
+                            <Input
+                              value={project.startDate}
+                              onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
+                              className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                              placeholder="Jan 2023"
+                            />
+                          </div>
+                          <div>
+                            <Label className="dark:text-gray-200">End Date</Label>
+                            <Input
+                              value={project.endDate}
+                              onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
+                              className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                              placeholder="Present"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="dark:text-gray-200">Description</Label>
+                        <Textarea
+                          value={project.description}
+                          onChange={(e) => updateProject(project.id, 'description', e.target.value)}
+                          className="mt-1 min-h-[80px] dark:bg-gray-600 dark:border-gray-500"
+                          placeholder="Describe the project, your role, and key achievements..."
+                        />
+                      </div>
+                    </Card>
+                  ))}
+                  <Button
+                    onClick={addProject}
+                    variant="outline"
+                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Project
+                  </Button>
+                </TabsContent>
+
+                {/* Languages Tab */}
+                <TabsContent value="languages" className="space-y-6">
+                  {resumeData.languages.map((lang) => (
+                    <Card key={lang.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900 dark:text-white">Language</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeLanguage(lang.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="dark:text-gray-200">Language</Label>
+                          <Input
+                            value={lang.language}
+                            onChange={(e) => updateLanguage(lang.id, 'language', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="English, Spanish, French..."
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Proficiency</Label>
+                          <select
+                            value={lang.proficiency}
+                            onChange={(e) => updateLanguage(lang.id, 'proficiency', e.target.value)}
+                            className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md dark:bg-gray-600 dark:text-white"
+                          >
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Fluent">Fluent</option>
+                            <option value="Native">Native</option>
+                          </select>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  <Button
+                    onClick={addLanguage}
+                    variant="outline"
+                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Language
+                  </Button>
+                </TabsContent>
+
+                {/* Interests Tab */}
+                <TabsContent value="interests" className="space-y-4">
+                  <div>
+                    <Label className="dark:text-gray-200">Interests & Hobbies</Label>
+                    <div className="flex flex-wrap gap-2 mt-2 mb-4">
+                      {resumeData.interests.map((interest) => (
+                        <span
+                          key={interest}
+                          className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                        >
+                          {interest}
+                          <button
+                            onClick={() => removeInterest(interest)}
+                            className="text-purple-600 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add an interest and press Enter"
+                        className="dark:bg-gray-700 dark:border-gray-600"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            addInterest(e.currentTarget.value);
+                            e.currentTarget.value = '';
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={() => {
+                          const input = document.querySelector('input[placeholder="Add an interest and press Enter"]') as HTMLInputElement;
+                          if (input) {
+                            addInterest(input.value);
+                            input.value = '';
+                          }
+                        }}
+                        variant="outline"
+                        className="dark:border-gray-600"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Certifications Tab */}
+                <TabsContent value="certifications" className="space-y-6">
+                  {resumeData.certifications.map((cert) => (
+                    <Card key={cert.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900 dark:text-white">Certification</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeCertification(cert.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="dark:text-gray-200">Certification Name</Label>
+                          <Input
+                            value={cert.name}
+                            onChange={(e) => updateCertification(cert.id, 'name', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Issuing Organization</Label>
+                          <Input
+                            value={cert.issuer}
+                            onChange={(e) => updateCertification(cert.id, 'issuer', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Date Obtained</Label>
+                          <Input
+                            value={cert.date}
+                            onChange={(e) => updateCertification(cert.id, 'date', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="Jan 2023"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Credential ID (Optional)</Label>
+                          <Input
+                            value={cert.credentialId}
+                            onChange={(e) => updateCertification(cert.id, 'credentialId', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  <Button
+                    onClick={addCertification}
+                    variant="outline"
+                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Certification
+                  </Button>
                 </TabsContent>
 
                 {/* Experience Tab */}
