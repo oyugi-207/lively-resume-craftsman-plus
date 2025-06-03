@@ -45,7 +45,7 @@ const CoverLetterBuilder = () => {
     companyName: '',
     positionTitle: '',
     content: '',
-    resumeId: resumeId || '',
+    resumeId: resumeId || 'none',
     templateId: 0
   });
 
@@ -85,7 +85,7 @@ const CoverLetterBuilder = () => {
           companyName: data.company_name || '',
           positionTitle: data.position_title || '',
           content: data.content || '',
-          resumeId: data.resume_id || '',
+          resumeId: data.resume_id || 'none',
           templateId: data.template_id || 0
         });
       }
@@ -111,7 +111,7 @@ const CoverLetterBuilder = () => {
         company_name: coverLetterData.companyName,
         position_title: coverLetterData.positionTitle,
         content: coverLetterData.content,
-        resume_id: coverLetterData.resumeId || null,
+        resume_id: coverLetterData.resumeId === 'none' ? null : coverLetterData.resumeId,
         template_id: coverLetterData.templateId
       };
 
@@ -165,7 +165,7 @@ const CoverLetterBuilder = () => {
     try {
       // Get resume data if selected
       let resumeData = null;
-      if (coverLetterData.resumeId) {
+      if (coverLetterData.resumeId && coverLetterData.resumeId !== 'none') {
         const { data, error } = await supabase
           .from('resumes')
           .select('*')
@@ -345,7 +345,7 @@ ${name}`;
                         <SelectValue placeholder="Select a resume to link" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No resume selected</SelectItem>
+                        <SelectItem value="none">No resume selected</SelectItem>
                         {resumes.map((resume) => (
                           <SelectItem key={resume.id} value={resume.id}>
                             {resume.title}
