@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   ArrowLeft,
   Save,
@@ -33,10 +34,12 @@ const CoverLetterBuilder = () => {
   const [searchParams] = useSearchParams();
   const coverLetterId = searchParams.get('id');
   const resumeId = searchParams.get('resume');
+  const previewRef = useRef<HTMLDivElement>(null);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [resumes, setResumes] = useState<any[]>([]);
 
   const [coverLetterData, setCoverLetterData] = useState({
@@ -232,12 +235,57 @@ Sincerely,
 ${name}`;
   };
 
-  const downloadPDF = () => {
-    toast({
-      title: "Download Started",
-      description: "Your cover letter PDF will be ready shortly"
-    });
-    window.print();
+  const downloadPDF = async () => {
+    if (!previewRef.current) {
+      toast({
+        title: "Error",
+        description: "Preview not ready for download",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setDownloadingPDF(true);
+    try {
+      // Hide any interactive elements for the screenshot
+      const preview = previewRef.current;
+      const canvas = await html2canvas(preview, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      const fileName = `${coverLetterData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_cover_letter.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "Success",
+        description: "Cover letter PDF downloaded successfully"
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingPDF(false);
+    }
   };
 
   if (loading) {
@@ -288,10 +336,11 @@ ${name}`;
             </Button>
             <Button 
               onClick={downloadPDF}
+              disabled={downloadingPDF || !coverLetterData.content}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Download className="w-4 h-4 mr-2" />
-              Download PDF
+              {downloadingPDF ? 'Generating PDF...' : 'Download PDF'}
             </Button>
           </div>
         </div>
@@ -410,10 +459,10 @@ ${name}`;
           {/* Preview Panel */}
           <div className="sticky top-24">
             <Card className="p-8 bg-white dark:bg-gray-800 shadow-sm min-h-[600px]">
-              <div className="space-y-6">
+              <div ref={previewRef} className="space-y-6">
                 <div className="text-center border-b border-gray-200 dark:border-gray-700 pb-4">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Cover Letter Preview
+                    Cover Letter
                   </h1>
                   {coverLetterData.companyName && coverLetterData.positionTitle && (
                     <p className="text-gray-600 dark:text-gray-300 mt-2">
@@ -424,7 +473,7 @@ ${name}`;
                 
                 <div className="prose dark:prose-invert max-w-none">
                   {coverLetterData.content ? (
-                    <div className="whitespace-pre-wrap text-gray-900 dark:text-white leading-relaxed">
+                    <div className="whitespace-pre-wrap text-gray-900 dark:text-white leading-relaxed text-sm">
                       {coverLetterData.content}
                     </div>
                   ) : (
