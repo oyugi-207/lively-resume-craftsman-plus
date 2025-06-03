@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -236,10 +237,10 @@ ${name}`;
   };
 
   const downloadPDF = async () => {
-    if (!previewRef.current) {
+    if (!previewRef.current || !coverLetterData.content.trim()) {
       toast({
         title: "Error",
-        description: "Preview not ready for download",
+        description: "Please add content to your cover letter before downloading",
         variant: "destructive"
       });
       return;
@@ -247,28 +248,52 @@ ${name}`;
 
     setDownloadingPDF(true);
     try {
-      // Hide any interactive elements for the screenshot
-      const preview = previewRef.current;
-      const canvas = await html2canvas(preview, {
+      // Create a temporary container for better PDF rendering
+      const element = previewRef.current;
+      
+      // Configure html2canvas for better quality
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff'
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Ensure the cloned document has proper styling
+          const clonedElement = clonedDoc.querySelector('[data-preview-ref]') as HTMLElement;
+          if (clonedElement) {
+            clonedElement.style.backgroundColor = '#ffffff';
+            clonedElement.style.color = '#000000';
+            clonedElement.style.padding = '40px';
+            clonedElement.style.fontFamily = 'Arial, sans-serif';
+          }
+        }
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      // Create PDF with proper dimensions
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
+      // A4 dimensions in mm
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calculate image dimensions to fit A4
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       
+      const imgDisplayWidth = imgWidth * ratio;
+      const imgDisplayHeight = imgHeight * ratio;
+      
+      // Center the image on the page
+      const x = (pdfWidth - imgDisplayWidth) / 2;
+      const y = (pdfHeight - imgDisplayHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', x, y, imgDisplayWidth, imgDisplayHeight);
+      
+      // Generate filename
       const fileName = `${coverLetterData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_cover_letter.pdf`;
       pdf.save(fileName);
 
@@ -280,7 +305,7 @@ ${name}`;
       console.error('Error generating PDF:', error);
       toast({
         title: "Error",
-        description: "Failed to generate PDF",
+        description: "Failed to generate PDF. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -336,7 +361,7 @@ ${name}`;
             </Button>
             <Button 
               onClick={downloadPDF}
-              disabled={downloadingPDF || !coverLetterData.content}
+              disabled={downloadingPDF || !coverLetterData.content.trim()}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Download className="w-4 h-4 mr-2" />
@@ -459,25 +484,25 @@ ${name}`;
           {/* Preview Panel */}
           <div className="sticky top-24">
             <Card className="p-8 bg-white dark:bg-gray-800 shadow-sm min-h-[600px]">
-              <div ref={previewRef} className="space-y-6">
-                <div className="text-center border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div ref={previewRef} data-preview-ref className="space-y-6" style={{ backgroundColor: '#ffffff', color: '#000000', minHeight: '500px' }}>
+                <div className="text-center border-b border-gray-200 pb-4">
+                  <h1 className="text-2xl font-bold text-gray-900">
                     Cover Letter
                   </h1>
                   {coverLetterData.companyName && coverLetterData.positionTitle && (
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">
+                    <p className="text-gray-600 mt-2">
                       {coverLetterData.positionTitle} at {coverLetterData.companyName}
                     </p>
                   )}
                 </div>
                 
-                <div className="prose dark:prose-invert max-w-none">
+                <div className="prose max-w-none">
                   {coverLetterData.content ? (
-                    <div className="whitespace-pre-wrap text-gray-900 dark:text-white leading-relaxed text-sm">
+                    <div className="whitespace-pre-wrap text-gray-900 leading-relaxed text-sm">
                       {coverLetterData.content}
                     </div>
                   ) : (
-                    <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+                    <div className="text-center text-gray-500 py-12">
                       <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg mb-2">Your cover letter preview will appear here</p>
                       <p className="text-sm">Fill in the job information and generate content with AI or write manually</p>

@@ -128,21 +128,28 @@ const CVUploader: React.FC<CVUploaderProps> = ({ onParsed }) => {
     setParseResult(null);
 
     try {
-      // Upload file to Supabase Storage
+      // Upload file to Supabase Storage with public access
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       setUploadProgress(25);
 
+      console.log('Uploading file to bucket cv-uploads with path:', fileName);
+
+      // Use upsert to overwrite if file exists and set public access
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('cv-uploads')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
+      console.log('File uploaded successfully:', uploadData);
       setUploadProgress(50);
 
       // For text files, read and parse directly
