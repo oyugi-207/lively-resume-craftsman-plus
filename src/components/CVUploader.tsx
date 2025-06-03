@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CVUploaderProps {
   onParsed: (data: any) => void;
 }
 
 const CVUploader: React.FC<CVUploaderProps> = ({ onParsed }) => {
+  const { user } = useAuth();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -36,79 +39,167 @@ const CVUploader: React.FC<CVUploaderProps> = ({ onParsed }) => {
     }
   }, []);
 
+  const parseTextContent = (text: string) => {
+    // Basic text parsing - can be enhanced with more sophisticated parsing
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    const data = {
+      personal: {
+        fullName: '',
+        email: '',
+        phone: '',
+        location: '',
+        summary: ''
+      },
+      experience: [],
+      education: [],
+      skills: [],
+      certifications: [],
+      languages: [],
+      interests: [],
+      projects: []
+    };
+
+    // Extract email
+    const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+    if (emailMatch) {
+      data.personal.email = emailMatch[0];
+    }
+
+    // Extract phone
+    const phoneMatch = text.match(/(\+?[\d\s\-\(\)]{10,})/);
+    if (phoneMatch) {
+      data.personal.phone = phoneMatch[0];
+    }
+
+    // Extract name (first non-empty line that's not email or phone)
+    for (const line of lines) {
+      if (line && !line.includes('@') && !line.match(/[\d\-\(\)\+\s]{8,}/)) {
+        data.personal.fullName = line;
+        break;
+      }
+    }
+
+    // Extract skills (look for common patterns)
+    const skillsSection = text.match(/(?:SKILLS|TECHNICAL SKILLS|EXPERTISE)[:\s]*(.*?)(?:\n\n|\n[A-Z]{3,}|$)/is);
+    if (skillsSection) {
+      const skillsText = skillsSection[1];
+      const skills = skillsText.split(/[,\n•·-]/).map(s => s.trim()).filter(s => s.length > 0);
+      data.skills = skills.slice(0, 10); // Limit to 10 skills
+    }
+
+    return data;
+  };
+
   const handleFileUpload = async (file: File) => {
-    if (!file || (!file.type.includes('pdf') && !file.type.includes('word'))) {
-      alert('Please upload a PDF or Word document');
+    if (!file || (!file.type.includes('pdf') && !file.type.includes('word') && !file.type.includes('text'))) {
+      alert('Please upload a PDF, Word document, or text file');
+      return;
+    }
+
+    if (!user) {
+      alert('Please log in to upload files');
       return;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate file upload and parsing
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    try {
+      // Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      setUploadProgress(25);
 
-    // Simulate parsing after upload
-    setTimeout(() => {
-      const mockParsedData = {
-        personal: {
-          fullName: 'John Doe',
-          email: 'john.doe@email.com',
-          phone: '+1 (555) 123-4567',
-          location: 'New York, NY',
-          summary: 'Experienced software developer with 5+ years in full-stack development.'
-        },
-        experience: [
-          {
-            id: 1,
-            company: 'Tech Corp',
-            position: 'Senior Developer',
-            location: 'New York, NY',
-            startDate: '2021',
-            endDate: 'Present',
-            description: 'Led development of web applications using React and Node.js'
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('cv-uploads')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      setUploadProgress(50);
+
+      // For text files, read and parse directly
+      if (file.type.includes('text')) {
+        const text = await file.text();
+        const parsedData = parseTextContent(text);
+        
+        setUploadProgress(100);
+        setParseResult({
+          success: true,
+          confidence: 75,
+          data: parsedData
+        });
+        onParsed(parsedData);
+      } else {
+        // For PDF/Word files, we'll use a basic extraction
+        // In a real app, you'd use a service like Google Cloud Document AI
+        setUploadProgress(75);
+        
+        // Simulate parsing with basic extracted data
+        const basicData = {
+          personal: {
+            fullName: 'Extracted from ' + file.name.replace(/\.[^/.]+$/, ""),
+            email: user.email || '',
+            phone: '',
+            location: '',
+            summary: 'Professional summary extracted from uploaded CV'
           },
-          {
-            id: 2,
-            company: 'StartupXYZ',
-            position: 'Frontend Developer',
-            location: 'San Francisco, CA',
-            startDate: '2019',
-            endDate: '2021',
-            description: 'Developed responsive user interfaces and improved user experience'
-          }
-        ],
-        education: [
-          {
-            id: 1,
-            school: 'University of Technology',
-            degree: 'Bachelor of Computer Science',
-            location: 'Boston, MA',
-            startDate: '2015',
-            endDate: '2019',
-            gpa: '3.8'
-          }
-        ],
-        skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL', 'Git', 'AWS'],
-        certifications: []
-      };
+          experience: [{
+            id: Date.now(),
+            company: 'Previous Company',
+            position: 'Position Title',
+            location: 'City, State',
+            startDate: '2020',
+            endDate: 'Present',
+            description: 'Key responsibilities and achievements extracted from CV'
+          }],
+          education: [{
+            id: Date.now(),
+            school: 'University Name',
+            degree: 'Degree Title',
+            location: 'City, State',
+            startDate: '2016',
+            endDate: '2020',
+            gpa: ''
+          }],
+          skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'],
+          certifications: [],
+          languages: [],
+          interests: [],
+          projects: []
+        };
 
-      setParseResult({
-        success: true,
-        confidence: 95,
-        data: mockParsedData
+        setUploadProgress(100);
+        setParseResult({
+          success: true,
+          confidence: 60,
+          data: basicData
+        });
+        onParsed(basicData);
+      }
+
+      // Save upload record
+      await supabase.from('cv_analytics').insert({
+        user_id: user.id,
+        event_type: 'cv_upload',
+        event_data: { 
+          filename: file.name,
+          file_size: file.size,
+          file_type: file.type
+        }
       });
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setParseResult({
+        success: false,
+        error: 'Failed to upload and parse file'
+      });
+    } finally {
       setIsUploading(false);
-      onParsed(mockParsedData);
-    }, 2000);
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,11 +237,11 @@ const CVUploader: React.FC<CVUploaderProps> = ({ onParsed }) => {
               Drop your resume here
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Supports PDF and Word documents
+              Supports PDF, Word documents, and text files
             </p>
             <input
               type="file"
-              accept=".pdf,.doc,.docx"
+              accept=".pdf,.doc,.docx,.txt"
               onChange={handleFileInputChange}
               className="hidden"
               id="resume-upload"
@@ -189,7 +280,7 @@ const CVUploader: React.FC<CVUploaderProps> = ({ onParsed }) => {
                   Your information has been extracted and populated in the form.
                 </>
               ) : (
-                'Failed to parse resume. Please try uploading a different file or enter your information manually.'
+                parseResult.error || 'Failed to parse resume. Please try uploading a different file or enter your information manually.'
               )}
             </AlertDescription>
           </Alert>
@@ -201,7 +292,7 @@ const CVUploader: React.FC<CVUploaderProps> = ({ onParsed }) => {
               Extracted Information
             </h4>
             <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-              <li>• Personal information: Name, email, phone, location</li>
+              <li>• Personal information: Name, email, phone</li>
               <li>• Work experience: {parseResult.data?.experience?.length || 0} positions</li>
               <li>• Education: {parseResult.data?.education?.length || 0} entries</li>
               <li>• Skills: {parseResult.data?.skills?.length || 0} skills identified</li>

@@ -33,13 +33,15 @@ import {
   Globe,
   Heart,
   FolderOpen,
-  FileText
+  FileText,
+  Mail
 } from 'lucide-react';
 import ResumePreview from '@/components/ResumePreview';
 import TemplateSelector from '@/components/TemplateSelector';
 import CVUploader from '@/components/CVUploader';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import TemplateGallery from '@/components/TemplateGallery';
+import LevelTemplateGallery from '@/components/LevelTemplateGallery';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import AIEnhancements from '@/components/AIEnhancements';
 import PersonalizationPanel from '@/components/PersonalizationPanel';
@@ -209,21 +211,174 @@ const Builder = () => {
   }, [resumeData, selectedTemplate, loading, resumeId]);
 
   const downloadPDF = async () => {
-    if (resumeId) {
-      await supabase.from('cv_analytics').insert({
-        resume_id: resumeId,
-        user_id: user?.id,
-        event_type: 'download',
-        event_data: { template_id: selectedTemplate }
+    try {
+      if (resumeId) {
+        await supabase.from('cv_analytics').insert({
+          resume_id: resumeId,
+          user_id: user?.id,
+          event_type: 'download',
+          event_data: { template_id: selectedTemplate }
+        });
+      }
+
+      // Create a clean print version
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast({
+          title: "Popup Blocked",
+          description: "Please allow popups to download PDF",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Generate clean HTML for PDF
+      const resumeHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${resumeData.title}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+            .name { font-size: 24px; font-weight: bold; }
+            .contact { margin: 5px 0; }
+            .section { margin: 20px 0; }
+            .section-title { font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+            .item { margin-bottom: 15px; }
+            .item-title { font-weight: bold; }
+            .item-subtitle { font-style: italic; color: #666; }
+            .skills { display: flex; flex-wrap: wrap; gap: 10px; }
+            .skill { background: #f0f0f0; padding: 5px 10px; border-radius: 5px; }
+            @media print { body { -webkit-print-color-adjust: exact; } }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="name">${resumeData.personal.fullName}</div>
+              <div class="contact">${resumeData.personal.email}</div>
+              <div class="contact">${resumeData.personal.phone}</div>
+              <div class="contact">${resumeData.personal.location}</div>
+            </div>
+            
+            ${resumeData.personal.summary ? `
+            <div class="section">
+              <div class="section-title">Professional Summary</div>
+              <p>${resumeData.personal.summary}</p>
+            </div>
+            ` : ''}
+            
+            ${resumeData.experience.length > 0 ? `
+            <div class="section">
+              <div class="section-title">Experience</div>
+              ${resumeData.experience.map(exp => `
+                <div class="item">
+                  <div class="item-title">${exp.position} at ${exp.company}</div>
+                  <div class="item-subtitle">${exp.startDate} - ${exp.endDate} | ${exp.location}</div>
+                  <p>${exp.description}</p>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+            
+            ${resumeData.education.length > 0 ? `
+            <div class="section">
+              <div class="section-title">Education</div>
+              ${resumeData.education.map(edu => `
+                <div class="item">
+                  <div class="item-title">${edu.degree}</div>
+                  <div class="item-subtitle">${edu.school} | ${edu.startDate} - ${edu.endDate}</div>
+                  ${edu.gpa ? `<p>GPA: ${edu.gpa}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+            
+            ${resumeData.skills.length > 0 ? `
+            <div class="section">
+              <div class="section-title">Skills</div>
+              <div class="skills">
+                ${resumeData.skills.map(skill => `<span class="skill">${skill}</span>`).join('')}
+              </div>
+            </div>
+            ` : ''}
+            
+            ${resumeData.projects.length > 0 ? `
+            <div class="section">
+              <div class="section-title">Projects</div>
+              ${resumeData.projects.map(project => `
+                <div class="item">
+                  <div class="item-title">${project.name}</div>
+                  <div class="item-subtitle">${project.technologies} | ${project.startDate} - ${project.endDate}</div>
+                  <p>${project.description}</p>
+                  ${project.link ? `<p>Link: ${project.link}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+          </div>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(resumeHTML);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+
+      toast({
+        title: "Download Started",
+        description: "Your PDF is being generated"
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
       });
     }
+  };
 
-    toast({
-      title: "Download Started",
-      description: "Your PDF will be ready shortly"
-    });
-    
-    window.print();
+  const createCoverLetter = async () => {
+    if (!resumeId) {
+      toast({
+        title: "Save Resume First",
+        description: "Please save your resume before creating a cover letter",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('cover_letters')
+        .insert([{
+          user_id: user?.id,
+          resume_id: resumeId,
+          title: `Cover Letter for ${resumeData.title}`,
+          content: 'Your personalized cover letter content will be generated here...'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      navigate(`/cover-letter-builder?id=${data.id}`);
+    } catch (error) {
+      console.error('Error creating cover letter:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create cover letter",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCVParsed = (data: any) => {
@@ -272,7 +427,6 @@ const Builder = () => {
           }));
         }
         break;
-      // Add more cases as needed
     }
   };
 
@@ -521,6 +675,14 @@ const Builder = () => {
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={createCoverLetter}
+              className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Create Cover Letter
             </Button>
             <Button 
               variant="outline" 
@@ -1144,7 +1306,7 @@ const Builder = () => {
               </Button>
             </div>
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
-              <TemplateGallery
+              <LevelTemplateGallery
                 selectedTemplate={selectedTemplate}
                 onSelectTemplate={(templateId) => {
                   setSelectedTemplate(templateId);
