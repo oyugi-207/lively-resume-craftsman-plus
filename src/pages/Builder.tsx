@@ -46,6 +46,7 @@ import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import AIEnhancements from '@/components/AIEnhancements';
 import PersonalizationPanel from '@/components/PersonalizationPanel';
 import IntegrationHub from '@/components/IntegrationHub';
+import { generateResumePDF } from '@/components/PDFGenerator';
 
 const Builder = () => {
   const { user } = useAuth();
