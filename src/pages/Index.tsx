@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,7 +21,8 @@ import {
   Brain,
   Download,
   Eye,
-  BarChart3
+  BarChart3,
+  Check
 } from 'lucide-react';
 
 const Index = () => {

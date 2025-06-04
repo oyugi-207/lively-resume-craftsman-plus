@@ -11,6 +11,7 @@ const QuickAuth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('password123');
+  const [fullName, setFullName] = useState('Test User');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, signOut, user } = useAuth();
 
@@ -24,7 +25,7 @@ const QuickAuth: React.FC = () => {
         if (error) throw error;
         toast.success('Logged in successfully!');
       } else {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(email, password, fullName);
         if (error) throw error;
         toast.success('Account created successfully!');
       }
@@ -106,6 +107,19 @@ const QuickAuth: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
