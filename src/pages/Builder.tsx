@@ -82,6 +82,19 @@ const Builder = () => {
     projects: [] as any[]
   });
 
+  // Handle template selection from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateParam = urlParams.get('template');
+    if (templateParam) {
+      const templateId = parseInt(templateParam, 10);
+      if (!isNaN(templateId) && templateId >= 0 && templateId <= 20) {
+        setSelectedTemplate(templateId);
+        console.log('Template selected from URL:', templateId);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) {
       navigate('/auth');

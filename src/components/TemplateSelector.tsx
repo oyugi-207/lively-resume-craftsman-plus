@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Check } from 'lucide-react';
+import { Star, Check, Eye } from 'lucide-react';
 
 interface TemplateSelectorProps {
   selectedTemplate: number;
@@ -33,7 +33,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     {
       id: 1,
       name: "Executive Leader",
-      category: "professional",
+      category: "professional", 
       description: "Sophisticated design for senior management positions",
       color: "bg-gradient-to-br from-gray-700 to-gray-900",
       popular: false,
@@ -52,8 +52,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       features: ["Traditional", "Corporate", "Conservative"],
       industry: ["Banking", "Law", "Government"]
     },
-    
-    // Creative Templates
     {
       id: 3,
       name: "Creative Designer",
@@ -67,7 +65,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     },
     {
       id: 4,
-      name: "Artistic Portfolio",
+      name: "Artistic Portfolio", 
       category: "creative",
       description: "Visual-heavy template for showcasing creative work",
       color: "bg-gradient-to-br from-orange-500 to-red-600",
@@ -79,7 +77,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     {
       id: 5,
       name: "Modern Creative",
-      category: "creative",
+      category: "creative", 
       description: "Balanced creativity with professionalism",
       color: "bg-gradient-to-br from-teal-500 to-cyan-600",
       popular: false,
@@ -87,8 +85,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       features: ["Modern", "Balanced", "Creative"],
       industry: ["UX/UI", "Branding", "Digital"]
     },
-
-    // Tech Templates
     {
       id: 6,
       name: "Tech Specialist",
@@ -122,8 +118,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       features: ["Infrastructure", "Technical", "Systems"],
       industry: ["DevOps", "Cloud", "Infrastructure"]
     },
-
-    // Academic Templates
     {
       id: 9,
       name: "Research Academic",
@@ -145,6 +139,117 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       atsScore: 91,
       features: ["Education-Focused", "Research", "Graduate"],
       industry: ["Academia", "PhD", "Research"]
+    },
+    // Additional templates to reach 20+
+    {
+      id: 11,
+      name: "Startup Founder",
+      category: "professional",
+      description: "Bold design for entrepreneurs and startup leaders",
+      color: "bg-gradient-to-br from-rose-500 to-pink-600",
+      popular: false,
+      atsScore: 87,
+      features: ["Entrepreneurial", "Bold", "Leadership"],
+      industry: ["Startups", "Entrepreneurship", "Innovation"]
+    },
+    {
+      id: 12,
+      name: "Marketing Specialist",
+      category: "creative",
+      description: "Dynamic layout perfect for marketing professionals",
+      color: "bg-gradient-to-br from-yellow-500 to-orange-500",
+      popular: false,
+      atsScore: 83,
+      features: ["Dynamic", "Marketing-Focused", "Results-Driven"],
+      industry: ["Marketing", "Sales", "Communications"]
+    },
+    {
+      id: 13,
+      name: "Healthcare Professional",
+      category: "professional",
+      description: "Clean, trustworthy design for medical professionals",
+      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
+      popular: false,
+      atsScore: 96,
+      features: ["Professional", "Trustworthy", "Clean"],
+      industry: ["Healthcare", "Medical", "Nursing"]
+    },
+    {
+      id: 14,
+      name: "Finance Expert",
+      category: "professional",
+      description: "Sophisticated layout for financial professionals",
+      color: "bg-gradient-to-br from-green-700 to-emerald-700",
+      popular: false,
+      atsScore: 94,
+      features: ["Sophisticated", "Numbers-Focused", "Professional"],
+      industry: ["Finance", "Banking", "Investment"]
+    },
+    {
+      id: 15,
+      name: "Creative Writer",
+      category: "creative",
+      description: "Elegant design for writers and content creators",
+      color: "bg-gradient-to-br from-purple-500 to-indigo-500",
+      popular: false,
+      atsScore: 79,
+      features: ["Elegant", "Content-Focused", "Creative"],
+      industry: ["Writing", "Content", "Publishing"]
+    },
+    {
+      id: 16,
+      name: "Data Scientist",
+      category: "tech",
+      description: "Analytics-focused design for data professionals",
+      color: "bg-gradient-to-br from-cyan-600 to-blue-600",
+      popular: false,
+      atsScore: 89,
+      features: ["Analytics-Focused", "Technical", "Data-Driven"],
+      industry: ["Data Science", "Analytics", "AI/ML"]
+    },
+    {
+      id: 17,
+      name: "Product Manager",
+      category: "professional",
+      description: "Strategic layout for product management roles",
+      color: "bg-gradient-to-br from-indigo-500 to-purple-500",
+      popular: false,
+      atsScore: 88,
+      features: ["Strategic", "Product-Focused", "Leadership"],
+      industry: ["Product Management", "Strategy", "Tech"]
+    },
+    {
+      id: 18,
+      name: "Consultant",
+      category: "professional",
+      description: "Professional design for consulting professionals",
+      color: "bg-gradient-to-br from-gray-600 to-blue-600",
+      popular: false,
+      atsScore: 93,
+      features: ["Professional", "Consulting-Focused", "Strategic"],
+      industry: ["Consulting", "Strategy", "Business"]
+    },
+    {
+      id: 19,
+      name: "Operations Manager",
+      category: "professional",
+      description: "Efficient design for operations professionals",
+      color: "bg-gradient-to-br from-emerald-500 to-green-600",
+      popular: false,
+      atsScore: 90,
+      features: ["Efficient", "Operations-Focused", "Results-Driven"],
+      industry: ["Operations", "Logistics", "Management"]
+    },
+    {
+      id: 20,
+      name: "Sales Professional",
+      category: "professional",
+      description: "Results-driven design for sales professionals",
+      color: "bg-gradient-to-br from-red-500 to-orange-500",
+      popular: false,
+      atsScore: 85,
+      features: ["Results-Driven", "Sales-Focused", "Dynamic"],
+      industry: ["Sales", "Business Development", "Account Management"]
     }
   ];
 
@@ -155,24 +260,30 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   };
 
   const handleSelectTemplate = (templateId: number) => {
+    console.log('Selecting template:', templateId);
     onSelectTemplate(templateId);
-    onClose();
+  };
+
+  const handlePreviewTemplate = (templateId: number) => {
+    console.log('Previewing template:', templateId);
+    // For now, just select the template when previewing
+    handleSelectTemplate(templateId);
   };
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">Choose Your Template</DialogTitle>
-          <p className="text-gray-600 text-center">Select a template that best fits your industry and style</p>
+          <p className="text-gray-600 text-center">Select from {templates.length} professional templates that best fit your industry and style</p>
         </DialogHeader>
         
-        <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-6">
           {templates.map((template) => (
             <Card 
               key={template.id} 
               className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                selectedTemplate === template.id ? 'ring-2 ring-blue-500' : ''
+                selectedTemplate === template.id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
               }`}
               onClick={() => handleSelectTemplate(template.id)}
             >
@@ -192,7 +303,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 </Badge>
                 
                 {selectedTemplate === template.id && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white p-1 rounded-full">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white p-2 rounded-full">
                     <Check className="w-4 h-4" />
                   </div>
                 )}
@@ -200,11 +311,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 {/* Template Preview Content */}
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm m-3 rounded-lg flex items-center justify-center">
                   <div className="text-white text-center">
-                    <div className="w-8 h-8 bg-white/20 rounded mx-auto mb-2"></div>
+                    <div className="w-6 h-6 bg-white/20 rounded mx-auto mb-2"></div>
                     <div className="space-y-1">
-                      <div className="h-1 bg-white/30 rounded w-12 mx-auto"></div>
-                      <div className="h-1 bg-white/30 rounded w-10 mx-auto"></div>
-                      <div className="h-0.5 bg-white/20 rounded w-8 mx-auto"></div>
+                      <div className="h-0.5 bg-white/30 rounded w-8 mx-auto"></div>
+                      <div className="h-0.5 bg-white/30 rounded w-6 mx-auto"></div>
+                      <div className="h-0.5 bg-white/20 rounded w-5 mx-auto"></div>
                     </div>
                   </div>
                 </div>
@@ -213,10 +324,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               {/* Template Info */}
               <div className="p-3">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm">{template.name}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-xs mb-2">{template.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs mb-2 line-clamp-2">{template.description}</p>
                 
                 {/* Features */}
-                <div className="flex flex-wrap gap-1 mb-2">
+                <div className="flex flex-wrap gap-1 mb-3">
                   {template.features.slice(0, 2).map((feature) => (
                     <span 
                       key={feature} 
@@ -227,28 +338,52 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   ))}
                 </div>
                 
-                <Button 
-                  className={`w-full text-xs py-1 h-7 ${
-                    selectedTemplate === template.id 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectTemplate(template.id);
-                  }}
-                >
-                  {selectedTemplate === template.id ? 'Selected' : 'Use Template'}
-                </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-1">
+                  <Button 
+                    className={`flex-1 text-xs py-1 h-7 ${
+                      selectedTemplate === template.id 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectTemplate(template.id);
+                    }}
+                  >
+                    {selectedTemplate === template.id ? 'Selected' : 'Select'}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="px-2 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePreviewTemplate(template.id);
+                    }}
+                  >
+                    <Eye className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
         
-        <div className="flex justify-center mt-6">
-          <Button variant="outline" onClick={onClose} className="px-8">
-            Cancel
-          </Button>
+        <div className="flex justify-between items-center mt-6">
+          <p className="text-sm text-gray-500">
+            {selectedTemplate !== undefined ? `Template ${selectedTemplate + 1} selected` : 'No template selected'}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            {selectedTemplate !== undefined && (
+              <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white">
+                Use Selected Template
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

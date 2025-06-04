@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -67,28 +66,32 @@ const Index = () => {
       title: "Clean Intern",
       description: "Perfect for students and fresh graduates",
       color: "bg-blue-100 text-blue-800",
-      emphasis: "Education & Projects focused"
+      emphasis: "Education & Projects focused",
+      templateId: 0
     },
     {
       level: "Junior",
       title: "Modern Junior",
       description: "Ideal for entry-level positions (0-2 years)",
       color: "bg-green-100 text-green-800",
-      emphasis: "Skills & Projects showcase"
+      emphasis: "Skills & Projects showcase",
+      templateId: 3
     },
     {
       level: "Mid-Level",
       title: "Professional",
       description: "For experienced professionals (3-7 years)",
       color: "bg-purple-100 text-purple-800",
-      emphasis: "Experience & Achievements"
+      emphasis: "Experience & Achievements",
+      templateId: 6
     },
     {
       level: "Senior",
       title: "Executive",
       description: "For senior roles and leadership positions",
       color: "bg-orange-100 text-orange-800",
-      emphasis: "Leadership & Strategic impact"
+      emphasis: "Leadership & Strategic impact",
+      templateId: 1
     }
   ];
 
@@ -98,6 +101,11 @@ const Index = () => {
     { number: "20+", label: "Templates" },
     { number: "5★", label: "User Rating" }
   ];
+
+  const handleTemplatePreview = (templateId: number) => {
+    // Navigate to builder with the selected template
+    navigate(`/builder?template=${templateId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -154,7 +162,7 @@ const Index = () => {
           </h1>
           
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-            Create ATS-optimized resumes and cover letters in minutes. Choose from level-specific templates,
+            Create ATS-optimized resumes and cover letters in minutes. Choose from 20+ level-specific templates,
             get AI suggestions, and track your application success.
           </p>
 
@@ -247,12 +255,77 @@ const Index = () => {
                     {template.emphasis}
                   </div>
                 </div>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleTemplatePreview(template.templateId)}
+                >
                   Preview Template
                 </Button>
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            Choose the plan that works best for you. All plans include our core features.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <Card className="p-6 border border-gray-200 dark:border-gray-700">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold mb-2">Basic</h3>
+              <div className="text-3xl font-bold text-blue-600 mb-2">$9.99</div>
+              <div className="text-gray-500">per month</div>
+            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />5 Templates</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />PDF Download</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Basic Support</li>
+            </ul>
+            <Button variant="outline" className="w-full">Get Started</Button>
+          </Card>
+
+          <Card className="p-6 border-2 border-blue-500 relative">
+            <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
+              Most Popular
+            </Badge>
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold mb-2">Professional</h3>
+              <div className="text-3xl font-bold text-blue-600 mb-2">$19.99</div>
+              <div className="text-gray-500">per month</div>
+            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />20+ Templates</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />ATS Optimization</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Cover Letters</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Priority Support</li>
+            </ul>
+            <Button className="w-full bg-blue-600 hover:bg-blue-700">Get Started</Button>
+          </Card>
+
+          <Card className="p-6 border border-gray-200 dark:border-gray-700">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold mb-2">Premium</h3>
+              <div className="text-3xl font-bold text-blue-600 mb-2">$39.99</div>
+              <div className="text-gray-500">per month</div>
+            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />All Templates</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />AI Content</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Career Coaching</li>
+              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />24/7 Support</li>
+            </ul>
+            <Button variant="outline" className="w-full">Get Started</Button>
+          </Card>
         </div>
       </section>
 
