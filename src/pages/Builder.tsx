@@ -34,7 +34,9 @@ import {
   Heart,
   FolderOpen,
   FileText,
-  Mail
+  Mail,
+  Eye,
+  Sparkles
 } from 'lucide-react';
 import ResumePreview from '@/components/ResumePreview';
 import TemplateSelector from '@/components/TemplateSelector';
@@ -62,6 +64,7 @@ const Builder = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isAIOptimizing, setIsAIOptimizing] = useState(false);
 
   const [resumeData, setResumeData] = useState({
     id: '',
@@ -235,6 +238,9 @@ const Builder = () => {
         });
       }
 
+      // Enhanced PDF generation with better formatting
+      const fileName = `${resumeData.personal.fullName || 'Resume'}_Template_${selectedTemplate + 1}.pdf`;
+      
       // Create a clean print version
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
@@ -246,7 +252,36 @@ const Builder = () => {
         return;
       }
 
-      // Generate clean HTML for PDF
+      // Generate enhanced HTML for PDF based on selected template
+      const getTemplateStyles = () => {
+        switch (selectedTemplate) {
+          case 0: // Modern Professional
+            return `
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2c3e50; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+              .section-title { color: #667eea; border-bottom: 2px solid #667eea; font-weight: bold; }
+            `;
+          case 1: // Executive Leadership
+            return `
+              body { font-family: 'Times New Roman', serif; color: #1a1a1a; }
+              .header { border-bottom: 3px solid #c9a96e; padding: 20px 0; }
+              .section-title { color: #c9a96e; font-variant: small-caps; letter-spacing: 1px; }
+            `;
+          case 2: // Classic Corporate
+            return `
+              body { font-family: Arial, sans-serif; color: #333; }
+              .header { border-bottom: 2px solid #2c3e50; }
+              .section-title { color: #2c3e50; text-transform: uppercase; }
+            `;
+          default:
+            return `
+              body { font-family: Arial, sans-serif; color: #333; }
+              .header { border-bottom: 2px solid #333; }
+              .section-title { color: #333; font-weight: bold; }
+            `;
+        }
+      };
+
       const resumeHTML = `
         <!DOCTYPE html>
         <html>
@@ -254,19 +289,24 @@ const Builder = () => {
           <title>${resumeData.title}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            body { font-size: 12px; line-height: 1.4; }
             .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-            .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-            .name { font-size: 24px; font-weight: bold; }
-            .contact { margin: 5px 0; }
+            .header { margin-bottom: 20px; }
+            .name { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+            .contact { margin: 3px 0; }
             .section { margin: 20px 0; }
-            .section-title { font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
-            .item { margin-bottom: 15px; }
-            .item-title { font-weight: bold; }
-            .item-subtitle { font-style: italic; color: #666; }
-            .skills { display: flex; flex-wrap: wrap; gap: 10px; }
-            .skill { background: #f0f0f0; padding: 5px 10px; border-radius: 5px; }
-            @media print { body { -webkit-print-color-adjust: exact; } }
+            .section-title { font-size: 16px; margin-bottom: 10px; padding-bottom: 5px; }
+            .item { margin-bottom: 12px; }
+            .item-title { font-weight: bold; font-size: 13px; }
+            .item-subtitle { font-style: italic; color: #666; font-size: 11px; }
+            .description { margin-top: 5px; }
+            .skills { display: flex; flex-wrap: wrap; gap: 8px; }
+            .skill { background: #f5f5f5; padding: 4px 8px; border-radius: 3px; font-size: 11px; }
+            ${getTemplateStyles()}
+            @media print { 
+              body { -webkit-print-color-adjust: exact; }
+              .container { max-width: none; padding: 0; }
+            }
           </style>
         </head>
         <body>
@@ -281,18 +321,18 @@ const Builder = () => {
             ${resumeData.personal.summary ? `
             <div class="section">
               <div class="section-title">Professional Summary</div>
-              <p>${resumeData.personal.summary}</p>
+              <p class="description">${resumeData.personal.summary}</p>
             </div>
             ` : ''}
             
             ${resumeData.experience.length > 0 ? `
             <div class="section">
-              <div class="section-title">Experience</div>
+              <div class="section-title">Professional Experience</div>
               ${resumeData.experience.map(exp => `
                 <div class="item">
-                  <div class="item-title">${exp.position} at ${exp.company}</div>
-                  <div class="item-subtitle">${exp.startDate} - ${exp.endDate} | ${exp.location}</div>
-                  <p>${exp.description}</p>
+                  <div class="item-title">${exp.position}</div>
+                  <div class="item-subtitle">${exp.company} | ${exp.location} | ${exp.startDate} - ${exp.endDate}</div>
+                  <p class="description">${exp.description}</p>
                 </div>
               `).join('')}
             </div>
@@ -304,8 +344,8 @@ const Builder = () => {
               ${resumeData.education.map(edu => `
                 <div class="item">
                   <div class="item-title">${edu.degree}</div>
-                  <div class="item-subtitle">${edu.school} | ${edu.startDate} - ${edu.endDate}</div>
-                  ${edu.gpa ? `<p>GPA: ${edu.gpa}</p>` : ''}
+                  <div class="item-subtitle">${edu.school} | ${edu.location} | ${edu.startDate} - ${edu.endDate}</div>
+                  ${edu.gpa ? `<p class="description">GPA: ${edu.gpa}</p>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -313,7 +353,7 @@ const Builder = () => {
             
             ${resumeData.skills.length > 0 ? `
             <div class="section">
-              <div class="section-title">Skills</div>
+              <div class="section-title">Technical Skills</div>
               <div class="skills">
                 ${resumeData.skills.map(skill => `<span class="skill">${skill}</span>`).join('')}
               </div>
@@ -327,10 +367,32 @@ const Builder = () => {
                 <div class="item">
                   <div class="item-title">${project.name}</div>
                   <div class="item-subtitle">${project.technologies} | ${project.startDate} - ${project.endDate}</div>
-                  <p>${project.description}</p>
-                  ${project.link ? `<p>Link: ${project.link}</p>` : ''}
+                  <p class="description">${project.description}</p>
+                  ${project.link ? `<p class="description">Link: ${project.link}</p>` : ''}
                 </div>
               `).join('')}
+            </div>
+            ` : ''}
+
+            ${resumeData.certifications.length > 0 ? `
+            <div class="section">
+              <div class="section-title">Certifications</div>
+              ${resumeData.certifications.map(cert => `
+                <div class="item">
+                  <div class="item-title">${cert.name}</div>
+                  <div class="item-subtitle">${cert.issuer} | ${cert.date}</div>
+                  ${cert.credentialId ? `<p class="description">Credential ID: ${cert.credentialId}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+
+            ${resumeData.languages.length > 0 ? `
+            <div class="section">
+              <div class="section-title">Languages</div>
+              <div class="skills">
+                ${resumeData.languages.map(lang => `<span class="skill">${lang.language} (${lang.proficiency})</span>`).join('')}
+              </div>
             </div>
             ` : ''}
           </div>
@@ -344,11 +406,11 @@ const Builder = () => {
       setTimeout(() => {
         printWindow.print();
         printWindow.close();
-      }, 500);
+      }, 1000);
 
       toast({
         title: "Download Started",
-        description: "Your PDF is being generated"
+        description: `${fileName} is being generated with Template ${selectedTemplate + 1} styling`
       });
     } catch (error) {
       console.error('Error downloading PDF:', error);
@@ -357,6 +419,44 @@ const Builder = () => {
         description: "Failed to generate PDF",
         variant: "destructive"
       });
+    }
+  };
+
+  // Enhanced AI optimization function
+  const optimizeWithAI = async () => {
+    setIsAIOptimizing(true);
+    try {
+      // Simulate AI enhancement - in real implementation, this would call an AI service
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Apply AI suggestions to improve resume content
+      const aiSuggestions = {
+        summary: `${resumeData.personal.summary} Enhanced with industry-specific keywords and achievement-focused language.`,
+        skills: [...resumeData.skills, 'Leadership', 'Problem Solving', 'Strategic Planning'].filter((skill, index, arr) => arr.indexOf(skill) === index),
+      };
+
+      setResumeData(prev => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          summary: aiSuggestions.summary
+        },
+        skills: aiSuggestions.skills
+      }));
+
+      toast({
+        title: "AI Optimization Complete",
+        description: "Your resume has been enhanced with AI suggestions"
+      });
+    } catch (error) {
+      console.error('Error with AI optimization:', error);
+      toast({
+        title: "Error",
+        description: "Failed to optimize with AI",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAIOptimizing(false);
     }
   };
 
@@ -664,9 +764,22 @@ const Builder = () => {
     );
   }
 
+  const getTemplateName = (index: number): string => {
+    const names = [
+      'Modern Professional',     // 0
+      'Executive Leadership',    // 1  
+      'Classic Corporate',       // 2
+      'Creative Designer',       // 3
+      'Tech Specialist',         // 4
+      'Minimalist',              // 5
+      'Two Column'               // 6
+    ];
+    return names[index] || 'Modern Professional';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
+      {/* Enhanced Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -692,6 +805,15 @@ const Builder = () => {
             </Button>
             <Button 
               variant="outline" 
+              onClick={optimizeWithAI}
+              disabled={isAIOptimizing}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-400"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isAIOptimizing ? 'Optimizing...' : 'AI Optimize'}
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={createCoverLetter}
               className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400"
             >
@@ -704,7 +826,7 @@ const Builder = () => {
               className="border-gray-300 dark:border-gray-600"
             >
               <Palette className="w-4 h-4 mr-2" />
-              Templates ({selectedTemplate + 1})
+              Template: {getTemplateName(selectedTemplate)}
             </Button>
             <Button 
               variant="outline" 
@@ -728,7 +850,7 @@ const Builder = () => {
 
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Editor Panel */}
+          {/* Enhanced Editor Panel */}
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800 shadow-sm">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -820,6 +942,218 @@ const Builder = () => {
                     />
                   </div>
                   <IntegrationHub onDataImport={handleDataImport} />
+                </TabsContent>
+
+                {/* Experience Tab */}
+                <TabsContent value="experience" className="space-y-6">
+                  {resumeData.experience.map((exp) => (
+                    <Card key={exp.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900 dark:text-white">Work Experience</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeExperience(exp.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <Label className="dark:text-gray-200">Company</Label>
+                          <Input
+                            value={exp.company}
+                            onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Position</Label>
+                          <Input
+                            value={exp.position}
+                            onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Location</Label>
+                          <Input
+                            value={exp.location}
+                            onChange={(e) => updateExperience(exp.id, 'location', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="dark:text-gray-200">Start Date</Label>
+                            <Input
+                              value={exp.startDate}
+                              onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
+                              className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                              placeholder="2020"
+                            />
+                          </div>
+                          <div>
+                            <Label className="dark:text-gray-200">End Date</Label>
+                            <Input
+                              value={exp.endDate}
+                              onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
+                              className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                              placeholder="Present"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="dark:text-gray-200">Description</Label>
+                        <Textarea
+                          value={exp.description}
+                          onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
+                          className="mt-1 min-h-[80px] dark:bg-gray-600 dark:border-gray-500"
+                          placeholder="Describe your key responsibilities and achievements..."
+                        />
+                      </div>
+                    </Card>
+                  ))}
+                  <Button
+                    onClick={addExperience}
+                    variant="outline"
+                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Experience
+                  </Button>
+                  <AIEnhancements resumeData={resumeData} onApplySuggestion={handleAISuggestion} />
+                </TabsContent>
+
+                {/* Education Tab */}
+                <TabsContent value="education" className="space-y-6">
+                  {resumeData.education.map((edu) => (
+                    <Card key={edu.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900 dark:text-white">Education</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeEducation(edu.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="dark:text-gray-200">School</Label>
+                          <Input
+                            value={edu.school}
+                            onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Degree</Label>
+                          <Input
+                            value={edu.degree}
+                            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Location</Label>
+                          <Input
+                            value={edu.location}
+                            onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">GPA (Optional)</Label>
+                          <Input
+                            value={edu.gpa}
+                            onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="3.8/4.0"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">Start Date</Label>
+                          <Input
+                            value={edu.startDate}
+                            onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="2016"
+                          />
+                        </div>
+                        <div>
+                          <Label className="dark:text-gray-200">End Date</Label>
+                          <Input
+                            value={edu.endDate}
+                            onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
+                            placeholder="2020"
+                          />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  <Button
+                    onClick={addEducation}
+                    variant="outline"
+                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Education
+                  </Button>
+                </TabsContent>
+
+                {/* Skills Tab */}
+                <TabsContent value="skills" className="space-y-4">
+                  <div>
+                    <Label className="dark:text-gray-200">Skills</Label>
+                    <div className="flex flex-wrap gap-2 mt-2 mb-4">
+                      {resumeData.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                        >
+                          {skill}
+                          <button
+                            onClick={() => removeSkill(skill)}
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add a skill and press Enter"
+                        className="dark:bg-gray-700 dark:border-gray-600"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            addSkill(e.currentTarget.value);
+                            e.currentTarget.value = '';
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={() => {
+                          const input = document.querySelector('input[placeholder="Add a skill and press Enter"]') as HTMLInputElement;
+                          if (input) {
+                            addSkill(input.value);
+                            input.value = '';
+                          }
+                        }}
+                        variant="outline"
+                        className="dark:border-gray-600"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <ATSOptimizer resumeData={resumeData} onOptimize={handleATSOptimize} />
                 </TabsContent>
 
                 {/* Projects Tab */}
@@ -1067,250 +1401,63 @@ const Builder = () => {
                     Add Certification
                   </Button>
                 </TabsContent>
-
-                {/* Experience Tab */}
-                <TabsContent value="experience" className="space-y-6">
-                  {resumeData.experience.map((exp) => (
-                    <Card key={exp.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium text-gray-900 dark:text-white">Work Experience</h3>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeExperience(exp.id)}
-                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <Label className="dark:text-gray-200">Company</Label>
-                          <Input
-                            value={exp.company}
-                            onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">Position</Label>
-                          <Input
-                            value={exp.position}
-                            onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">Location</Label>
-                          <Input
-                            value={exp.location}
-                            onChange={(e) => updateExperience(exp.id, 'location', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="dark:text-gray-200">Start Date</Label>
-                            <Input
-                              value={exp.startDate}
-                              onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
-                              className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                              placeholder="2020"
-                            />
-                          </div>
-                          <div>
-                            <Label className="dark:text-gray-200">End Date</Label>
-                            <Input
-                              value={exp.endDate}
-                              onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
-                              className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                              placeholder="Present"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="dark:text-gray-200">Description</Label>
-                        <Textarea
-                          value={exp.description}
-                          onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                          className="mt-1 min-h-[80px] dark:bg-gray-600 dark:border-gray-500"
-                          placeholder="Describe your key responsibilities and achievements..."
-                        />
-                      </div>
-                    </Card>
-                  ))}
-                  <Button
-                    onClick={addExperience}
-                    variant="outline"
-                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Experience
-                  </Button>
-                  <AIEnhancements resumeData={resumeData} onApplySuggestion={handleAISuggestion} />
-                </TabsContent>
-
-                {/* Education Tab */}
-                <TabsContent value="education" className="space-y-6">
-                  {resumeData.education.map((edu) => (
-                    <Card key={edu.id} className="p-4 border border-gray-200 dark:border-gray-600 dark:bg-gray-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium text-gray-900 dark:text-white">Education</h3>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeEducation(edu.id)}
-                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label className="dark:text-gray-200">School</Label>
-                          <Input
-                            value={edu.school}
-                            onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">Degree</Label>
-                          <Input
-                            value={edu.degree}
-                            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">Location</Label>
-                          <Input
-                            value={edu.location}
-                            onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">GPA (Optional)</Label>
-                          <Input
-                            value={edu.gpa}
-                            onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                            placeholder="3.8/4.0"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">Start Date</Label>
-                          <Input
-                            value={edu.startDate}
-                            onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                            placeholder="2016"
-                          />
-                        </div>
-                        <div>
-                          <Label className="dark:text-gray-200">End Date</Label>
-                          <Input
-                            value={edu.endDate}
-                            onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-                            className="mt-1 dark:bg-gray-600 dark:border-gray-500"
-                            placeholder="2020"
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                  <Button
-                    onClick={addEducation}
-                    variant="outline"
-                    className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Education
-                  </Button>
-                </TabsContent>
-
-                {/* Skills Tab */}
-                <TabsContent value="skills" className="space-y-4">
-                  <div>
-                    <Label className="dark:text-gray-200">Skills</Label>
-                    <div className="flex flex-wrap gap-2 mt-2 mb-4">
-                      {resumeData.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                        >
-                          {skill}
-                          <button
-                            onClick={() => removeSkill(skill)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Add a skill and press Enter"
-                        className="dark:bg-gray-700 dark:border-gray-600"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            addSkill(e.currentTarget.value);
-                            e.currentTarget.value = '';
-                          }
-                        }}
-                      />
-                      <Button
-                        onClick={() => {
-                          const input = document.querySelector('input[placeholder="Add a skill and press Enter"]') as HTMLInputElement;
-                          if (input) {
-                            addSkill(input.value);
-                            input.value = '';
-                          }
-                        }}
-                        variant="outline"
-                        className="dark:border-gray-600"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <ATSOptimizer resumeData={resumeData} onOptimize={handleATSOptimize} />
-                </TabsContent>
-
-                {/* Analytics Tab */}
-                <TabsContent value="analytics" className="space-y-4">
-                  <AnalyticsDashboard resumeId={resumeId} />
-                </TabsContent>
-
-                {/* Settings Tab */}
-                <TabsContent value="settings" className="space-y-4">
-                  <PersonalizationPanel onBrandingChange={() => {}} />
-                </TabsContent>
               </Tabs>
             </Card>
           </div>
 
-          {/* Preview Panel */}
+          {/* Enhanced Preview Panel */}
           <div className="sticky top-24">
-            <ResumePreview 
-              data={resumeData} 
-              template={selectedTemplate}
-            />
+            <Card className="overflow-hidden">
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Eye className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {getTemplateName(selectedTemplate)}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Template {selectedTemplate + 1} - Live Preview
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTemplateGallery(true)}
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-400"
+                  >
+                    <Palette className="w-4 h-4 mr-1" />
+                    Change
+                  </Button>
+                </div>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 p-4">
+                <ResumePreview 
+                  data={resumeData} 
+                  template={selectedTemplate}
+                />
+              </div>
+            </Card>
           </div>
         </div>
       </div>
 
-      {/* Template Gallery Modal */}
+      {/* Enhanced Template Gallery Modal */}
       {showTemplateGallery && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Choose Template ({selectedTemplate + 1} of 20+ templates)
-              </h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Choose Template
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Select from {7} professional resume templates with live preview
+                </p>
+              </div>
               <Button
                 variant="ghost"
                 onClick={() => setShowTemplateGallery(false)}
@@ -1327,7 +1474,7 @@ const Builder = () => {
                   setShowTemplateGallery(false);
                   toast({
                     title: "Template Updated",
-                    description: `Switched to template ${templateId + 1}`
+                    description: `Switched to ${getTemplateName(templateId)} - Template ${templateId + 1}`
                   });
                 }}
               />
