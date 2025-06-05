@@ -123,7 +123,12 @@ const Index = () => {
           
           <div className="hidden md:flex items-center space-x-8">
             <a href="#features" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Features</a>
-            <a href="#templates" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Templates</a>
+            <button 
+              onClick={() => navigate('/templates')}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            >
+              Templates
+            </button>
             <a href="#pricing" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Pricing</a>
           </div>
 
@@ -180,11 +185,11 @@ const Index = () => {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate('/builder')}
+              onClick={() => navigate('/templates')}
               className="px-8 py-4 text-lg"
             >
               <Eye className="w-5 h-5 mr-2" />
-              View Demo
+              View Templates
             </Button>
           </div>
 
@@ -238,6 +243,12 @@ const Index = () => {
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Choose from professionally designed templates optimized for different experience levels and industries.
             </p>
+            <Button 
+              onClick={() => navigate('/templates')}
+              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              View All Templates
+            </Button>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

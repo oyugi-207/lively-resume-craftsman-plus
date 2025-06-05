@@ -129,15 +129,25 @@ const ResumeBuilder: React.FC = () => {
         const resume = data[0];
         setResumeId(resume.id);
         setSelectedTemplate(resume.template_id || 0);
+        
+        // Safely handle the JSON data with proper type checking
         setResumeData({
-          personal: resume.personal_info || {},
-          experience: resume.experience || [],
-          education: resume.education || [],
-          skills: resume.skills || [],
-          certifications: resume.certifications || [],
-          languages: resume.languages || [],
-          interests: resume.interests || [],
-          projects: resume.projects || []
+          personal: resume.personal_info && typeof resume.personal_info === 'object' && !Array.isArray(resume.personal_info) 
+            ? resume.personal_info as ResumeData['personal']
+            : {
+                fullName: '',
+                email: '',
+                phone: '',
+                location: '',
+                summary: ''
+              },
+          experience: Array.isArray(resume.experience) ? resume.experience as ResumeData['experience'] : [],
+          education: Array.isArray(resume.education) ? resume.education as ResumeData['education'] : [],
+          skills: Array.isArray(resume.skills) ? resume.skills as string[] : [],
+          certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
+          languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
+          interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
+          projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : []
         });
       }
     } catch (error: any) {
