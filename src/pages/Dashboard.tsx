@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -175,21 +174,22 @@ const Dashboard = () => {
     }
   };
 
-  const deleteResume = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this resume?')) return;
-
+  const handleDeleteResume = async (resumeId: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('resumes')
         .delete()
-        .eq('id', id);
+        .eq('id', resumeId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setResumes(prev => prev.filter(r => r.id !== id));
+      setResumes(prev => prev.filter(r => r.id !== resumeId));
       toast({
         title: "Success",
-        description: "Resume deleted"
+        description: "Resume deleted successfully"
       });
     } catch (error) {
       console.error('Error deleting resume:', error);
@@ -201,21 +201,22 @@ const Dashboard = () => {
     }
   };
 
-  const deleteCoverLetter = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this cover letter?')) return;
-
+  const handleDeleteCoverLetter = async (coverLetterId: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('cover_letters')
         .delete()
-        .eq('id', id);
+        .eq('id', coverLetterId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setCoverLetters(prev => prev.filter(cl => cl.id !== id));
+      setCoverLetters(prev => prev.filter(cl => cl.id !== coverLetterId));
       toast({
         title: "Success",
-        description: "Cover letter deleted"
+        description: "Cover letter deleted successfully"
       });
     } catch (error) {
       console.error('Error deleting cover letter:', error);
@@ -438,7 +439,7 @@ const Dashboard = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => deleteResume(resume.id)}
+                          onClick={() => handleDeleteResume(resume.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -518,7 +519,7 @@ const Dashboard = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => deleteCoverLetter(coverLetter.id)}
+                          onClick={() => handleDeleteCoverLetter(coverLetter.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-3 h-3" />

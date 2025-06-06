@@ -14,6 +14,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import CoverLetterTemplates from '@/components/CoverLetterTemplates';
 import { 
   ArrowLeft,
   Save,
@@ -24,7 +25,8 @@ import {
   User,
   Moon,
   Sun,
-  Wand2
+  Wand2,
+  Palette
 } from 'lucide-react';
 
 const CoverLetterBuilder = () => {
@@ -42,6 +44,7 @@ const CoverLetterBuilder = () => {
   const [generating, setGenerating] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [resumes, setResumes] = useState<any[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const [coverLetterData, setCoverLetterData] = useState({
     id: '',
@@ -52,6 +55,53 @@ const CoverLetterBuilder = () => {
     resumeId: resumeId || 'none',
     templateId: 0
   });
+
+  // Template content based on selected template
+  const getTemplateContent = (templateId: number, companyName: string, positionTitle: string, resumeData: any) => {
+    const templates = [
+      {
+        id: 0,
+        content: `Dear Hiring Manager,
+
+I am writing to express my strong interest in the ${positionTitle} position at ${companyName}. With my background and skills, I am confident that I would be a valuable addition to your team.
+
+${resumeData?.personal_info?.summary ? 
+`In my professional experience, ${resumeData.personal_info.summary.toLowerCase()}` : 
+'Throughout my career, I have developed strong skills and experience that align well with this role.'
+}
+
+Key qualifications I bring include:
+${resumeData?.skills ? 
+resumeData.skills.slice(0, 3).map((skill: string) => `• Expertise in ${skill}`).join('\n') : 
+'• Strong problem-solving abilities\n• Excellent communication skills\n• Team collaboration experience'
+}
+
+I am excited about the opportunity to contribute to ${companyName}'s continued success. Thank you for considering my application.
+
+Sincerely,
+${resumeData?.personal_info?.fullName || '[Your Name]'}`
+      },
+      {
+        id: 1,
+        content: `Hello [Hiring Manager Name],
+
+Your ${positionTitle} opportunity immediately caught my attention – it's exactly the kind of creative challenge I've been seeking! As a passionate professional with a proven track record, I'm excited to bring my unique perspective to ${companyName}.
+
+What sets me apart is my ability to think creatively and solve complex problems. In my recent work, I have consistently delivered innovative solutions that drive results.
+
+I'm particularly excited about ${companyName}'s approach to innovation. Your recent work in the industry resonates with me because it aligns with my passion for excellence and creativity.
+
+I'd love to show you how my creative vision can contribute to ${companyName}'s continued success. Let's chat!
+
+Best regards,
+${resumeData?.personal_info?.fullName || '[Your Name]'}`
+      },
+      // Add more templates as needed
+    ];
+
+    const template = templates.find(t => t.id === templateId) || templates[0];
+    return template.content;
+  };
 
   useEffect(() => {
     if (!user) {
@@ -79,9 +129,19 @@ const CoverLetterBuilder = () => {
           .from('cover_letters')
           .select('*')
           .eq('id', coverLetterId)
+          .eq('user_id', user?.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error loading cover letter:', error);
+          toast({
+            title: "Error",
+            description: "Cover letter not found",
+            variant: "destructive"
+          });
+          navigate('/dashboard');
+          return;
+        }
 
         setCoverLetterData({
           id: data.id,
@@ -116,20 +176,22 @@ const CoverLetterBuilder = () => {
         position_title: coverLetterData.positionTitle,
         content: coverLetterData.content,
         resume_id: coverLetterData.resumeId === 'none' ? null : coverLetterData.resumeId,
-        template_id: coverLetterData.templateId
+        template_id: coverLetterData.templateId,
+        user_id: user.id
       };
 
       if (coverLetterId) {
         const { error } = await supabase
           .from('cover_letters')
           .update(payload)
-          .eq('id', coverLetterId);
+          .eq('id', coverLetterId)
+          .eq('user_id', user.id);
         
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from('cover_letters')
-          .insert([{ ...payload, user_id: user.id }])
+          .insert([payload])
           .select()
           .single();
         
@@ -179,8 +241,9 @@ const CoverLetterBuilder = () => {
         if (!error) resumeData = data;
       }
 
-      // Generate cover letter content (simplified version)
-      const generatedContent = generateCoverLetterTemplate(
+      // Generate cover letter content using selected template
+      const generatedContent = getTemplateContent(
+        coverLetterData.templateId,
         coverLetterData.companyName,
         coverLetterData.positionTitle,
         resumeData
@@ -193,7 +256,7 @@ const CoverLetterBuilder = () => {
 
       toast({
         title: "Cover Letter Generated",
-        description: "AI has generated your cover letter content"
+        description: "Template content has been applied to your cover letter"
       });
     } catch (error) {
       console.error('Error generating cover letter:', error);
@@ -205,35 +268,6 @@ const CoverLetterBuilder = () => {
     } finally {
       setGenerating(false);
     }
-  };
-
-  const generateCoverLetterTemplate = (company: string, position: string, resumeData: any) => {
-    const name = resumeData?.personal_info?.fullName || '[Your Name]';
-    
-    return `Dear Hiring Manager,
-
-I am writing to express my strong interest in the ${position} position at ${company}. With my background and skills, I am confident that I would be a valuable addition to your team.
-
-${resumeData?.personal_info?.summary ? 
-`In my professional experience, ${resumeData.personal_info.summary.toLowerCase()}` : 
-'Throughout my career, I have developed strong skills and experience that align well with this role.'
-}
-
-Key qualifications I bring include:
-${resumeData?.skills ? 
-resumeData.skills.slice(0, 3).map((skill: string) => `• Expertise in ${skill}`).join('\n') : 
-'• Strong problem-solving abilities\n• Excellent communication skills\n• Team collaboration experience'
-}
-
-${resumeData?.experience && resumeData.experience.length > 0 ?
-`In my previous role at ${resumeData.experience[0].company}, I ${resumeData.experience[0].description?.substring(0, 100) || 'contributed significantly to the team\'s success'}.` :
-'I am eager to bring my skills and enthusiasm to contribute to your organization\'s continued success.'
-}
-
-I am excited about the opportunity to discuss how my background and passion align with ${company}'s goals. Thank you for considering my application.
-
-Sincerely,
-${name}`;
   };
 
   const downloadPDF = async () => {
@@ -248,10 +282,8 @@ ${name}`;
 
     setDownloadingPDF(true);
     try {
-      // Create a temporary container for better PDF rendering
       const element = previewRef.current;
       
-      // Configure html2canvas for better quality
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -259,27 +291,14 @@ ${name}`;
         backgroundColor: '#ffffff',
         width: element.scrollWidth,
         height: element.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Ensure the cloned document has proper styling
-          const clonedElement = clonedDoc.querySelector('[data-preview-ref]') as HTMLElement;
-          if (clonedElement) {
-            clonedElement.style.backgroundColor = '#ffffff';
-            clonedElement.style.color = '#000000';
-            clonedElement.style.padding = '40px';
-            clonedElement.style.fontFamily = 'Arial, sans-serif';
-          }
-        }
       });
 
-      // Create PDF with proper dimensions
       const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // A4 dimensions in mm
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Calculate image dimensions to fit A4
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
@@ -287,13 +306,13 @@ ${name}`;
       const imgDisplayWidth = imgWidth * ratio;
       const imgDisplayHeight = imgHeight * ratio;
       
-      // Center the image on the page
+      // Add some padding and center the content
+      const padding = 10;
       const x = (pdfWidth - imgDisplayWidth) / 2;
-      const y = (pdfHeight - imgDisplayHeight) / 2;
+      const y = padding;
 
-      pdf.addImage(imgData, 'PNG', x, y, imgDisplayWidth, imgDisplayHeight);
+      pdf.addImage(imgData, 'PNG', x, y, imgDisplayWidth, imgDisplayHeight - padding);
       
-      // Generate filename
       const fileName = `${coverLetterData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_cover_letter.pdf`;
       pdf.save(fileName);
 
@@ -313,12 +332,52 @@ ${name}`;
     }
   };
 
+  const handleTemplateSelect = (templateId: number) => {
+    setCoverLetterData(prev => ({ ...prev, templateId }));
+    setShowTemplates(false);
+    toast({
+      title: "Template Selected",
+      description: "Click 'Generate with AI' to apply the template"
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading cover letter...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showTemplates) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowTemplates(false)}
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Editor
+              </Button>
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Choose a Template
+            </h1>
+            <div></div>
+          </div>
+        </header>
+        <div className="max-w-7xl mx-auto p-6">
+          <CoverLetterTemplates 
+            onSelectTemplate={handleTemplateSelect}
+            selectedTemplate={coverLetterData.templateId}
+          />
         </div>
       </div>
     );
@@ -377,6 +436,27 @@ ${name}`;
           <div className="space-y-6">
             <Card className="p-6 bg-white dark:bg-gray-800 shadow-sm">
               <div className="space-y-6">
+                {/* Template Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Palette className="w-5 h-5 text-purple-600" />
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Template Selection
+                    </h2>
+                  </div>
+                  
+                  <Button
+                    onClick={() => setShowTemplates(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Palette className="w-4 h-4 mr-2" />
+                    Choose Template (Currently: Template {coverLetterData.templateId + 1})
+                  </Button>
+                </div>
+
+                <Separator />
+
                 {/* Company and Position Info */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2 mb-4">
@@ -451,7 +531,7 @@ ${name}`;
                   </Button>
                   
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    AI will create a personalized cover letter based on your job information and linked resume.
+                    AI will create a personalized cover letter based on your selected template, job information and linked resume.
                   </p>
                 </div>
 
@@ -473,7 +553,7 @@ ${name}`;
                       value={coverLetterData.content}
                       onChange={(e) => setCoverLetterData(prev => ({ ...prev, content: e.target.value }))}
                       className="mt-1 min-h-[400px] dark:bg-gray-700 dark:border-gray-600"
-                      placeholder="Write your cover letter content here, or use the AI generator above..."
+                      placeholder="Write your cover letter content here, choose a template and use the AI generator above..."
                     />
                   </div>
                 </div>
@@ -484,7 +564,7 @@ ${name}`;
           {/* Preview Panel */}
           <div className="sticky top-24">
             <Card className="p-8 bg-white dark:bg-gray-800 shadow-sm min-h-[600px]">
-              <div ref={previewRef} data-preview-ref className="space-y-6" style={{ backgroundColor: '#ffffff', color: '#000000', minHeight: '500px' }}>
+              <div ref={previewRef} data-preview-ref className="space-y-6 bg-white text-black p-8 rounded" style={{ minHeight: '500px' }}>
                 <div className="text-center border-b border-gray-200 pb-4">
                   <h1 className="text-2xl font-bold text-gray-900">
                     Cover Letter
@@ -505,7 +585,7 @@ ${name}`;
                     <div className="text-center text-gray-500 py-12">
                       <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg mb-2">Your cover letter preview will appear here</p>
-                      <p className="text-sm">Fill in the job information and generate content with AI or write manually</p>
+                      <p className="text-sm">Choose a template, fill in the job information and generate content with AI or write manually</p>
                     </div>
                   )}
                 </div>
