@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,12 +23,23 @@ import {
   BarChart3
 } from 'lucide-react';
 
+interface AnalysisResult {
+  atsScore: number;
+  jobMatch?: number;
+  issues: string[];
+  suggestions: string[];
+  keywordGaps: string[];
+  strengths: string[];
+  optimizedSections: Record<string, number>;
+  optimizations?: string[];
+}
+
 const CVOptimizer: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [jobDescription, setJobDescription] = useState('');
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +64,7 @@ const CVOptimizer: React.FC = () => {
     
     // Simulate AI analysis
     setTimeout(() => {
-      const mockAnalysis = {
+      const mockAnalysis: AnalysisResult = {
         atsScore: 78,
         issues: [
           'Missing contact information format optimization',
@@ -105,19 +115,21 @@ const CVOptimizer: React.FC = () => {
     
     // Simulate job-specific optimization
     setTimeout(() => {
-      const jobOptimizedAnalysis = {
-        ...analysis,
-        atsScore: 89,
-        jobMatch: 92,
-        optimizations: [
-          'Tailored keywords for target role',
-          'Highlighted relevant experience',
-          'Adjusted skills priority',
-          'Enhanced summary for role alignment'
-        ]
-      };
-      
-      setAnalysis(jobOptimizedAnalysis);
+      if (analysis) {
+        const jobOptimizedAnalysis: AnalysisResult = {
+          ...analysis,
+          atsScore: 89,
+          jobMatch: 92,
+          optimizations: [
+            'Tailored keywords for target role',
+            'Highlighted relevant experience',
+            'Adjusted skills priority',
+            'Enhanced summary for role alignment'
+          ]
+        };
+        
+        setAnalysis(jobOptimizedAnalysis);
+      }
       setAnalyzing(false);
       toast.success('CV optimized for target job!');
     }, 2500);
@@ -294,7 +306,7 @@ const CVOptimizer: React.FC = () => {
                       <div key={section} className="flex items-center justify-between">
                         <span className="capitalize font-medium">{section}</span>
                         <div className="flex items-center gap-2">
-                          <Progress value={score as number} className="w-20" />
+                          <Progress value={score} className="w-20" />
                           <span className="text-sm font-medium w-10">{score}%</span>
                         </div>
                       </div>
@@ -314,7 +326,7 @@ const CVOptimizer: React.FC = () => {
                     <div>
                       <h4 className="font-medium mb-2 text-red-600">Issues Found:</h4>
                       <ul className="space-y-1">
-                        {analysis.issues.map((issue: string, index: number) => (
+                        {analysis.issues.map((issue, index) => (
                           <li key={index} className="text-sm flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
                             {issue}
@@ -326,7 +338,7 @@ const CVOptimizer: React.FC = () => {
                     <div>
                       <h4 className="font-medium mb-2 text-blue-600">Suggestions:</h4>
                       <ul className="space-y-1">
-                        {analysis.suggestions.map((suggestion: string, index: number) => (
+                        {analysis.suggestions.map((suggestion, index) => (
                           <li key={index} className="text-sm flex items-start gap-2">
                             <TrendingUp className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                             {suggestion}
@@ -344,7 +356,7 @@ const CVOptimizer: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {analysis.keywordGaps.map((keyword: string, index: number) => (
+                      {analysis.keywordGaps.map((keyword, index) => (
                         <Badge key={index} variant="outline" className="text-orange-600">
                           {keyword}
                         </Badge>
