@@ -27,7 +27,10 @@ import {
   Mail,
   Building,
   Briefcase,
-  Clock
+  Clock,
+  Zap,
+  Target,
+  Sparkles
 } from 'lucide-react';
 
 interface Resume {
@@ -224,6 +227,16 @@ const Dashboard = () => {
     }
   };
 
+  const previewResume = (resume: Resume) => {
+    // Open preview in new tab/window
+    window.open(`/builder?id=${resume.id}&preview=true`, '_blank');
+  };
+
+  const previewCoverLetter = (coverLetter: CoverLetter) => {
+    // Open preview in new tab/window
+    window.open(`/cover-letter-builder?id=${coverLetter.id}&preview=true`, '_blank');
+  };
+
   const filteredResumes = resumes.filter(resume =>
     resume.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -275,20 +288,20 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto p-6">
         {/* Quick Actions */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                  Create New Resume
+                  Create Resume
                 </h3>
                 <p className="text-blue-700 dark:text-blue-300 text-sm">
-                  Start building your professional resume with our AI-powered tools
+                  Build professional resumes with AI
                 </p>
               </div>
               <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
-                New Resume
+                New
               </Button>
             </div>
           </Card>
@@ -297,15 +310,49 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
-                  Create Cover Letter
+                  Cover Letter
                 </h3>
                 <p className="text-green-700 dark:text-green-300 text-sm">
-                  Write compelling cover letters tailored to specific job applications
+                  Write compelling cover letters
                 </p>
               </div>
               <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700">
                 <Mail className="w-4 h-4 mr-2" />
-                New Cover Letter
+                New
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                  CV Optimizer
+                </h3>
+                <p className="text-purple-700 dark:text-purple-300 text-sm">
+                  Optimize your CV with AI
+                </p>
+              </div>
+              <Button onClick={() => navigate('/cv-optimizer')} className="bg-purple-600 hover:bg-purple-700">
+                <Zap className="w-4 h-4 mr-2" />
+                Optimize
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                  Templates
+                </h3>
+                <p className="text-orange-700 dark:text-orange-300 text-sm">
+                  Browse premium templates
+                </p>
+              </div>
+              <Button onClick={() => navigate('/templates')} className="bg-orange-600 hover:bg-orange-700">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Browse
               </Button>
             </div>
           </Card>
@@ -379,7 +426,11 @@ const Dashboard = () => {
                             <Edit className="w-3 h-3 mr-1" />
                             Edit
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => previewResume(resume)}
+                          >
                             <Eye className="w-3 h-3 mr-1" />
                             Preview
                           </Button>
@@ -455,7 +506,11 @@ const Dashboard = () => {
                             <Edit className="w-3 h-3 mr-1" />
                             Edit
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => previewCoverLetter(coverLetter)}
+                          >
                             <Eye className="w-3 h-3 mr-1" />
                             Preview
                           </Button>

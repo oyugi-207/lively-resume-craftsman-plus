@@ -1,29 +1,24 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
-  ArrowRight, 
-  CheckCircle, 
-  Star, 
+  FileText, 
+  Zap, 
   Users, 
-  Award, 
-  Zap,
-  FileText,
-  Target,
+  CheckCircle, 
+  Star,
+  ArrowRight,
   Sparkles,
-  Globe,
-  Briefcase,
-  GraduationCap,
-  Brain,
-  Download,
-  Eye,
-  BarChart3,
-  Check
-} from 'lucide-react';
+  Target,
+  Award,
+  TrendingUp,
+  Shield,
+  Clock
+} from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,174 +26,168 @@ const Index = () => {
 
   const features = [
     {
-      icon: <Zap className="w-6 h-6 text-blue-600" />,
-      title: "AI-Powered Builder",
-      description: "Smart suggestions and auto-formatting to create professional resumes in minutes"
+      icon: <Zap className="w-6 h-6" />,
+      title: "AI-Powered Optimization",
+      description: "Let our AI optimize your resume for ATS systems and specific job requirements."
     },
     {
-      icon: <Target className="w-6 h-6 text-green-600" />,
-      title: "ATS Optimization",
-      description: "Beat applicant tracking systems with optimized formatting and keywords"
+      icon: <FileText className="w-6 h-6" />,
+      title: "Professional Templates",
+      description: "Choose from 16+ professionally designed templates that get you noticed."
     },
     {
-      icon: <Eye className="w-6 h-6 text-purple-600" />,
-      title: "Real-time Preview",
-      description: "See your changes instantly with our live preview feature"
+      icon: <Target className="w-6 h-6" />,
+      title: "Job Market Scanner",
+      description: "Automatically scan job markets and get insights on trending requirements."
     },
     {
-      icon: <FileText className="w-6 h-6 text-orange-600" />,
-      title: "Multiple Templates",
-      description: "Choose from 20+ professional templates for different career levels"
+      icon: <Shield className="w-6 h-6" />,
+      title: "ATS Compatibility",
+      description: "Ensure your resume passes through Applicant Tracking Systems with 95% success rate."
     },
     {
-      icon: <BarChart3 className="w-6 h-6 text-indigo-600" />,
-      title: "Performance Analytics",
-      description: "Track views, downloads, and optimize your resume performance"
+      icon: <Award className="w-6 h-6" />,
+      title: "Cover Letter Builder",
+      description: "Create compelling cover letters with multiple templates and AI assistance."
     },
     {
-      icon: <Globe className="w-6 h-6 text-teal-600" />,
-      title: "Cover Letter Generator",
-      description: "Create matching cover letters with AI-powered customization"
-    }
-  ];
-
-  const templates = [
-    {
-      level: "Internship",
-      title: "Clean Intern",
-      description: "Perfect for students and fresh graduates",
-      color: "bg-blue-100 text-blue-800",
-      emphasis: "Education & Projects focused",
-      templateId: 0
-    },
-    {
-      level: "Junior",
-      title: "Modern Junior",
-      description: "Ideal for entry-level positions (0-2 years)",
-      color: "bg-green-100 text-green-800",
-      emphasis: "Skills & Projects showcase",
-      templateId: 3
-    },
-    {
-      level: "Mid-Level",
-      title: "Professional",
-      description: "For experienced professionals (3-7 years)",
-      color: "bg-purple-100 text-purple-800",
-      emphasis: "Experience & Achievements",
-      templateId: 6
-    },
-    {
-      level: "Senior",
-      title: "Executive",
-      description: "For senior roles and leadership positions",
-      color: "bg-orange-100 text-orange-800",
-      emphasis: "Leadership & Strategic impact",
-      templateId: 1
+      icon: <TrendingUp className="w-6 h-6" />,
+      title: "Analytics Dashboard",
+      description: "Track your application success rate and get insights to improve your chances."
     }
   ];
 
   const stats = [
-    { number: "10K+", label: "Resumes Created" },
-    { number: "95%", label: "Success Rate" },
-    { number: "20+", label: "Templates" },
-    { number: "5★", label: "User Rating" }
+    { number: "10,000+", label: "Resumes Created" },
+    { number: "85%", label: "Interview Success Rate" },
+    { number: "16+", label: "Professional Templates" },
+    { number: "95%", label: "ATS Compatibility" }
   ];
 
-  const handleTemplatePreview = (templateId: number) => {
-    // Navigate to builder with the selected template
-    navigate(`/builder?template=${templateId}`);
-  };
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "Software Engineer",
+      company: "Tech Corp",
+      quote: "This resume builder helped me land my dream job at a Fortune 500 company. The ATS optimization was a game-changer!"
+    },
+    {
+      name: "Michael Chen",
+      role: "Marketing Manager", 
+      company: "StartupXYZ",
+      quote: "The AI-powered suggestions and professional templates made my resume stand out. Highly recommended!"
+    },
+    {
+      name: "Emily Rodriguez",
+      role: "Data Scientist",
+      company: "Analytics Pro",
+      quote: "The job market scanner feature helped me understand what skills were in demand. Got 3 interviews in one week!"
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header */}
+      <header className="border-b bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">ResumeAI</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              ResumeBuilder Pro
+            </span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Features</a>
-            <button 
-              onClick={() => navigate('/templates')}
-              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-            >
-              Templates
-            </button>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Pricing</a>
-          </div>
+          <nav className="hidden md:flex items-center space-x-6">
+            <a href="#features" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              Features
+            </a>
+            <a href="#pricing" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              Pricing
+            </a>
+            <a href="#testimonials" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              Reviews
+            </a>
+          </nav>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {user ? (
-              <Button onClick={() => navigate('/dashboard')} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Dashboard
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <Button onClick={() => navigate("/dashboard")} className="bg-gradient-to-r from-blue-600 to-purple-600">
+                Go to Dashboard
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => navigate('/auth')}>
+                <Button variant="ghost" onClick={() => navigate("/auth")}>
                   Sign In
                 </Button>
-                <Button onClick={() => navigate('/auth')} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button onClick={() => navigate("/auth")} className="bg-gradient-to-r from-blue-600 to-purple-600">
                   Get Started
-                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </>
             )}
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <div className="max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm">
-            <Sparkles className="w-4 h-4 mr-2" />
-            New: AI-Powered Cover Letter Generator
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center max-w-4xl">
+          <Badge className="mb-6 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            ✨ AI-Powered Resume Builder
           </Badge>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            Build Your Perfect Resume with{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              AI Intelligence
-            </span>
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            Build Resumes That
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Get Hired</span>
           </h1>
           
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-            Create ATS-optimized resumes and cover letters in minutes. Choose from 20+ level-specific templates,
-            get AI suggestions, and track your application success.
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Create professional, ATS-friendly resumes with our AI-powered builder. 
+            Stand out from the crowd and land your dream job faster.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button
-              size="lg"
-              onClick={() => navigate(user ? '/dashboard' : '/auth')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
-            >
-              {user ? 'Go to Dashboard' : 'Start Building Free'}
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/templates')}
-              className="px-8 py-4 text-lg"
-            >
-              <Eye className="w-5 h-5 mr-2" />
-              View Templates
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            {user ? (
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/dashboard")}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-lg px-8 py-6"
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Go to Dashboard
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  size="lg" 
+                  onClick={() => navigate("/auth")}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-lg px-8 py-6"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start Building Free
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => navigate("/auth")}
+                  className="text-lg px-8 py-6"
+                >
+                  <FileText className="w-5 h-5 mr-2" />
+                  View Templates
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">{stat.number}</div>
-                <div className="text-gray-600 dark:text-gray-300">{stat.label}</div>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stat.number}</div>
+                <div className="text-gray-600 dark:text-gray-400">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -206,221 +195,154 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Everything You Need to Land Your Dream Job
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            From AI-powered content suggestions to ATS optimization, we've got every aspect of your job search covered.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300">
-              <div className="flex items-center mb-4">
-                {feature.icon}
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white ml-3">
-                  {feature.title}
-                </h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                {feature.description}
-              </p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Templates Section */}
-      <section id="templates" className="bg-gray-50 dark:bg-gray-900 py-20">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="features" className="py-20 px-4 bg-white dark:bg-gray-800">
+        <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Templates for Every Career Level
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Everything You Need to Land Your Dream Job
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Choose from professionally designed templates optimized for different experience levels and industries.
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Our comprehensive suite of tools helps you create, optimize, and track your job applications.
             </p>
-            <Button 
-              onClick={() => navigate('/templates')}
-              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              View All Templates
-            </Button>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {templates.map((template, index) => (
-              <Card key={index} className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300">
-                <div className="mb-4">
-                  <Badge className={`${template.color} mb-3`}>
-                    {template.level}
-                  </Badge>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    {template.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    {template.description}
-                  </p>
-                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                    {template.emphasis}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
+                    {feature.icon}
                   </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => handleTemplatePreview(template.templateId)}
-                >
-                  Preview Template
-                </Button>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-gray-600 dark:text-gray-300">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Choose the plan that works best for you. All plans include our core features.
-          </p>
-        </div>
+      {/* Testimonials */}
+      <section id="testimonials" className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Loved by Job Seekers Worldwide
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">
+              See what our users have to say about their success stories.
+            </p>
+          </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <Card className="p-6 border border-gray-200 dark:border-gray-700">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold mb-2">Basic</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-2">$9.99</div>
-              <div className="text-gray-500">per month</div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />5 Templates</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />PDF Download</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Basic Support</li>
-            </ul>
-            <Button variant="outline" className="w-full">Get Started</Button>
-          </Card>
-
-          <Card className="p-6 border-2 border-blue-500 relative">
-            <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
-              Most Popular
-            </Badge>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold mb-2">Professional</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-2">$19.99</div>
-              <div className="text-gray-500">per month</div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />20+ Templates</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />ATS Optimization</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Cover Letters</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Priority Support</li>
-            </ul>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">Get Started</Button>
-          </Card>
-
-          <Card className="p-6 border border-gray-200 dark:border-gray-700">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold mb-2">Premium</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-2">$39.99</div>
-              <div className="text-gray-500">per month</div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />All Templates</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />AI Content</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />Career Coaching</li>
-              <li className="flex items-center"><Check className="w-4 h-4 text-green-500 mr-2" />24/7 Support</li>
-            </ul>
-            <Button variant="outline" className="w-full">Get Started</Button>
-          </Card>
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="border-0 bg-white dark:bg-gray-800 shadow-lg">
+                <CardContent className="pt-6">
+                  <div className="flex mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">"{testimonial.quote}"</p>
+                  <div>
+                    <div className="font-semibold text-gray-900 dark:text-white">{testimonial.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {testimonial.role} at {testimonial.company}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <Card className="p-12 bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0">
-          <h2 className="text-4xl font-bold mb-4">
-            Ready to Transform Your Career?
+      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="container mx-auto text-center max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Ready to Build Your Perfect Resume?
           </h2>
-          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            Join thousands of professionals who've successfully landed their dream jobs using our AI-powered platform.
+          <p className="text-xl text-blue-100 mb-8">
+            Join thousands of successful job seekers who've landed their dream jobs using our platform.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={() => navigate(user ? '/dashboard' : '/auth')}
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg"
+          
+          {user ? (
+            <Button 
+              size="lg" 
+              onClick={() => navigate("/dashboard")}
+              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6"
             >
-              {user ? 'Create New Resume' : 'Start Free Trial'}
+              <Sparkles className="w-5 h-5 mr-2" />
+              Go to Dashboard
+            </Button>
+          ) : (
+            <Button 
+              size="lg" 
+              onClick={() => navigate("/auth")}
+              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Start Building Free
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg"
-            >
-              <Download className="w-5 h-5 mr-2" />
-              Download Sample
-            </Button>
-          </div>
-        </Card>
+          )}
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-6">
+      <footer className="py-12 px-4 bg-gray-900 text-white">
+        <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold">ResumeAI</span>
+                <span className="text-xl font-bold">ResumeBuilder Pro</span>
               </div>
-              <p className="text-gray-400 mb-4">
-                Building the future of professional resumes with AI technology.
+              <p className="text-gray-400">
+                The most advanced AI-powered resume builder to help you land your dream job.
               </p>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
+              <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Resume Builder</a></li>
-                <li><a href="#" className="hover:text-white">Cover Letters</a></li>
-                <li><a href="#" className="hover:text-white">Templates</a></li>
-                <li><a href="#" className="hover:text-white">ATS Scanner</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Templates</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
+              <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Career Guide</a></li>
-                <li><a href="#" className="hover:text-white">Resume Examples</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">About</a></li>
-                <li><a href="#" className="hover:text-white">Privacy</a></li>
-                <li><a href="#" className="hover:text-white">Terms</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 ResumeAI. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 ResumeBuilder Pro. All rights reserved.</p>
           </div>
         </div>
       </footer>
