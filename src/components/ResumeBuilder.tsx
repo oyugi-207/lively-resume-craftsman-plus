@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -116,10 +115,11 @@ const ResumeBuilder: React.FC = () => {
     if (!user) return;
 
     try {
+      // Add proper user filtering to ensure data isolation
       const { data, error } = await supabase
         .from('resumes')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id) // Ensure only user's own resumes
         .order('updated_at', { ascending: false })
         .limit(1);
 
@@ -157,12 +157,15 @@ const ResumeBuilder: React.FC = () => {
   };
 
   const saveResumeData = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error('Please sign in to save your resume');
+      return;
+    }
 
     setSaving(true);
     try {
       const resumePayload = {
-        user_id: user.id,
+        user_id: user.id, // Ensure user ownership
         title: resumeData.personal.fullName ? `${resumeData.personal.fullName}'s Resume` : 'Untitled Resume',
         template_id: selectedTemplate,
         personal_info: resumeData.personal,
@@ -177,10 +180,12 @@ const ResumeBuilder: React.FC = () => {
       };
 
       if (resumeId) {
+        // Update only if user owns the resume
         const { error } = await supabase
           .from('resumes')
           .update(resumePayload)
-          .eq('id', resumeId);
+          .eq('id', resumeId)
+          .eq('user_id', user.id); // Additional security check
         
         if (error) throw error;
       } else {
