@@ -1,19 +1,30 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, Check, Eye, Search, Filter } from 'lucide-react';
-import TemplatePreviewModal from './TemplatePreviewModal';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Eye, Star, Palette, CheckCircle, Zap } from 'lucide-react';
+import ImprovedResumePreview from './ImprovedResumePreview';
 
 interface EnhancedTemplateSelectorProps {
   isOpen: boolean;
   selectedTemplate: number;
-  onSelectTemplate: (template: number) => void;
+  onSelectTemplate: (templateId: number) => void;
   onClose: () => void;
+}
+
+interface Template {
+  id: number;
+  name: string;
+  category: string;
+  description: string;
+  atsScore: number;
+  popular: boolean;
+  color: string;
+  industry: string[];
+  features: string[];
 }
 
 const EnhancedTemplateSelector: React.FC<EnhancedTemplateSelectorProps> = ({
@@ -22,347 +33,390 @@ const EnhancedTemplateSelector: React.FC<EnhancedTemplateSelectorProps> = ({
   onSelectTemplate,
   onClose
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterATS, setFilterATS] = useState('all');
   const [previewTemplate, setPreviewTemplate] = useState<number | null>(null);
 
-  const templates = [
+  const templates: Template[] = [
     {
       id: 0,
-      name: "Modern Professional",
-      category: "professional",
-      description: "Clean and contemporary design perfect for corporate roles",
-      color: "bg-gradient-to-br from-blue-600 to-blue-800",
-      popular: true,
+      name: 'Modern Professional',
+      category: 'professional',
+      description: 'Clean, modern design perfect for most industries',
       atsScore: 95,
-      features: ["ATS-Friendly", "Clean Layout", "Professional"],
-      industry: ["Corporate", "Finance", "Consulting"],
-      tags: ["clean", "corporate", "professional", "modern"]
+      popular: true,
+      color: 'bg-gradient-to-br from-blue-600 to-blue-800',
+      industry: ['Technology', 'Business', 'Consulting', 'Finance'],
+      features: ['ATS Optimized', 'Clean Layout', 'Professional Typography']
     },
     {
       id: 1,
-      name: "Executive Leadership",
-      category: "executive", 
-      description: "Sophisticated design for senior management positions",
-      color: "bg-gradient-to-br from-gray-700 to-gray-900",
-      popular: false,
+      name: 'Executive Leadership',
+      category: 'executive',
+      description: 'Premium design for senior-level positions',
       atsScore: 92,
-      features: ["Executive", "Elegant", "Leadership"],
-      industry: ["Management", "Executive", "C-Level"],
-      tags: ["executive", "leadership", "sophisticated", "senior"]
+      popular: true,
+      color: 'bg-gradient-to-br from-gray-700 to-gray-900',
+      industry: ['Executive', 'C-Level', 'Management', 'Leadership'],
+      features: ['Executive Focus', 'Achievement Highlights', 'Leadership Emphasis']
     },
     {
       id: 2,
-      name: "Classic Corporate",
-      category: "traditional",
-      description: "Traditional layout with modern touches",
-      color: "bg-gradient-to-br from-slate-600 to-slate-800",
-      popular: false,
+      name: 'Classic Corporate',
+      category: 'corporate',
+      description: 'Traditional professional format for conservative industries',
       atsScore: 98,
-      features: ["Traditional", "Corporate", "Conservative"],
-      industry: ["Banking", "Law", "Government"],
-      tags: ["traditional", "conservative", "formal", "classic"]
+      popular: false,
+      color: 'bg-gradient-to-br from-slate-600 to-slate-800',
+      industry: ['Banking', 'Legal', 'Government', 'Insurance'],
+      features: ['Traditional Layout', 'Maximum ATS Score', 'Conservative Design']
     },
     {
       id: 3,
-      name: "Creative Designer",
-      category: "creative",
-      description: "Eye-catching design for creative and design positions",
-      color: "bg-gradient-to-br from-purple-600 to-pink-600",
+      name: 'Creative Designer',
+      category: 'creative',
+      description: 'Visually appealing design for creative professionals',
+      atsScore: 88,
       popular: true,
-      atsScore: 78,
-      features: ["Creative", "Colorful", "Stand Out"],
-      industry: ["Design", "Marketing", "Advertising"],
-      tags: ["creative", "colorful", "design", "artistic"]
+      color: 'bg-gradient-to-br from-purple-600 to-pink-600',
+      industry: ['Design', 'Marketing', 'Advertising', 'Media'],
+      features: ['Visual Appeal', 'Creative Layout', 'Portfolio Integration']
     },
     {
       id: 4,
-      name: "Tech Specialist",
-      category: "technical",
-      description: "Code-inspired layout perfect for developers and engineers",
-      color: "bg-gradient-to-br from-green-600 to-teal-600",
+      name: 'Tech Specialist',
+      category: 'tech',
+      description: 'Technical focus for IT and engineering roles',
+      atsScore: 94,
       popular: true,
-      atsScore: 90,
-      features: ["Tech-Focused", "Unique", "Developer-Friendly"],
-      industry: ["Software", "Engineering", "IT"],
-      tags: ["tech", "developer", "coding", "engineering"]
+      color: 'bg-gradient-to-br from-green-600 to-teal-600',
+      industry: ['Software', 'Engineering', 'IT', 'Data Science'],
+      features: ['Technical Skills Focus', 'Project Highlights', 'Tech-Friendly']
     },
     {
       id: 5,
-      name: "Minimalist",
-      category: "clean",
-      description: "Clean, minimal design focusing on content",
-      color: "bg-gradient-to-br from-gray-500 to-gray-700",
+      name: 'Minimalist Clean',
+      category: 'minimal',
+      description: 'Ultra-clean design with maximum readability',
+      atsScore: 96,
       popular: false,
-      atsScore: 94,
-      features: ["Minimal", "Clean", "Elegant"],
-      industry: ["Any Industry", "Consulting", "Academia"],
-      tags: ["minimal", "clean", "simple", "elegant"]
+      color: 'bg-gradient-to-br from-gray-400 to-gray-600',
+      industry: ['Any Industry', 'Startups', 'Modern Companies'],
+      features: ['Maximum Readability', 'Minimal Design', 'Universal Appeal']
     },
     {
       id: 6,
-      name: "Two Column",
-      category: "structured",
-      description: "Structured two-column layout for maximum efficiency",
-      color: "bg-gradient-to-br from-indigo-600 to-purple-600",
+      name: 'Two Column Layout',
+      category: 'modern',
+      description: 'Efficient two-column design for comprehensive resumes',
+      atsScore: 91,
       popular: false,
-      atsScore: 88,
-      features: ["Two-Column", "Structured", "Efficient"],
-      industry: ["General", "Consulting", "Operations"],
-      tags: ["structured", "organized", "efficient", "sidebar"]
+      color: 'bg-gradient-to-br from-indigo-600 to-blue-600',
+      industry: ['Healthcare', 'Education', 'Research', 'Academia'],
+      features: ['Two Column Layout', 'Comprehensive', 'Information Dense']
+    },
+    {
+      id: 7,
+      name: 'Academic Scholar',
+      category: 'academic',
+      description: 'Scholarly design for academic and research positions',
+      atsScore: 93,
+      popular: false,
+      color: 'bg-gradient-to-br from-amber-600 to-yellow-600',
+      industry: ['Academia', 'Research', 'Education', 'Science'],
+      features: ['Academic Focus', 'Publication Ready', 'Research Emphasis']
+    },
+    {
+      id: 8,
+      name: 'Sales Champion',
+      category: 'sales',
+      description: 'Results-driven design highlighting achievements',
+      atsScore: 90,
+      popular: false,
+      color: 'bg-gradient-to-br from-red-500 to-orange-500',
+      industry: ['Sales', 'Business Development', 'Account Management'],
+      features: ['Achievement Focus', 'Results Driven', 'Performance Metrics']
+    },
+    {
+      id: 9,
+      name: 'Startup Innovator',
+      category: 'startup',
+      description: 'Dynamic design for startup and entrepreneurial roles',
+      atsScore: 87,
+      popular: false,
+      color: 'bg-gradient-to-br from-rose-500 to-pink-600',
+      industry: ['Startups', 'Innovation', 'Entrepreneurship'],
+      features: ['Dynamic Design', 'Innovation Focus', 'Startup Friendly']
+    },
+    {
+      id: 10,
+      name: 'Healthcare Professional',
+      category: 'healthcare',
+      description: 'Trusted design for medical and healthcare professionals',
+      atsScore: 94,
+      popular: false,
+      color: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+      industry: ['Healthcare', 'Medical', 'Nursing', 'Therapy'],
+      features: ['Professional Trust', 'Medical Focus', 'Care Emphasis']
+    },
+    {
+      id: 11,
+      name: 'Finance Expert',
+      category: 'finance',
+      description: 'Professional design for financial services',
+      atsScore: 96,
+      popular: false,
+      color: 'bg-gradient-to-br from-emerald-600 to-green-600',
+      industry: ['Finance', 'Banking', 'Investment', 'Accounting'],
+      features: ['Financial Focus', 'Numbers Emphasis', 'Professional Trust']
+    },
+    {
+      id: 12,
+      name: 'Marketing Creative',
+      category: 'marketing',
+      description: 'Brand-focused design for marketing professionals',
+      atsScore: 89,
+      popular: false,
+      color: 'bg-gradient-to-br from-violet-600 to-purple-600',
+      industry: ['Marketing', 'Brand Management', 'Digital Marketing'],
+      features: ['Brand Focus', 'Creative Elements', 'Marketing Metrics']
+    },
+    {
+      id: 13,
+      name: 'Engineering Focus',
+      category: 'engineering',
+      description: 'Technical precision for engineering professionals',
+      atsScore: 95,
+      popular: false,
+      color: 'bg-gradient-to-br from-slate-700 to-zinc-700',
+      industry: ['Engineering', 'Manufacturing', 'Technical'],
+      features: ['Technical Precision', 'Project Focus', 'Engineering Metrics']
+    },
+    {
+      id: 14,
+      name: 'Legal Professional',
+      category: 'legal',
+      description: 'Authoritative design for legal professionals',
+      atsScore: 97,
+      popular: false,
+      color: 'bg-gradient-to-br from-stone-600 to-gray-700',
+      industry: ['Legal', 'Law', 'Compliance', 'Government'],
+      features: ['Professional Authority', 'Legal Focus', 'Conservative Design']
+    },
+    {
+      id: 15,
+      name: 'Consulting Elite',
+      category: 'consulting',
+      description: 'Premium design for consulting professionals',
+      atsScore: 93,
+      popular: false,
+      color: 'bg-gradient-to-br from-sky-600 to-blue-700',
+      industry: ['Consulting', 'Strategy', 'Business Advisory'],
+      features: ['Strategic Focus', 'Problem Solving', 'Client Results']
     }
   ];
 
-  const getATSScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400';
-    if (score >= 80) return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-400';
-    return 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-400';
+  const mockResumeData = {
+    personal: {
+      fullName: 'John Doe',
+      email: 'john.doe@example.com',
+      phone: '+1 (555) 123-4567',
+      location: 'San Francisco, CA',
+      summary: 'Experienced software engineer with expertise in full-stack development.'
+    },
+    experience: [
+      {
+        id: 1,
+        company: 'Tech Corp',
+        position: 'Senior Software Engineer',
+        location: 'San Francisco, CA',
+        startDate: '2020-01',
+        endDate: 'Present',
+        description: 'Led development of scalable web applications using React and Node.js.'
+      }
+    ],
+    education: [
+      {
+        id: 1,
+        school: 'University of California',
+        degree: 'Bachelor of Science in Computer Science',
+        location: 'Berkeley, CA',
+        startDate: '2016-09',
+        endDate: '2020-05',
+        gpa: '3.8'
+      }
+    ],
+    skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS'],
+    certifications: [],
+    languages: [],
+    interests: [],
+    projects: []
   };
 
-  const filteredTemplates = templates.filter(template => {
-    const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = filterCategory === 'all' || template.category === filterCategory;
-    
-    const matchesATS = filterATS === 'all' || 
-                       (filterATS === 'excellent' && template.atsScore >= 90) ||
-                       (filterATS === 'good' && template.atsScore >= 80 && template.atsScore < 90) ||
-                       (filterATS === 'moderate' && template.atsScore < 80);
-    
-    return matchesSearch && matchesCategory && matchesATS;
-  });
-
-  const handleSelectTemplate = (templateId: number) => {
+  const handleSelect = (templateId: number) => {
     onSelectTemplate(templateId);
+    onClose();
   };
 
-  const handlePreviewTemplate = (templateId: number) => {
-    setPreviewTemplate(templateId);
+  const getATSScoreColor = (score: number) => {
+    if (score >= 95) return 'text-green-600 bg-green-100';
+    if (score >= 90) return 'text-blue-600 bg-blue-100';
+    if (score >= 85) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
   };
-
-  const categories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'professional', label: 'Professional' },
-    { value: 'creative', label: 'Creative' },
-    { value: 'technical', label: 'Technical' },
-    { value: 'executive', label: 'Executive' },
-    { value: 'traditional', label: 'Traditional' },
-    { value: 'clean', label: 'Minimal' },
-    { value: 'structured', label: 'Structured' }
-  ];
-
-  const atsFilters = [
-    { value: 'all', label: 'All ATS Scores' },
-    { value: 'excellent', label: 'Excellent (90%+)' },
-    { value: 'good', label: 'Good (80-89%)' },
-    { value: 'moderate', label: 'Moderate (<80%)' }
-  ];
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Choose Your Perfect Template</DialogTitle>
-            <p className="text-gray-600 text-center">Select from {templates.length} professional templates designed for different industries and career levels</p>
-          </DialogHeader>
-          
-          {/* Search and Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search templates..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger>
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  <SelectValue placeholder="Category" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={filterATS} onValueChange={setFilterATS}>
-              <SelectTrigger>
-                <SelectValue placeholder="ATS Score" />
-              </SelectTrigger>
-              <SelectContent>
-                {atsFilters.map((filter) => (
-                  <SelectItem key={filter.value} value={filter.value}>
-                    {filter.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Results Count */}
-          <div className="text-sm text-gray-600 mt-4">
-            Showing {filteredTemplates.length} of {templates.length} templates
-          </div>
-          
-          {/* Templates Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-            {filteredTemplates.map((template) => (
-              <Card 
-                key={template.id} 
-                className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                  selectedTemplate === template.id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
-                }`}
-                onClick={() => handleSelectTemplate(template.id)}
-              >
-                {/* Template Preview */}
-                <div className={`h-32 ${template.color} relative`}>
-                  {template.popular && (
-                    <Badge className="absolute top-2 right-2 bg-yellow-500 text-yellow-900 hover:bg-yellow-500 text-xs">
-                      <Star className="w-2 h-2 mr-1 fill-current" />
-                      Popular
-                    </Badge>
-                  )}
-                  
-                  <Badge 
-                    className={`absolute top-2 left-2 text-xs ${getATSScoreColor(template.atsScore)}`}
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <Palette className="w-6 h-6" />
+            Choose Your Resume Template
+          </DialogTitle>
+          <DialogDescription>
+            Select from {templates.length} professionally designed templates optimized for ATS systems
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+          {/* Template List */}
+          <div className="lg:col-span-2">
+            <ScrollArea className="h-[60vh]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-4">
+                {templates.map((template) => (
+                  <Card 
+                    key={template.id}
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                      selectedTemplate === template.id ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}
                   >
-                    ATS: {template.atsScore}%
-                  </Badge>
-                  
-                  {selectedTemplate === template.id && (
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white p-2 rounded-full">
-                      <Check className="w-4 h-4" />
-                    </div>
-                  )}
-                  
-                  {/* Template Preview Content */}
-                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm m-3 rounded-lg flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <div className="w-6 h-6 bg-white/20 rounded mx-auto mb-2"></div>
-                      <div className="space-y-1">
-                        <div className="h-0.5 bg-white/30 rounded w-8 mx-auto"></div>
-                        <div className="h-0.5 bg-white/30 rounded w-6 mx-auto"></div>
-                        <div className="h-0.5 bg-white/20 rounded w-5 mx-auto"></div>
+                    {/* Template Header */}
+                    <div className={`h-20 ${template.color} relative`}>
+                      {template.popular && (
+                        <Badge className="absolute top-2 right-2 bg-yellow-500 text-yellow-900 hover:bg-yellow-500 text-xs">
+                          <Star className="w-3 h-3 mr-1 fill-current" />
+                          Popular
+                        </Badge>
+                      )}
+                      
+                      <div className="absolute inset-0 bg-white/10 backdrop-blur-sm m-2 rounded flex items-center justify-center">
+                        <div className="text-white text-center">
+                          <div className="text-sm font-semibold">{template.name}</div>
+                          <div className="text-xs opacity-80">{template.category}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-                
-                {/* Template Info */}
-                <div className="p-3">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm">{template.name}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-xs mb-2 line-clamp-2">{template.description}</p>
-                  
-                  {/* Features */}
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {template.features.slice(0, 2).map((feature) => (
-                      <Badge 
-                        key={feature} 
-                        variant="outline"
-                        className="text-xs px-1 py-0.5"
-                      >
-                        {feature}
-                      </Badge>
-                    ))}
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex gap-1">
-                    <Button 
-                      className={`flex-1 text-xs py-1 h-7 ${
-                        selectedTemplate === template.id 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectTemplate(template.id);
-                      }}
-                    >
-                      {selectedTemplate === template.id ? 'Selected' : 'Select'}
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      className="px-2 h-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePreviewTemplate(template.id);
-                      }}
-                    >
-                      <Eye className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
 
-          {/* No Results */}
-          {filteredTemplates.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <Search className="w-12 h-12 mx-auto" />
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center justify-between">
+                        {template.name}
+                        {selectedTemplate === template.id && (
+                          <CheckCircle className="w-5 h-5 text-blue-500" />
+                        )}
+                      </CardTitle>
+                      <CardDescription className="text-sm">{template.description}</CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3">
+                      {/* ATS Score */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">ATS Score</span>
+                        <Badge className={`${getATSScoreColor(template.atsScore)} text-xs`}>
+                          {template.atsScore}%
+                        </Badge>
+                      </div>
+
+                      {/* Features */}
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Features</span>
+                        <div className="flex flex-wrap gap-1">
+                          {template.features.slice(0, 2).map((feature, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {feature}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Industry Tags */}
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Best For</span>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          {template.industry.slice(0, 2).join(', ')}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPreviewTemplate(previewTemplate === template.id ? null : template.id)}
+                          className="flex-1 text-xs"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          {previewTemplate === template.id ? 'Hide' : 'Preview'}
+                        </Button>
+                        <Button
+                          onClick={() => handleSelect(template.id)}
+                          className={`flex-1 text-xs ${
+                            selectedTemplate === template.id
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {selectedTemplate === template.id ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Selected
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-3 h-3 mr-1" />
+                              Select
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No templates found</h3>
-              <p className="text-gray-600 dark:text-gray-400">Try adjusting your search terms or filters</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => {
-                  setSearchTerm('');
-                  setFilterCategory('all');
-                  setFilterATS('all');
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
-          )}
-          
-          <div className="flex justify-between items-center mt-6 pt-6 border-t">
-            <p className="text-sm text-gray-500">
-              {selectedTemplate !== undefined ? `Template ${selectedTemplate + 1} selected` : 'No template selected'}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              {selectedTemplate !== undefined && (
-                <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  Use Selected Template
-                </Button>
-              )}
-            </div>
+            </ScrollArea>
           </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Template Preview Modal */}
-      {previewTemplate !== null && (
-        <TemplatePreviewModal
-          isOpen={previewTemplate !== null}
-          onClose={() => setPreviewTemplate(null)}
-          templateId={previewTemplate}
-          templateName={templates.find(t => t.id === previewTemplate)?.name || ''}
-          onSelectTemplate={handleSelectTemplate}
-          selectedTemplate={selectedTemplate}
-        />
-      )}
-    </>
+          {/* Preview Panel */}
+          <div className="lg:col-span-1">
+            <Card className="h-[60vh]">
+              <CardHeader>
+                <CardTitle className="text-lg">Template Preview</CardTitle>
+                <CardDescription>
+                  {previewTemplate !== null ? `Previewing: ${templates[previewTemplate]?.name}` : 'Select a template to preview'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-full overflow-hidden">
+                {previewTemplate !== null ? (
+                  <div className="h-full bg-gray-100 dark:bg-gray-800 rounded p-2 overflow-auto">
+                    <div className="transform scale-[0.3] origin-top-left w-[300%]">
+                      <ImprovedResumePreview 
+                        data={mockResumeData} 
+                        template={previewTemplate}
+                        scale={1}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <Eye className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Click "Preview" on any template to see it here</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
