@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Builder from "./pages/Builder";
 import Templates from "./pages/Templates";
 import CoverLetterBuilder from "./pages/CoverLetterBuilder";
+import CVOptimizer from "./pages/CVOptimizer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/builder" element={<Builder />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/cover-letter-builder" element={<CoverLetterBuilder />} />
+              <Route path="/cv-optimizer" element={<CVOptimizer />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

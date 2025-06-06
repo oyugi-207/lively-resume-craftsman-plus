@@ -13,42 +13,61 @@ export class PDFGenerator {
 
       // Create a clone to avoid modifying the original
       const clone = element.cloneNode(true) as HTMLElement;
+      
+      // Improved styling for better PDF output
       clone.style.position = 'absolute';
       clone.style.left = '-9999px';
       clone.style.top = '0';
-      clone.style.width = '210mm'; // A4 width
-      clone.style.minHeight = '297mm'; // A4 height
+      clone.style.width = '794px'; // A4 width in pixels (210mm * 3.78)
+      clone.style.minHeight = '1123px'; // A4 height in pixels (297mm * 3.78)
+      clone.style.maxWidth = '794px';
       clone.style.backgroundColor = '#ffffff';
       clone.style.transform = 'scale(1)';
       clone.style.transformOrigin = 'top left';
       clone.style.fontFamily = 'Arial, sans-serif';
+      clone.style.padding = '40px';
+      clone.style.margin = '0';
+      clone.style.boxSizing = 'border-box';
+      clone.style.overflow = 'visible';
+      
+      // Ensure proper text rendering
+      const allTextElements = clone.querySelectorAll('*');
+      allTextElements.forEach((el: any) => {
+        if (el.style) {
+          el.style.webkitFontSmoothing = 'antialiased';
+          el.style.mozOsxFontSmoothing = 'grayscale';
+        }
+      });
       
       // Append clone to body
       document.body.appendChild(clone);
 
       // Wait for fonts and styles to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Capture with high quality settings
+      // Capture with optimized settings
       const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
-        width: Math.round(210 * 3.78), // A4 width in pixels at 96 DPI
-        height: Math.round(297 * 3.78), // A4 height in pixels at 96 DPI
+        width: 794,
+        height: 1123,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: Math.round(210 * 3.78),
-        windowHeight: Math.round(297 * 3.78),
+        windowWidth: 794,
+        windowHeight: 1123,
+        logging: false,
         onclone: (clonedDoc) => {
           // Ensure all styles are properly applied to the cloned document
-          const clonedElement = clonedDoc.body.querySelector('[data-resume-preview]') as HTMLElement;
+          const clonedElement = clonedDoc.body.lastElementChild as HTMLElement;
           if (clonedElement) {
-            clonedElement.style.maxWidth = 'none';
+            clonedElement.style.maxWidth = '794px';
             clonedElement.style.margin = '0';
-            clonedElement.style.padding = '20px';
+            clonedElement.style.padding = '40px';
             clonedElement.style.boxShadow = 'none';
+            clonedElement.style.border = 'none';
+            clonedElement.style.backgroundColor = '#ffffff';
           }
         }
       });
@@ -71,7 +90,7 @@ export class PDFGenerator {
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Handle multi-page content
+      // Handle multi-page content if needed
       if (imgHeight > pdfHeight) {
         let position = 0;
         const pageHeight = (canvas.width * pdfHeight) / pdfWidth;
@@ -103,8 +122,8 @@ export class PDFGenerator {
           position += pageHeight;
         }
       } else {
-        // Single page
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        // Single page - fit to page properly
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pdfHeight));
       }
       
       // Add metadata
@@ -126,35 +145,48 @@ export class PDFGenerator {
 
   static async generateCoverLetterPDF(element: HTMLElement, filename: string = 'cover-letter.pdf') {
     try {
-      // Similar process but optimized for cover letter format
+      // Hide any unwanted elements before capture
       const elementsToHide = element.querySelectorAll('.no-print, .hover\\:opacity-100');
       elementsToHide.forEach(el => {
         (el as HTMLElement).style.display = 'none';
       });
 
       const clone = element.cloneNode(true) as HTMLElement;
+      
+      // Optimized styling for cover letter
       clone.style.position = 'absolute';
       clone.style.left = '-9999px';
       clone.style.top = '0';
-      clone.style.width = '210mm';
-      clone.style.minHeight = '297mm';
+      clone.style.width = '794px'; // A4 width
+      clone.style.minHeight = '1123px'; // A4 height
+      clone.style.maxWidth = '794px';
       clone.style.backgroundColor = '#ffffff';
-      clone.style.padding = '25mm 20mm';
+      clone.style.padding = '60px 50px'; // Better margins for cover letter
       clone.style.boxSizing = 'border-box';
       clone.style.fontFamily = 'Arial, sans-serif';
       clone.style.fontSize = '11pt';
-      clone.style.lineHeight = '1.5';
+      clone.style.lineHeight = '1.6';
+      clone.style.margin = '0';
+      clone.style.overflow = 'visible';
+      
+      // Ensure proper text spacing for cover letters
+      const paragraphs = clone.querySelectorAll('p');
+      paragraphs.forEach((p: any) => {
+        p.style.marginBottom = '16px';
+        p.style.textAlign = 'left';
+      });
       
       document.body.appendChild(clone);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
-        width: Math.round(210 * 3.78),
-        height: Math.round(297 * 3.78)
+        width: 794,
+        height: 1123,
+        logging: false
       });
 
       document.body.removeChild(clone);
@@ -165,7 +197,11 @@ export class PDFGenerator {
       const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('portrait', 'mm', 'a4');
       
-      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+      // Fit cover letter to page with no top spacing issues
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, 297));
       
       pdf.setProperties({
         title: filename.replace('.pdf', ''),
