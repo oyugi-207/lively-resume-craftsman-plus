@@ -30,12 +30,28 @@ export class PDFGenerator {
       clone.style.boxSizing = 'border-box';
       clone.style.overflow = 'visible';
       
+      // Enhanced bullet point styling
+      const bulletPoints = clone.querySelectorAll('li, .bullet-point');
+      bulletPoints.forEach((bullet: any) => {
+        if (bullet.style) {
+          bullet.style.marginBottom = '8px';
+          bullet.style.lineHeight = '1.6';
+          bullet.style.paddingLeft = '8px';
+          // Ensure bullet points are visible
+          bullet.style.listStyleType = 'disc';
+          bullet.style.listStylePosition = 'outside';
+          bullet.style.marginLeft = '20px';
+        }
+      });
+      
       // Ensure proper text rendering
       const allTextElements = clone.querySelectorAll('*');
       allTextElements.forEach((el: any) => {
         if (el.style) {
           el.style.webkitFontSmoothing = 'antialiased';
           el.style.mozOsxFontSmoothing = 'grayscale';
+          // Fix text color for PDF
+          el.style.color = el.style.color || '#000000';
         }
       });
       
@@ -43,11 +59,11 @@ export class PDFGenerator {
       document.body.appendChild(clone);
 
       // Wait for fonts and styles to load
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Capture with optimized settings
       const canvas = await html2canvas(clone, {
-        scale: 2,
+        scale: 3, // Higher resolution
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
@@ -58,6 +74,8 @@ export class PDFGenerator {
         windowWidth: 794,
         windowHeight: 1123,
         logging: false,
+        imageTimeout: 15000,
+        removeContainer: true,
         onclone: (clonedDoc) => {
           // Ensure all styles are properly applied to the cloned document
           const clonedElement = clonedDoc.body.lastElementChild as HTMLElement;
@@ -68,6 +86,15 @@ export class PDFGenerator {
             clonedElement.style.boxShadow = 'none';
             clonedElement.style.border = 'none';
             clonedElement.style.backgroundColor = '#ffffff';
+            
+            // Fix bullet points in cloned document
+            const clonedBullets = clonedElement.querySelectorAll('li, .bullet-point');
+            clonedBullets.forEach((bullet: any) => {
+              bullet.style.display = 'list-item';
+              bullet.style.listStyleType = 'disc';
+              bullet.style.marginLeft = '20px';
+              bullet.style.paddingLeft = '8px';
+            });
           }
         }
       });
@@ -83,7 +110,13 @@ export class PDFGenerator {
       const imgData = canvas.toDataURL('image/png', 1.0);
       
       // Create PDF with A4 dimensions
-      const pdf = new jsPDF('portrait', 'mm', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      
       const pdfWidth = 210; // A4 width in mm
       const pdfHeight = 297; // A4 height in mm
       
@@ -94,6 +127,7 @@ export class PDFGenerator {
       if (imgHeight > pdfHeight) {
         let position = 0;
         const pageHeight = (canvas.width * pdfHeight) / pdfWidth;
+        let pageNum = 0;
         
         while (position < canvas.height) {
           const pageCanvas = document.createElement('canvas');
@@ -114,16 +148,17 @@ export class PDFGenerator {
           
           const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
           
-          if (position > 0) {
+          if (pageNum > 0) {
             pdf.addPage();
           }
           
-          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, (pageCanvas.height * imgWidth) / canvas.width);
+          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, (pageCanvas.height * imgWidth) / canvas.width, '', 'FAST');
           position += pageHeight;
+          pageNum++;
         }
       } else {
         // Single page - fit to page properly
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pdfHeight));
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pdfHeight), '', 'FAST');
       }
       
       // Add metadata
@@ -132,9 +167,10 @@ export class PDFGenerator {
         subject: 'Professional Resume',
         author: 'Resume Builder',
         creator: 'AI Resume Builder',
-        keywords: 'resume, cv, professional'
+        keywords: 'resume, cv, professional, ats'
       });
       
+      // Download the PDF
       pdf.save(filename);
       return true;
     } catch (error) {
@@ -174,19 +210,22 @@ export class PDFGenerator {
       paragraphs.forEach((p: any) => {
         p.style.marginBottom = '16px';
         p.style.textAlign = 'left';
+        p.style.color = '#000000';
       });
       
       document.body.appendChild(clone);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       const canvas = await html2canvas(clone, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
         width: 794,
         height: 1123,
-        logging: false
+        logging: false,
+        imageTimeout: 15000,
+        removeContainer: true
       });
 
       document.body.removeChild(clone);
@@ -195,13 +234,18 @@ export class PDFGenerator {
       });
 
       const imgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF('portrait', 'mm', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
       
       // Fit cover letter to page with no top spacing issues
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, 297));
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, 297), '', 'FAST');
       
       pdf.setProperties({
         title: filename.replace('.pdf', ''),
@@ -216,6 +260,12 @@ export class PDFGenerator {
       console.error('Cover letter PDF generation error:', error);
       throw new Error('Failed to generate cover letter PDF. Please try again.');
     }
+  }
+  
+  // Enhanced method for DOCX export (placeholder for future implementation)
+  static async generateDOCX(element: HTMLElement, filename: string = 'resume.docx') {
+    // This would require a DOCX library like docx or mammoth
+    throw new Error('DOCX export is not implemented yet. Please use PDF export for now.');
   }
 }
 

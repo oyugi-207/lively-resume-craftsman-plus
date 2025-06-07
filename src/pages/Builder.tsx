@@ -41,6 +41,10 @@ import JobDescriptionParser from '@/components/JobDescriptionParser';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import PDFGenerator from '@/components/PDFGenerator';
 import JobScanner from '@/components/JobScanner';
+import UserProfile from '@/components/UserProfile';
+import NotificationsCenter from '@/components/NotificationsCenter';
+import Settings from '@/components/Settings';
+import JobMarket from '@/components/JobMarket';
 
 interface ResumeData {
   personal: {
@@ -97,6 +101,8 @@ const Builder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const resumeIdParam = searchParams.get('id');
+  const isPreview = searchParams.get('preview') === 'true';
   const initialTemplate = parseInt(searchParams.get('template') || '0');
   
   const [resumeData, setResumeData] = useState<ResumeData>({
@@ -128,18 +134,24 @@ const Builder: React.FC = () => {
     if (user) {
       loadResumeData();
     }
-  }, [user]);
+  }, [user, resumeIdParam]);
 
   const loadResumeData = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('resumes')
         .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(1);
+        .eq('user_id', user.id);
+      
+      if (resumeIdParam) {
+        query = query.eq('id', resumeIdParam);
+      } else {
+        query = query.order('updated_at', { ascending: false }).limit(1);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -261,18 +273,38 @@ const Builder: React.FC = () => {
     }
 
     try {
-      const response = await supabase.functions.invoke('ai-optimize-resume', {
+      const { data, error } = await supabase.functions.invoke('gemini-ai-optimize', {
         body: { resumeData }
       });
 
-      if (response.error) throw response.error;
+      if (error) throw error;
 
-      const optimizedData = response.data;
-      setResumeData(prev => ({ ...prev, ...optimizedData }));
-      toast.success('Resume optimized with AI suggestions!');
+      if (data?.suggestions?.length > 0) {
+        // Apply AI suggestions to resume data
+        let updatedData = { ...resumeData };
+        
+        data.suggestions.forEach((suggestion: any) => {
+          if (suggestion.section === 'summary' && suggestion.confidence > 0.7) {
+            updatedData.personal.summary = suggestion.suggested;
+          }
+          // Add more suggestion applications as needed
+        });
+        
+        setResumeData(updatedData);
+        setAtsOptimization({
+          score: data.atsScore || 85,
+          suggestions: data.suggestions,
+          keywordMatches: data.keywordMatches || [],
+          missingKeywords: data.missingKeywords || []
+        });
+        
+        toast.success('Resume optimized with AI suggestions!');
+      } else {
+        toast.info('No improvements suggested at this time');
+      }
     } catch (error: any) {
       console.error('AI optimization error:', error);
-      toast.error('Failed to optimize resume with AI');
+      toast.error('Failed to optimize resume with AI. Please check your API configuration.');
     }
   };
 
@@ -294,20 +326,21 @@ const Builder: React.FC = () => {
     toast.success('Job description parsed and applied to resume!');
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const element = document.getElementById('resume-preview');
     if (!element) {
       toast.error('Resume preview not found');
       return;
     }
 
-    PDFGenerator.generatePDF(element, `${resumeData.personal.fullName || 'Resume'}.pdf`)
-      .then(() => {
-        toast.success('PDF downloaded successfully!');
-      })
-      .catch(() => {
-        toast.error('Failed to download PDF');
-      });
+    try {
+      toast.info('Generating PDF... This may take a moment.');
+      await PDFGenerator.generatePDF(element, `${resumeData.personal.fullName || 'Resume'}.pdf`);
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to download PDF. Please try again.');
+    }
   };
 
   const handleATSOptimization = (optimization: any) => {
