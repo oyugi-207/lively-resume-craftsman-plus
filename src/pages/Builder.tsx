@@ -43,6 +43,7 @@ import JobDescriptionParser from '@/components/JobDescriptionParser';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import PDFGenerator from '@/components/PDFGenerator';
 import JobScanner from '@/components/JobScanner';
+import { ProfileIntegrationService } from '@/services/profileIntegration';
 
 interface ResumeData {
   personal: {
@@ -127,6 +128,7 @@ const Builder: React.FC = () => {
   const [showJobParser, setShowJobParser] = useState(false);
   const [showJobScanner, setShowJobScanner] = useState(false);
   const [atsOptimization, setAtsOptimization] = useState<any>(null);
+  const [importingProfile, setImportingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -368,6 +370,61 @@ const Builder: React.FC = () => {
     setAtsOptimization(optimization);
   };
 
+  const handleImportFromProfile = async () => {
+    if (!user) {
+      toast.error('Please sign in to import profile data');
+      return;
+    }
+
+    setImportingProfile(true);
+    try {
+      const profileData = await ProfileIntegrationService.getProfileData(user.id);
+      if (!profileData) {
+        toast.error('No profile data found. Please update your profile first.');
+        return;
+      }
+
+      let linkedinData = null;
+      let githubData = null;
+
+      // Extract LinkedIn data if URL exists
+      if (profileData.linkedin_url) {
+        toast.info('Extracting LinkedIn profile data...');
+        linkedinData = await ProfileIntegrationService.extractLinkedInData(profileData.linkedin_url);
+      }
+
+      // Extract GitHub data if URL exists
+      if (profileData.github_url) {
+        toast.info('Extracting GitHub profile data...');
+        githubData = await ProfileIntegrationService.extractGitHubData(profileData.github_url);
+      }
+
+      // Merge all data
+      const mergedData = ProfileIntegrationService.mergeProfileDataToResume(
+        profileData,
+        linkedinData || undefined,
+        githubData || undefined
+      );
+
+      // Update resume with merged data
+      setResumeData(prev => ({
+        ...prev,
+        personal: { ...prev.personal, ...mergedData.personal },
+        experience: [...prev.experience, ...mergedData.experience],
+        education: [...prev.education, ...mergedData.education],
+        skills: [...new Set([...prev.skills, ...mergedData.skills])],
+        projects: [...prev.projects, ...mergedData.projects]
+      }));
+
+      toast.success('Profile data imported successfully!');
+    } catch (error: any) {
+      console.error('Profile import error:', error);
+      toast.error('Failed to import profile data. Please try again.');
+    } finally {
+      setImportingProfile(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -412,6 +469,19 @@ const Builder: React.FC = () => {
             </div>
             
             <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={handleImportFromProfile}
+                disabled={importingProfile}
+                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-indigo-50 border-indigo-200"
+              >
+                {importingProfile ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <User className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">Import Profile</span>
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowJobScanner(true)}

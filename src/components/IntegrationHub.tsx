@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { ProfileIntegrationService } from '@/services/profileIntegration';
 import { 
   Linkedin, 
   Github, 
@@ -20,7 +21,9 @@ import {
   ExternalLink,
   Cloud,
   Database,
-  Globe
+  Globe,
+  User,
+  Loader2
 } from 'lucide-react';
 
 interface IntegrationHubProps {
@@ -29,63 +32,91 @@ interface IntegrationHubProps {
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onDataImport }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [githubUsername, setGithubUsername] = useState('');
   const [importing, setImporting] = useState(false);
   const [connectedServices, setConnectedServices] = useState<string[]>([]);
+
+  const importFromProfile = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to import profile data",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const profileData = await ProfileIntegrationService.getProfileData(user.id);
+      if (!profileData) {
+        toast({
+          title: "No Profile Data",
+          description: "Please update your profile with LinkedIn and GitHub URLs first",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      let linkedinData = null;
+      let githubData = null;
+
+      if (profileData.linkedin_url) {
+        linkedinData = await ProfileIntegrationService.extractLinkedInData(profileData.linkedin_url);
+      }
+
+      if (profileData.github_url) {
+        githubData = await ProfileIntegrationService.extractGitHubData(profileData.github_url);
+      }
+
+      const mergedData = ProfileIntegrationService.mergeProfileDataToResume(
+        profileData,
+        linkedinData || undefined,
+        githubData || undefined
+      );
+
+      onDataImport(mergedData, 'profile');
+      setConnectedServices(prev => [...prev, 'profile']);
+      
+      toast({
+        title: "Profile Import Successful",
+        description: "Your profile data has been imported and populated in your resume"
+      });
+    } catch (error) {
+      console.error('Profile import error:', error);
+      toast({
+        title: "Import Failed",
+        description: "Unable to import profile data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const importLinkedInProfile = async () => {
     if (!linkedinUrl) return;
     
     setImporting(true);
     try {
-      // Simulate LinkedIn import - in real app, this would use LinkedIn API
-      setTimeout(() => {
-        const mockLinkedInData = {
-          personal: {
-            fullName: 'John Doe',
-            email: 'john.doe@email.com',
-            location: 'San Francisco, CA',
-            summary: 'Experienced software developer with expertise in full-stack development and team leadership.'
-          },
-          experience: [
-            {
-              id: Date.now(),
-              company: 'Tech Corporation',
-              position: 'Senior Software Engineer',
-              location: 'San Francisco, CA',
-              startDate: '2021',
-              endDate: 'Present',
-              description: 'Lead development of scalable web applications using React and Node.js'
-            }
-          ],
-          education: [
-            {
-              id: Date.now(),
-              school: 'Stanford University',
-              degree: 'Bachelor of Computer Science',
-              location: 'Stanford, CA',
-              startDate: '2015',
-              endDate: '2019'
-            }
-          ],
-          skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS']
-        };
-
-        onDataImport(mockLinkedInData, 'linkedin');
+      const linkedinData = await ProfileIntegrationService.extractLinkedInData(linkedinUrl);
+      if (linkedinData) {
+        onDataImport(linkedinData, 'linkedin');
         setConnectedServices(prev => [...prev, 'linkedin']);
         toast({
           title: "LinkedIn Import Successful",
           description: "Your profile data has been imported and populated in your resume"
         });
-        setImporting(false);
-      }, 2000);
+      }
     } catch (error) {
       toast({
         title: "Import Failed",
         description: "Unable to import LinkedIn profile. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setImporting(false);
     }
   };
@@ -95,40 +126,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onDataImport }) => {
     
     setImporting(true);
     try {
-      // Simulate GitHub import
-      setTimeout(() => {
-        const mockGitHubData = {
-          skills: ['JavaScript', 'TypeScript', 'Python', 'Go', 'Docker', 'Kubernetes'],
-          projects: [
-            {
-              name: 'Advanced React Components',
-              description: 'A collection of reusable React components with TypeScript',
-              technologies: ['React', 'TypeScript', 'Storybook'],
-              url: 'https://github.com/username/react-components'
-            },
-            {
-              name: 'Microservices API',
-              description: 'Scalable API built with Node.js and Docker',
-              technologies: ['Node.js', 'Docker', 'MongoDB'],
-              url: 'https://github.com/username/microservices-api'
-            }
-          ]
-        };
-
-        onDataImport(mockGitHubData, 'github');
+      const githubData = await ProfileIntegrationService.extractGitHubData(`https://github.com/${githubUsername}`);
+      if (githubData) {
+        onDataImport(githubData, 'github');
         setConnectedServices(prev => [...prev, 'github']);
         toast({
           title: "GitHub Import Successful",
           description: "Your repositories and skills have been imported"
         });
-        setImporting(false);
-      }, 2000);
+      }
     } catch (error) {
       toast({
         title: "Import Failed",
         description: "Unable to import GitHub profile. Please check the username.",
         variant: "destructive"
       });
+    } finally {
       setImporting(false);
     }
   };
@@ -223,6 +236,45 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onDataImport }) => {
         </TabsList>
 
         <TabsContent value="import" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-indigo-600" />
+                Import from Profile
+              </CardTitle>
+              <CardDescription>
+                Automatically import data from your connected LinkedIn and GitHub profiles
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={importFromProfile} 
+                disabled={importing}
+                className="w-full"
+              >
+                {importing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Import from My Profile
+                  </>
+                )}
+              </Button>
+              {connectedServices.includes('profile') && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Profile data successfully imported! Your resume has been updated.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
