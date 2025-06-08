@@ -25,7 +25,9 @@ import {
   ArrowLeft,
   Home,
   Search,
-  Zap
+  Zap,
+  Crown,
+  Shield
 } from 'lucide-react';
 import PersonalInfoForm from '@/components/PersonalInfoForm';
 import ExperienceForm from '@/components/ExperienceForm';
@@ -41,10 +43,6 @@ import JobDescriptionParser from '@/components/JobDescriptionParser';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import PDFGenerator from '@/components/PDFGenerator';
 import JobScanner from '@/components/JobScanner';
-import UserProfile from '@/components/UserProfile';
-import NotificationsCenter from '@/components/NotificationsCenter';
-import Settings from '@/components/Settings';
-import JobMarket from '@/components/JobMarket';
 
 interface ResumeData {
   personal: {
@@ -272,9 +270,20 @@ const Builder: React.FC = () => {
       return;
     }
 
+    const apiKey = localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+      toast.error('Please set your Gemini API key in Settings first');
+      return;
+    }
+
     try {
+      toast.info('AI is optimizing your resume...');
+      
       const { data, error } = await supabase.functions.invoke('gemini-ai-optimize', {
-        body: { resumeData }
+        body: { 
+          resumeData,
+          apiKey 
+        }
       });
 
       if (error) throw error;
@@ -287,7 +296,6 @@ const Builder: React.FC = () => {
           if (suggestion.section === 'summary' && suggestion.confidence > 0.7) {
             updatedData.personal.summary = suggestion.suggested;
           }
-          // Add more suggestion applications as needed
         });
         
         setResumeData(updatedData);
@@ -304,7 +312,7 @@ const Builder: React.FC = () => {
       }
     } catch (error: any) {
       console.error('AI optimization error:', error);
-      toast.error('Failed to optimize resume with AI. Please check your API configuration.');
+      toast.error('Failed to optimize resume with AI. Please check your API key in Settings.');
     }
   };
 
@@ -333,13 +341,26 @@ const Builder: React.FC = () => {
       return;
     }
 
+    if (!resumeData.personal.fullName) {
+      toast.error('Please add your name before downloading');
+      return;
+    }
+
     try {
       toast.info('Generating PDF... This may take a moment.');
-      await PDFGenerator.generatePDF(element, `${resumeData.personal.fullName || 'Resume'}.pdf`);
+      
+      // Add PDF-specific attributes to the element
+      element.setAttribute('data-pdf-element', 'true');
+      
+      const filename = `${resumeData.personal.fullName.replace(/[^a-z0-9]/gi, '_')}_Resume.pdf`;
+      await PDFGenerator.generatePDF(element, filename);
+      
       toast.success('PDF downloaded successfully!');
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Failed to download PDF. Please try again.');
+    } finally {
+      element.removeAttribute('data-pdf-element');
     }
   };
 
@@ -360,86 +381,94 @@ const Builder: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Enhanced Navigation Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 hover:bg-blue-50"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Dashboard
-            </Button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                AI Resume Builder
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-                Create your professional resume with AI assistance
-              </p>
+        {/* Premium Header */}
+        <div className="relative mb-8 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-2xl"></div>
+          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 hover:bg-blue-50 border-blue-200"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Dashboard
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Crown className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    AI Resume Builder Pro
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+                    Create premium resumes with AI assistance
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowJobScanner(true)}
-              className="flex items-center gap-2 text-xs sm:text-sm"
-            >
-              <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">Job Scanner</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowJobParser(true)}
-              className="flex items-center gap-2 text-xs sm:text-sm"
-            >
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Parse Job</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowTemplateSelector(true)}
-              className="flex items-center gap-2 text-xs sm:text-sm"
-            >
-              <Palette className="w-4 h-4" />
-              <span className="hidden sm:inline">Templates</span>
-            </Button>
-            <Button
-              onClick={handleAIOptimize}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs sm:text-sm"
-            >
-              <Wand2 className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Optimize</span>
-            </Button>
-            <Button
-              onClick={handleDownloadPDF}
-              variant="outline"
-              className="flex items-center gap-2 text-xs sm:text-sm"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Download</span>
-            </Button>
-            <Button
-              onClick={saveResumeData}
-              disabled={saving}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : <span className="hidden sm:inline">Save</span>}
-            </Button>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowJobScanner(true)}
+                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-green-50 border-green-200"
+              >
+                <Search className="w-4 h-4" />
+                <span className="hidden sm:inline">Job Scanner</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowJobParser(true)}
+                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-orange-50 border-orange-200"
+              >
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">Parse Job</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowTemplateSelector(true)}
+                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-purple-50 border-purple-200"
+              >
+                <Palette className="w-4 h-4" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
+              <Button
+                onClick={handleAIOptimize}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs sm:text-sm shadow-lg"
+              >
+                <Wand2 className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Optimize</span>
+              </Button>
+              <Button
+                onClick={handleDownloadPDF}
+                variant="outline"
+                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-green-50 border-green-200"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Download</span>
+              </Button>
+              <Button
+                onClick={saveResumeData}
+                disabled={saving}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm shadow-lg"
+              >
+                <Save className="w-4 h-4" />
+                {saving ? 'Saving...' : <span className="hidden sm:inline">Save</span>}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Template & ATS Info Cards */}
+        {/* Premium Status Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <Card className="p-4 shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+          <Card className="p-4 shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
                   <Eye className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -447,13 +476,14 @@ const Builder: React.FC = () => {
                     Template: {getTemplateName(selectedTemplate)}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Template {selectedTemplate + 1} - Professional design
+                    Professional ATS-optimized design
                   </p>
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <Badge className="bg-green-100 text-green-800 text-xs">
-                  ATS Score: {atsOptimization?.score || 85}%
+                <Badge className="bg-green-100 text-green-800 text-xs flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  ATS Score: {atsOptimization?.score || 95}%
                 </Badge>
                 <Badge variant="outline" className="flex items-center gap-1 text-xs">
                   <Sparkles className="w-3 h-3" />
@@ -470,41 +500,42 @@ const Builder: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Form Section - Takes 2 columns on XL screens */}
+          {/* Enhanced Form Section */}
           <div className="xl:col-span-2 space-y-6">
-            <Card className="shadow-lg border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur">
-              <CardContent className="p-6">
+            <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+              <CardContent className="relative p-6">
                 <Tabs defaultValue="personal" className="w-full">
-                  <TabsList className="grid grid-cols-4 lg:grid-cols-8 mb-6 h-auto">
-                    <TabsTrigger value="personal" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                  <TabsList className="grid grid-cols-4 lg:grid-cols-8 mb-6 h-auto bg-gray-100/50 dark:bg-gray-700/50">
+                    <TabsTrigger value="personal" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <User className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Personal</span>
                     </TabsTrigger>
-                    <TabsTrigger value="experience" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="experience" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <Briefcase className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Experience</span>
                     </TabsTrigger>
-                    <TabsTrigger value="education" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="education" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <GraduationCap className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Education</span>
                     </TabsTrigger>
-                    <TabsTrigger value="skills" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="skills" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <Award className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Skills</span>
                     </TabsTrigger>
-                    <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <FolderOpen className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Projects</span>
                     </TabsTrigger>
-                    <TabsTrigger value="certifications" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="certifications" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <Award className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Certs</span>
                     </TabsTrigger>
-                    <TabsTrigger value="languages" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="languages" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <Languages className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Languages</span>
                     </TabsTrigger>
-                    <TabsTrigger value="interests" className="flex flex-col sm:flex-row items-center gap-1 p-2">
+                    <TabsTrigger value="interests" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
                       <Heart className="w-4 h-4" />
                       <span className="text-xs sm:text-sm">Interests</span>
                     </TabsTrigger>
@@ -570,13 +601,16 @@ const Builder: React.FC = () => {
             </Card>
           </div>
 
-          {/* Enhanced Preview Section - Takes 1 column on XL screens */}
+          {/* Enhanced Preview Section */}
           <div className="xl:col-span-1">
-            <Card className="overflow-hidden shadow-lg border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur sticky top-6">
-              <CardHeader className="pb-3">
+            <Card className="overflow-hidden shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg sticky top-6">
+              <CardHeader className="pb-3 bg-gradient-to-r from-blue-600/5 to-purple-600/5">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Eye className="w-5 h-5" />
                   Live Preview
+                  <Badge variant="secondary" className="ml-auto">
+                    Premium
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">

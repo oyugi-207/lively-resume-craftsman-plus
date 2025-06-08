@@ -1,295 +1,188 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, FileText, Star, Calendar, Target, Award, Briefcase } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, Users, FileText, Target } from 'lucide-react';
 
-interface AnalyticsDashboardProps {
-  resumeId?: string;
-}
-
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ resumeId }) => {
+const AnalyticsDashboard = () => {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<any[]>([]);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [skillMarketData, setSkillMarketData] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState({
+    totalResumes: 0,
+    totalViews: 0,
+    atsScore: 0,
+    suggestions: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       loadAnalytics();
-      loadApplications();
-      loadSkillMarketData();
     }
-  }, [user, resumeId]);
+  }, [user]);
 
   const loadAnalytics = async () => {
     try {
-      const { data, error } = await supabase
-        .from('cv_analytics')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+      // Load resume count
+      const { data: resumes, error: resumeError } = await supabase
+        .from('resumes')
+        .select('id')
+        .eq('user_id', user?.id);
 
-      if (error) throw error;
-      setAnalytics(data || []);
+      if (resumeError) throw resumeError;
+
+      // Load AI suggestions count
+      const { data: suggestions, error: suggestionsError } = await supabase
+        .from('ai_suggestions')
+        .select('id')
+        .eq('user_id', user?.id);
+
+      if (suggestionsError) throw suggestionsError;
+
+      // Load user activity count
+      const { data: activity, error: activityError } = await supabase
+        .from('user_activity')
+        .select('id')
+        .eq('user_id', user?.id);
+
+      if (activityError) throw activityError;
+
+      setAnalytics({
+        totalResumes: resumes?.length || 0,
+        totalViews: activity?.length || 0,
+        atsScore: 85, // Mock ATS score
+        suggestions: suggestions?.length || 0
+      });
     } catch (error) {
       console.error('Error loading analytics:', error);
-    }
-  };
-
-  const loadApplications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('job_applications')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('application_date', { ascending: false });
-
-      if (error) throw error;
-      setApplications(data || []);
-    } catch (error) {
-      console.error('Error loading applications:', error);
-    }
-  };
-
-  const loadSkillMarketData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('skill_market_data')
-        .select('*')
-        .order('demand_score', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setSkillMarketData(data || []);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading skill data:', error);
+    } finally {
       setLoading(false);
     }
   };
-
-  const getSuccessRate = () => {
-    const successful = applications.filter(app => 
-      app.status === 'interview' || app.status === 'accepted'
-    ).length;
-    return applications.length > 0 ? (successful / applications.length) * 100 : 0;
-  };
-
-  const getCallbackRate = () => {
-    const callbacks = applications.filter(app => 
-      app.status !== 'applied' && app.status !== 'rejected'
-    ).length;
-    return applications.length > 0 ? (callbacks / applications.length) * 100 : 0;
-  };
-
-  const applicationsByStatus = applications.reduce((acc, app) => {
-    acc[app.status] = (acc[app.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  const statusData = Object.entries(applicationsByStatus).map(([status, count]) => ({
-    name: status.charAt(0).toUpperCase() + status.slice(1),
-    value: count as number
-  }));
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-16 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
+  const chartData = [
+    { name: 'Resumes', value: analytics.totalResumes },
+    { name: 'Views', value: analytics.totalViews },
+    { name: 'Suggestions', value: analytics.suggestions }
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{applications.length}</div>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Resumes</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.totalResumes}</p>
+              </div>
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getSuccessRate().toFixed(1)}%</div>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Profile Views</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.totalViews}</p>
+              </div>
+              <Users className="w-8 h-8 text-green-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Callback Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getCallbackRate().toFixed(1)}%</div>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">ATS Score</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.atsScore}%</p>
+              </div>
+              <Target className="w-8 h-8 text-purple-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CV Views</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {analytics.filter(a => a.event_type === 'view').length}
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">AI Suggestions</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.suggestions}</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="applications" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="applications">Application Tracking</TabsTrigger>
-          <TabsTrigger value="skills">Skill Market Analysis</TabsTrigger>
-          <TabsTrigger value="performance">CV Performance</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Activity Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="applications" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Application Status Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {statusData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    No application data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Applications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 max-h-72 overflow-y-auto">
-                  {applications.slice(0, 5).map((app) => (
-                    <div key={app.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{app.position_title}</h4>
-                        <p className="text-sm text-gray-600">{app.company_name}</p>
-                      </div>
-                      <Badge variant={
-                        app.status === 'accepted' ? 'default' :
-                        app.status === 'interview' ? 'secondary' :
-                        app.status === 'rejected' ? 'destructive' : 'outline'
-                      }>
-                        {app.status}
-                      </Badge>
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="skills" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Top In-Demand Skills</CardTitle>
-              <CardDescription>Market demand and salary insights</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {skillMarketData.map((skill) => (
-                  <div key={skill.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{skill.skill_name}</h4>
-                        <Badge variant={
-                          skill.growth_trend === 'growing' ? 'default' :
-                          skill.growth_trend === 'stable' ? 'secondary' : 'outline'
-                        }>
-                          {skill.growth_trend}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>Demand: {skill.demand_score}%</span>
-                        <span>
-                          Salary: ${skill.salary_range?.min?.toLocaleString()} - ${skill.salary_range?.max?.toLocaleString()}
-                        </span>
-                      </div>
-                      <Progress value={skill.demand_score} className="mt-2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="performance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>CV Performance Metrics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {analytics.filter(a => a.event_type === 'download').length}
-                  </div>
-                  <p className="text-sm text-gray-600">Downloads</p>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {analytics.filter(a => a.event_type === 'view').length}
-                  </div>
-                  <p className="text-sm text-gray-600">Views</p>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {(getCallbackRate() / 10).toFixed(1)}
-                  </div>
-                  <p className="text-sm text-gray-600">Effectiveness Score</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
