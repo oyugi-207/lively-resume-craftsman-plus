@@ -27,23 +27,9 @@ import {
   Search,
   Zap,
   Crown,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
-import PersonalInfoForm from '@/components/PersonalInfoForm';
-import ExperienceForm from '@/components/ExperienceForm';
-import EducationForm from '@/components/EducationForm';
-import SkillsForm from '@/components/SkillsForm';
-import ProjectsForm from '@/components/ProjectsForm';
-import CertificationsForm from '@/components/CertificationsForm';
-import LanguagesForm from '@/components/LanguagesForm';
-import InterestsForm from '@/components/InterestsForm';
-import ImprovedResumePreview from '@/components/ImprovedResumePreview';
-import EnhancedTemplateSelector from '@/components/EnhancedTemplateSelector';
-import JobDescriptionParser from '@/components/JobDescriptionParser';
-import ATSOptimizer from '@/components/ATSOptimizer';
-import PDFGenerator from '@/components/PDFGenerator';
-import JobScanner from '@/components/JobScanner';
-import { ProfileIntegrationService } from '@/services/profileIntegration';
 
 interface ResumeData {
   personal: {

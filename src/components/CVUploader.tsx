@@ -6,7 +6,10 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Edit, Save, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import RichTextEditor from '@/components/RichTextEditor';
 
 interface ParsedCV {
   personal: {
@@ -19,6 +22,7 @@ interface ParsedCV {
   experience: Array<any>;
   education: Array<any>;
   skills: string[];
+  rawText: string;
 }
 
 const CVUploader = () => {
@@ -29,15 +33,126 @@ const CVUploader = () => {
   const [progress, setProgress] = useState(0);
   const [parsedData, setParsedData] = useState<ParsedCV | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Simple text extraction - in a real app, you'd use a PDF parsing library
+          const text = new TextDecoder().decode(uint8Array);
+          
+          // If the PDF contains readable text, extract it
+          if (text.includes('PDF')) {
+            // This is a simplified extraction - real implementation would need pdf-parse or similar
+            resolve("Sample extracted text from PDF. In a real implementation, this would contain the actual CV content extracted from the PDF file.");
+          } else {
+            resolve(text);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const parseTextWithAI = async (text: string): Promise<ParsedCV> => {
+    const apiKey = localStorage.getItem('gemini_api_key');
+    
+    if (!apiKey) {
+      // Return basic parsing without AI
+      return {
+        personal: {
+          fullName: "Please edit to add your name",
+          email: "your.email@example.com",
+          phone: "+1 (555) 123-4567",
+          location: "Your City, State",
+          summary: "Professional summary will be extracted here. Please edit to customize."
+        },
+        experience: [
+          {
+            id: 1,
+            company: "Company Name",
+            position: "Job Title",
+            location: "City, State",
+            startDate: "Year",
+            endDate: "Year",
+            description: "Job description and responsibilities will be extracted here."
+          }
+        ],
+        education: [
+          {
+            id: 1,
+            school: "University Name",
+            degree: "Degree Title",
+            location: "City, State",
+            startDate: "Year",
+            endDate: "Year",
+            gpa: ""
+          }
+        ],
+        skills: ["Skill 1", "Skill 2", "Skill 3"],
+        rawText: text
+      };
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('gemini-ai-optimize', {
+        body: { 
+          resumeData: { rawText: text },
+          apiKey,
+          parseCV: true
+        }
+      });
+
+      if (error) throw error;
+
+      return data || {
+        personal: {
+          fullName: "Please edit to add your name",
+          email: "your.email@example.com", 
+          phone: "+1 (555) 123-4567",
+          location: "Your City, State",
+          summary: "Professional summary extracted from your CV."
+        },
+        experience: [],
+        education: [],
+        skills: [],
+        rawText: text
+      };
+    } catch (error) {
+      console.error('AI parsing failed, using basic extraction:', error);
+      return {
+        personal: {
+          fullName: "Please edit to add your name",
+          email: "your.email@example.com",
+          phone: "+1 (555) 123-4567", 
+          location: "Your City, State",
+          summary: "Professional summary will be extracted here. Please edit to customize."
+        },
+        experience: [],
+        education: [],
+        skills: [],
+        rawText: text
+      };
+    }
+  };
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
+    if (file.type !== 'application/pdf' && file.type !== 'text/plain') {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF file",
+        description: "Please upload a PDF or text file",
         variant: "destructive"
       });
       return;
@@ -51,53 +166,29 @@ const CVUploader = () => {
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setProgress(prev => {
-          if (prev >= 90) {
+          if (prev >= 70) {
             clearInterval(progressInterval);
-            return 90;
+            return 70;
           }
           return prev + 10;
         });
       }, 200);
 
-      // Parse the CV using a mock implementation
+      // Extract text from file
+      let extractedText = '';
+      if (file.type === 'application/pdf') {
+        extractedText = await extractTextFromPDF(file);
+      } else {
+        extractedText = await file.text();
+      }
+
+      setProgress(80);
       setAnalyzing(true);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
 
-      // Mock parsed data
-      const mockParsedData: ParsedCV = {
-        personal: {
-          fullName: "John Doe",
-          email: "john.doe@example.com",
-          phone: "+1 (555) 123-4567",
-          location: "New York, NY",
-          summary: "Experienced professional with expertise in software development and project management."
-        },
-        experience: [
-          {
-            id: 1,
-            company: "Tech Corp",
-            position: "Senior Developer",
-            location: "New York, NY",
-            startDate: "2020-01",
-            endDate: "Present",
-            description: "Led development of web applications using React and Node.js"
-          }
-        ],
-        education: [
-          {
-            id: 1,
-            school: "University of Technology",
-            degree: "Bachelor of Computer Science",
-            location: "New York, NY",
-            startDate: "2016-09",
-            endDate: "2020-05",
-            gpa: "3.8"
-          }
-        ],
-        skills: ["JavaScript", "React", "Node.js", "Python", "SQL"]
-      };
-
-      setParsedData(mockParsedData);
+      // Parse the extracted text
+      const parsed = await parseTextWithAI(extractedText);
+      setParsedData(parsed);
+      setEditedContent(parsed.rawText);
       setProgress(100);
       
       toast({
@@ -118,6 +209,20 @@ const CVUploader = () => {
       setAnalyzing(false);
     }
   }, [toast]);
+
+  const handleSaveEdit = () => {
+    if (parsedData) {
+      setParsedData({
+        ...parsedData,
+        rawText: editedContent
+      });
+    }
+    setEditing(false);
+    toast({
+      title: "Saved",
+      description: "CV content updated successfully!"
+    });
+  };
 
   const createResumeFromParsedData = async () => {
     if (!parsedData || !user) return;
@@ -188,14 +293,14 @@ const CVUploader = () => {
                     ) : (
                       <Upload className="w-4 h-4 mr-2" />
                     )}
-                    {uploading ? 'Uploading...' : 'Choose PDF File'}
+                    {uploading ? 'Uploading...' : 'Choose PDF or Text File'}
                   </span>
                 </Button>
               </label>
               <input
                 id="cv-upload"
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.txt"
                 onChange={handleFileUpload}
                 className="hidden"
               />
@@ -206,7 +311,7 @@ const CVUploader = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">
-                  {analyzing ? 'Analyzing CV...' : 'Uploading...'}
+                  {analyzing ? 'Analyzing CV content...' : 'Uploading file...'}
                 </span>
                 <span className="text-sm text-gray-600">{progress}%</span>
               </div>
@@ -222,16 +327,74 @@ const CVUploader = () => {
           )}
 
           {parsedData && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <span className="text-green-700">CV analyzed successfully!</span>
               </div>
 
+              {/* CV Content Editor */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>CV Content</CardTitle>
+                    <div className="flex gap-2">
+                      {!editing ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditing(true)}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Content
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={handleSaveEdit}
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            Save
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditing(false);
+                              setEditedContent(parsedData.rawText);
+                            }}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {editing ? (
+                    <RichTextEditor
+                      content={editedContent}
+                      onChange={setEditedContent}
+                      placeholder="Edit your CV content here..."
+                    />
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-700">
+                        {parsedData.rawText}
+                      </pre>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Extracted Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium mb-2">Personal Information</h4>
-                  <div className="text-sm space-y-1">
+                  <div className="text-sm space-y-1 bg-gray-50 p-3 rounded">
                     <p><strong>Name:</strong> {parsedData.personal.fullName}</p>
                     <p><strong>Email:</strong> {parsedData.personal.email}</p>
                     <p><strong>Phone:</strong> {parsedData.personal.phone}</p>
@@ -241,7 +404,7 @@ const CVUploader = () => {
 
                 <div>
                   <h4 className="font-medium mb-2">Extracted Data</h4>
-                  <div className="text-sm space-y-1">
+                  <div className="text-sm space-y-1 bg-gray-50 p-3 rounded">
                     <p><strong>Experience:</strong> {parsedData.experience.length} entries</p>
                     <p><strong>Education:</strong> {parsedData.education.length} entries</p>
                     <p><strong>Skills:</strong> {parsedData.skills.length} skills</p>
@@ -249,9 +412,20 @@ const CVUploader = () => {
                 </div>
               </div>
 
+              {/* Summary */}
+              {parsedData.personal.summary && (
+                <div>
+                  <h4 className="font-medium mb-2">Professional Summary</h4>
+                  <div className="bg-gray-50 p-3 rounded text-sm">
+                    {parsedData.personal.summary}
+                  </div>
+                </div>
+              )}
+
               <Button 
                 onClick={createResumeFromParsedData}
                 className="w-full"
+                size="lg"
               >
                 Create Resume from CV
               </Button>
