@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,11 +31,12 @@ import {
   Zap,
   Target,
   Sparkles,
-  Settings
+  Settings as SettingsIcon,
+  Bell
 } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import NotificationsCenter from '@/components/NotificationsCenter';
-import Settings from '@/components/Settings';
+import SettingsComponent from '@/components/Settings';
 import JobMarket from '@/components/JobMarket';
 
 interface Resume {
@@ -261,7 +263,7 @@ const Dashboard = () => {
       case 'notifications':
         return <NotificationsCenter />;
       case 'settings':
-        return <Settings />;
+        return <SettingsComponent />;
       case 'jobs':
         return <JobMarket />;
       default:
@@ -555,7 +557,7 @@ const Dashboard = () => {
                   { id: 'jobs', label: 'Jobs', icon: Search },
                   { id: 'profile', label: 'Profile', icon: User },
                   { id: 'notifications', label: 'Notifications', icon: Bell },
-                  { id: 'settings', label: 'Settings', icon: Settings }
+                  { id: 'settings', label: 'Settings', icon: SettingsIcon }
                 ].map(({ id, label, icon: Icon }) => (
                   <Button
                     key={id}
@@ -607,7 +609,7 @@ const Dashboard = () => {
             { id: 'jobs', label: 'Jobs', icon: Search },
             { id: 'profile', label: 'Profile', icon: User },
             { id: 'notifications', label: 'Notifications', icon: Bell },
-            { id: 'settings', label: 'Settings', icon: Settings }
+            { id: 'settings', label: 'Settings', icon: SettingsIcon }
           ].map(({ id, label, icon: Icon }) => (
             <Button
               key={id}
