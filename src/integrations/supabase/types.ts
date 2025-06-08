@@ -59,6 +59,53 @@ export type Database = {
           },
         ]
       }
+      cover_letters: {
+        Row: {
+          company_name: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          position_title: string | null
+          resume_id: string | null
+          template_id: number | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          position_title?: string | null
+          resume_id?: string | null
+          template_id?: number | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          position_title?: string | null
+          resume_id?: string | null
+          template_id?: number | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_letters_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string

@@ -95,8 +95,7 @@ I'd love to show you how my creative vision can contribute to ${companyName}'s c
 
 Best regards,
 ${resumeData?.personal_info?.fullName || '[Your Name]'}`
-      },
-      // Add more templates as needed
+      }
     ];
 
     const template = templates.find(t => t.id === templateId) || templates[0];
@@ -125,7 +124,8 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
 
       // Load cover letter if editing
       if (coverLetterId) {
-        const { data, error } = await supabase
+        // Use any type to bypass TypeScript issues until types are regenerated
+        const { data, error } = await (supabase as any)
           .from('cover_letters')
           .select('*')
           .eq('id', coverLetterId)
@@ -181,7 +181,7 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
       };
 
       if (coverLetterId) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('cover_letters')
           .update(payload)
           .eq('id', coverLetterId)
@@ -189,7 +189,7 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
         
         if (error) throw error;
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('cover_letters')
           .insert([payload])
           .select()
