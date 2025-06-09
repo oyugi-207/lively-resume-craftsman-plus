@@ -1,14 +1,19 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
 import { 
   Bold, 
   Italic, 
+  Underline, 
   List, 
   ListOrdered, 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight,
+  Link,
   Type,
-  Minus
+  Palette
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -18,198 +23,227 @@ interface RichTextEditorProps {
   className?: string;
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({
-  value,
-  onChange,
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ 
+  value, 
+  onChange, 
   placeholder = "Start typing...",
   className = ""
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [isEditorFocused, setIsEditorFocused] = useState(false);
 
-  const insertText = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value;
+    }
+  }, [value]);
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = value.substring(start, end);
-    
-    const newText = value.substring(0, start) + before + selectedText + after + value.substring(end);
-    onChange(newText);
-    
-    // Set cursor position after the inserted text
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length);
-    }, 0);
+  const handleInput = () => {
+    if (editorRef.current) {
+      const newValue = editorRef.current.innerHTML;
+      onChange(newValue);
+    }
   };
 
-  const insertBulletPoint = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-    const beforeCursor = value.substring(0, start);
-    const afterCursor = value.substring(start);
-    
-    // Check if we're at the beginning of a line
-    const isAtLineStart = start === 0 || value[start - 1] === '\n';
-    
-    let newText;
-    if (isAtLineStart) {
-      newText = beforeCursor + '• ' + afterCursor;
-    } else {
-      newText = beforeCursor + '\n• ' + afterCursor;
-    }
-    
-    onChange(newText);
-    
-    setTimeout(() => {
-      textarea.focus();
-      const newPosition = isAtLineStart ? start + 2 : start + 3;
-      textarea.setSelectionRange(newPosition, newPosition);
-    }, 0);
+  const execCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+    handleInput();
   };
 
-  const insertNumberedPoint = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const beforeCursor = value.substring(0, start);
-    const afterCursor = value.substring(start);
-    
-    // Find existing numbered items to determine next number
-    const lines = beforeCursor.split('\n');
-    let nextNumber = 1;
-    
-    // Look for existing numbered items
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const match = lines[i].match(/^(\d+)\.\s/);
-      if (match) {
-        nextNumber = parseInt(match[1]) + 1;
-        break;
-      }
-    }
-    
-    const isAtLineStart = start === 0 || value[start - 1] === '\n';
-    
-    let newText;
-    if (isAtLineStart) {
-      newText = beforeCursor + `${nextNumber}. ` + afterCursor;
-    } else {
-      newText = beforeCursor + `\n${nextNumber}. ` + afterCursor;
-    }
-    
-    onChange(newText);
-    
-    setTimeout(() => {
-      textarea.focus();
-      const newPosition = isAtLineStart ? start + `${nextNumber}. `.length : start + `\n${nextNumber}. `.length;
-      textarea.setSelectionRange(newPosition, newPosition);
-    }, 0);
+  const insertBulletList = () => {
+    execCommand('insertUnorderedList');
   };
 
-  const insertSeparator = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  const insertNumberedList = () => {
+    execCommand('insertOrderedList');
+  };
 
-    const start = textarea.selectionStart;
-    const beforeCursor = value.substring(0, start);
-    const afterCursor = value.substring(start);
-    
-    const isAtLineStart = start === 0 || value[start - 1] === '\n';
-    
-    let newText;
-    if (isAtLineStart) {
-      newText = beforeCursor + '---\n' + afterCursor;
-    } else {
-      newText = beforeCursor + '\n---\n' + afterCursor;
+  const formatText = (command: string) => {
+    execCommand(command);
+  };
+
+  const alignText = (alignment: string) => {
+    execCommand(`justify${alignment}`);
+  };
+
+  const insertLink = () => {
+    const url = prompt('Enter URL:');
+    if (url) {
+      execCommand('createLink', url);
     }
-    
-    onChange(newText);
-    
-    setTimeout(() => {
-      textarea.focus();
-      const newPosition = isAtLineStart ? start + 4 : start + 5;
-      textarea.setSelectionRange(newPosition, newPosition);
-    }, 0);
+  };
+
+  const changeFontSize = (size: string) => {
+    execCommand('fontSize', size);
+  };
+
+  const changeTextColor = (color: string) => {
+    execCommand('foreColor', color);
   };
 
   return (
-    <div className={`border border-gray-300 dark:border-gray-600 rounded-lg ${className}`}>
+    <Card className={`w-full ${className}`}>
       {/* Toolbar */}
-      <div className="flex items-center gap-1 p-2 border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-t-lg">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => insertText('**', '**')}
-          title="Bold"
-          className="h-8 w-8 p-0"
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => insertText('*', '*')}
-          title="Italic"
-          className="h-8 w-8 p-0"
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
-        
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={insertBulletPoint}
-          title="Bullet Point"
-          className="h-8 w-8 p-0"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={insertNumberedPoint}
-          title="Numbered List"
-          className="h-8 w-8 p-0"
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-        
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
-        
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={insertSeparator}
-          title="Separator"
-          className="h-8 w-8 p-0"
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
+      <div className="border-b border-gray-200 p-3">
+        <div className="flex flex-wrap gap-1">
+          {/* Text Formatting */}
+          <div className="flex gap-1 mr-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => formatText('bold')}
+              className="p-2"
+            >
+              <Bold className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => formatText('italic')}
+              className="p-2"
+            >
+              <Italic className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => formatText('underline')}
+              className="p-2"
+            >
+              <Underline className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Lists */}
+          <div className="flex gap-1 mr-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={insertBulletList}
+              className="p-2"
+              title="Bullet List"
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={insertNumberedList}
+              className="p-2"
+              title="Numbered List"
+            >
+              <ListOrdered className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Alignment */}
+          <div className="flex gap-1 mr-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => alignText('Left')}
+              className="p-2"
+            >
+              <AlignLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => alignText('Center')}
+              className="p-2"
+            >
+              <AlignCenter className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => alignText('Right')}
+              className="p-2"
+            >
+              <AlignRight className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Link */}
+          <div className="flex gap-1 mr-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={insertLink}
+              className="p-2"
+            >
+              <Link className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Font Size */}
+          <div className="flex gap-1 mr-3">
+            <select 
+              onChange={(e) => changeFontSize(e.target.value)}
+              className="text-xs border border-gray-300 rounded px-2 py-1"
+            >
+              <option value="1">Small</option>
+              <option value="3" selected>Normal</option>
+              <option value="5">Large</option>
+              <option value="7">X-Large</option>
+            </select>
+          </div>
+
+          {/* Text Color */}
+          <div className="flex gap-1">
+            <input
+              type="color"
+              onChange={(e) => changeTextColor(e.target.value)}
+              className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+              title="Text Color"
+            />
+          </div>
+        </div>
       </div>
-      
-      {/* Text Area */}
-      <Textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="border-0 rounded-t-none focus:ring-0 min-h-[300px] resize-none"
-      />
-    </div>
+
+      {/* Editor */}
+      <div className="min-h-[200px] max-h-[400px] overflow-y-auto">
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleInput}
+          onFocus={() => setIsEditorFocused(true)}
+          onBlur={() => setIsEditorFocused(false)}
+          className={`p-4 min-h-[200px] outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+            !value && !isEditorFocused ? 'text-gray-400' : 'text-gray-900'
+          }`}
+          style={{ 
+            lineHeight: '1.6',
+            fontFamily: 'inherit'
+          }}
+          suppressContentEditableWarning={true}
+        >
+          {!value && !isEditorFocused && (
+            <span className="text-gray-400 pointer-events-none">
+              {placeholder}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-gray-200 p-2">
+        <div className="text-xs text-gray-500 flex justify-between items-center">
+          <span>Use toolbar for formatting</span>
+          <span>{value.replace(/<[^>]*>/g, '').length} characters</span>
+        </div>
+      </div>
+    </Card>
   );
 };
 

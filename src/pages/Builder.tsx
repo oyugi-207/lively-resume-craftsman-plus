@@ -31,6 +31,24 @@ import {
   Loader2
 } from 'lucide-react';
 
+// Import all form components
+import PersonalInfoForm from '@/components/PersonalInfoForm';
+import ExperienceForm from '@/components/ExperienceForm';
+import EducationForm from '@/components/EducationForm';
+import SkillsForm from '@/components/SkillsForm';
+import ProjectsForm from '@/components/ProjectsForm';
+import CertificationsForm from '@/components/CertificationsForm';
+import LanguagesForm from '@/components/LanguagesForm';
+import InterestsForm from '@/components/InterestsForm';
+import ImprovedResumePreview from '@/components/ImprovedResumePreview';
+import EnhancedTemplateSelector from '@/components/EnhancedTemplateSelector';
+import JobDescriptionParser from '@/components/JobDescriptionParser';
+import JobScanner from '@/components/JobScanner';
+import ATSOptimizer from '@/components/ATSOptimizer';
+import PDFGenerator from '@/components/PDFGenerator';
+import { ProfileIntegrationService } from '@/services/profileIntegration';
+import { useAPIKey } from '@/hooks/useAPIKey';
+
 interface ResumeData {
   personal: {
     fullName: string;
@@ -86,6 +104,7 @@ const Builder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { apiKey } = useAPIKey();
   const resumeIdParam = searchParams.get('id');
   const isPreview = searchParams.get('preview') === 'true';
   const initialTemplate = parseInt(searchParams.get('template') || '0');
@@ -115,6 +134,7 @@ const Builder: React.FC = () => {
   const [showJobScanner, setShowJobScanner] = useState(false);
   const [atsOptimization, setAtsOptimization] = useState<any>(null);
   const [importingProfile, setImportingProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState('personal');
 
   useEffect(() => {
     if (user) {
@@ -146,7 +166,6 @@ const Builder: React.FC = () => {
         setResumeId(resume.id);
         setSelectedTemplate(resume.template_id || 0);
         
-        // Safely handle the JSON data with proper type checking
         setResumeData({
           personal: resume.personal_info && typeof resume.personal_info === 'object' && !Array.isArray(resume.personal_info) 
             ? resume.personal_info as ResumeData['personal']
@@ -258,7 +277,6 @@ const Builder: React.FC = () => {
       return;
     }
 
-    const apiKey = localStorage.getItem('gemini_api_key');
     if (!apiKey) {
       toast.error('Please set your Gemini API key in Settings first');
       return;
@@ -277,7 +295,6 @@ const Builder: React.FC = () => {
       if (error) throw error;
 
       if (data?.suggestions?.length > 0) {
-        // Apply AI suggestions to resume data
         let updatedData = { ...resumeData };
         
         data.suggestions.forEach((suggestion: any) => {
@@ -305,7 +322,6 @@ const Builder: React.FC = () => {
   };
 
   const handleJobDescriptionParsed = (parsedData: any) => {
-    // Update resume data with parsed information
     if (parsedData.skills) {
       updateSkills([...resumeData.skills, ...parsedData.skills]);
     }
@@ -323,12 +339,6 @@ const Builder: React.FC = () => {
   };
 
   const handleDownloadPDF = async () => {
-    const element = document.getElementById('resume-preview');
-    if (!element) {
-      toast.error('Resume preview not found');
-      return;
-    }
-
     if (!resumeData.personal.fullName) {
       toast.error('Please add your name before downloading');
       return;
@@ -337,18 +347,13 @@ const Builder: React.FC = () => {
     try {
       toast.info('Generating PDF... This may take a moment.');
       
-      // Add PDF-specific attributes to the element
-      element.setAttribute('data-pdf-element', 'true');
-      
       const filename = `${resumeData.personal.fullName.replace(/[^a-z0-9]/gi, '_')}_Resume.pdf`;
-      await PDFGenerator.generatePDF(element, filename);
+      await PDFGenerator.generateTextPDF(resumeData, selectedTemplate, filename);
       
       toast.success('PDF downloaded successfully!');
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Failed to download PDF. Please try again.');
-    } finally {
-      element.removeAttribute('data-pdf-element');
     }
   };
 
@@ -373,26 +378,22 @@ const Builder: React.FC = () => {
       let linkedinData = null;
       let githubData = null;
 
-      // Extract LinkedIn data if URL exists
       if (profileData.linkedin_url) {
         toast.info('Extracting LinkedIn profile data...');
         linkedinData = await ProfileIntegrationService.extractLinkedInData(profileData.linkedin_url);
       }
 
-      // Extract GitHub data if URL exists
       if (profileData.github_url) {
         toast.info('Extracting GitHub profile data...');
         githubData = await ProfileIntegrationService.extractGitHubData(profileData.github_url);
       }
 
-      // Merge all data
       const mergedData = ProfileIntegrationService.mergeProfileDataToResume(
         profileData,
         linkedinData || undefined,
         githubData || undefined
       );
 
-      // Update resume with merged data
       setResumeData(prev => ({
         ...prev,
         personal: { ...prev.personal, ...mergedData.personal },
@@ -425,113 +426,129 @@ const Builder: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Premium Header */}
-        <div className="relative mb-8 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-7xl">
+        {/* Responsive Header */}
+        <div className="relative mb-4 sm:mb-8 p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-2xl"></div>
-          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4">
+          <div className="relative flex flex-col gap-4">
+            <div className="flex items-center justify-between">
               <Button
                 variant="outline"
                 onClick={() => navigate('/dashboard')}
                 className="flex items-center gap-2 hover:bg-blue-50 border-blue-200"
+                size="sm"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Dashboard
+                <span className="hidden sm:inline">Dashboard</span>
               </Button>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Crown className="w-6 h-6 text-white" />
+              
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Crown className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <div className="text-center sm:text-left">
+                  <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     AI Resume Builder Pro
                   </h1>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+                  <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm lg:text-base hidden sm:block">
                     Create premium resumes with AI assistance
                   </p>
                 </div>
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            {/* Action Buttons - Responsive Layout */}
+            <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
               <Button
                 variant="outline"
                 onClick={handleImportFromProfile}
                 disabled={importingProfile}
-                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-indigo-50 border-indigo-200"
+                className="flex items-center gap-1 sm:gap-2 text-xs hover:bg-indigo-50 border-indigo-200 px-2 sm:px-3"
+                size="sm"
               >
                 {importingProfile ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
                 ) : (
-                  <User className="w-4 h-4" />
+                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
                 )}
-                <span className="hidden sm:inline">Import Profile</span>
+                <span className="hidden md:inline">Import</span>
               </Button>
+              
               <Button
                 variant="outline"
                 onClick={() => setShowJobScanner(true)}
-                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-green-50 border-green-200"
+                className="flex items-center gap-1 sm:gap-2 text-xs hover:bg-green-50 border-green-200 px-2 sm:px-3"
+                size="sm"
               >
-                <Search className="w-4 h-4" />
-                <span className="hidden sm:inline">Job Scanner</span>
+                <Search className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden md:inline">Scanner</span>
               </Button>
+              
               <Button
                 variant="outline"
                 onClick={() => setShowJobParser(true)}
-                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-orange-50 border-orange-200"
+                className="flex items-center gap-1 sm:gap-2 text-xs hover:bg-orange-50 border-orange-200 px-2 sm:px-3"
+                size="sm"
               >
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Parse Job</span>
+                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden md:inline">Parse</span>
               </Button>
+              
               <Button
                 variant="outline"
                 onClick={() => setShowTemplateSelector(true)}
-                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-purple-50 border-purple-200"
+                className="flex items-center gap-1 sm:gap-2 text-xs hover:bg-purple-50 border-purple-200 px-2 sm:px-3"
+                size="sm"
               >
-                <Palette className="w-4 h-4" />
-                <span className="hidden sm:inline">Templates</span>
+                <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden md:inline">Templates</span>
               </Button>
+              
               <Button
                 onClick={handleAIOptimize}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs sm:text-sm shadow-lg"
+                className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs shadow-lg px-2 sm:px-3"
+                size="sm"
               >
-                <Wand2 className="w-4 h-4" />
-                <span className="hidden sm:inline">AI Optimize</span>
+                <Wand2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden md:inline">AI</span>
               </Button>
+              
               <Button
                 onClick={handleDownloadPDF}
                 variant="outline"
-                className="flex items-center gap-2 text-xs sm:text-sm hover:bg-green-50 border-green-200"
+                className="flex items-center gap-1 sm:gap-2 text-xs hover:bg-green-50 border-green-200 px-2 sm:px-3"
+                size="sm"
               >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Download</span>
+                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden md:inline">PDF</span>
               </Button>
+              
               <Button
                 onClick={saveResumeData}
                 disabled={saving}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm shadow-lg"
+                className="flex items-center gap-1 sm:gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs shadow-lg px-2 sm:px-3"
+                size="sm"
               >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : <span className="hidden sm:inline">Save</span>}
+                <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                {saving ? 'Saving...' : <span className="hidden md:inline">Save</span>}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Premium Status Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <Card className="p-4 shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg">
+        {/* Status Cards - Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Card className="p-3 sm:p-4 shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
-                  <Eye className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
+                  <Eye className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
                     Template: {getTemplateName(selectedTemplate)}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Professional ATS-optimized design
                   </p>
                 </div>
@@ -539,11 +556,11 @@ const Builder: React.FC = () => {
               <div className="flex flex-col gap-1">
                 <Badge className="bg-green-100 text-green-800 text-xs flex items-center gap-1">
                   <Shield className="w-3 h-3" />
-                  ATS Score: {atsOptimization?.score || 95}%
+                  {atsOptimization?.score || 95}%
                 </Badge>
                 <Badge variant="outline" className="flex items-center gap-1 text-xs">
                   <Sparkles className="w-3 h-3" />
-                  AI Enhanced
+                  AI
                 </Badge>
               </div>
             </div>
@@ -555,45 +572,46 @@ const Builder: React.FC = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Enhanced Form Section */}
-          <div className="xl:col-span-2 space-y-6">
+        {/* Main Content - Responsive Layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+          {/* Form Section */}
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
             <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
-              <CardContent className="relative p-6">
-                <Tabs defaultValue="personal" className="w-full">
-                  <TabsList className="grid grid-cols-4 lg:grid-cols-8 mb-6 h-auto bg-gray-100/50 dark:bg-gray-700/50">
-                    <TabsTrigger value="personal" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <User className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Personal</span>
+              <CardContent className="relative p-3 sm:p-6">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid grid-cols-4 sm:grid-cols-8 mb-4 sm:mb-6 h-auto bg-gray-100/50 dark:bg-gray-700/50 text-xs">
+                    <TabsTrigger value="personal" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Personal</span>
                     </TabsTrigger>
-                    <TabsTrigger value="experience" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <Briefcase className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Experience</span>
+                    <TabsTrigger value="experience" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Work</span>
                     </TabsTrigger>
-                    <TabsTrigger value="education" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <GraduationCap className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Education</span>
+                    <TabsTrigger value="education" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <GraduationCap className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Education</span>
                     </TabsTrigger>
-                    <TabsTrigger value="skills" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <Award className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Skills</span>
+                    <TabsTrigger value="skills" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Award className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Skills</span>
                     </TabsTrigger>
-                    <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <FolderOpen className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Projects</span>
+                    <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <FolderOpen className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Projects</span>
                     </TabsTrigger>
-                    <TabsTrigger value="certifications" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <Award className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Certs</span>
+                    <TabsTrigger value="certifications" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Award className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Certs</span>
                     </TabsTrigger>
-                    <TabsTrigger value="languages" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <Languages className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Languages</span>
+                    <TabsTrigger value="languages" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Languages className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Lang</span>
                     </TabsTrigger>
-                    <TabsTrigger value="interests" className="flex flex-col sm:flex-row items-center gap-1 p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
-                      <Heart className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm">Interests</span>
+                    <TabsTrigger value="interests" className="flex flex-col sm:flex-row items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md">
+                      <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs">Interests</span>
                     </TabsTrigger>
                   </TabsList>
 
@@ -657,25 +675,25 @@ const Builder: React.FC = () => {
             </Card>
           </div>
 
-          {/* Enhanced Preview Section */}
+          {/* Preview Section - Responsive */}
           <div className="xl:col-span-1">
             <Card className="overflow-hidden shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg sticky top-6">
               <CardHeader className="pb-3 bg-gradient-to-r from-blue-600/5 to-purple-600/5">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Eye className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                   Live Preview
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ml-auto text-xs">
                     Premium
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="bg-gray-100 dark:bg-gray-800 p-4">
+                <div className="bg-gray-100 dark:bg-gray-800 p-2 sm:p-4">
                   <div id="resume-preview" className="transform-gpu">
                     <ImprovedResumePreview 
                       data={resumeData} 
                       template={selectedTemplate}
-                      scale={0.4}
+                      scale={0.25}
                     />
                   </div>
                 </div>
@@ -685,7 +703,7 @@ const Builder: React.FC = () => {
         </div>
       </div>
 
-      {/* Enhanced Template Selector Modal */}
+      {/* Modals */}
       {showTemplateSelector && (
         <EnhancedTemplateSelector
           isOpen={showTemplateSelector}
@@ -695,7 +713,6 @@ const Builder: React.FC = () => {
         />
       )}
 
-      {/* Job Description Parser Modal */}
       {showJobParser && (
         <JobDescriptionParser
           isOpen={showJobParser}
@@ -704,13 +721,11 @@ const Builder: React.FC = () => {
         />
       )}
 
-      {/* Job Scanner Modal */}
       {showJobScanner && (
         <JobScanner
           isOpen={showJobScanner}
           onClose={() => setShowJobScanner(false)}
           onJobSelected={(job) => {
-            // Auto-fill resume based on job requirements
             toast.success('Job requirements applied to resume!');
             setShowJobScanner(false);
           }}

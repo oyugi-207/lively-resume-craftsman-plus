@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +5,12 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Edit, Save, X } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Edit, Save, X, Download } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import RichTextEditor from '@/components/RichTextEditor';
+import { useAPIKey } from '@/hooks/useAPIKey';
+import PDFGenerator from '@/components/PDFGenerator';
 
 interface ParsedCV {
   personal: {
@@ -28,6 +29,7 @@ interface ParsedCV {
 const CVUploader = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { apiKey } = useAPIKey();
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -35,6 +37,7 @@ const CVUploader = () => {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState(0);
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -64,8 +67,6 @@ const CVUploader = () => {
   };
 
   const parseTextWithAI = async (text: string): Promise<ParsedCV> => {
-    const apiKey = localStorage.getItem('gemini_api_key');
-    
     if (!apiKey) {
       // Return basic parsing without AI
       return {
@@ -208,7 +209,7 @@ const CVUploader = () => {
       setUploading(false);
       setAnalyzing(false);
     }
-  }, [toast]);
+  }, [toast, apiKey]);
 
   const handleSaveEdit = () => {
     if (parsedData) {
@@ -233,7 +234,7 @@ const CVUploader = () => {
         .insert([{
           user_id: user.id,
           title: `${parsedData.personal.fullName}'s Resume`,
-          template_id: 0,
+          template_id: selectedTemplate,
           personal_info: parsedData.personal,
           experience: parsedData.experience,
           education: parsedData.education,
@@ -264,6 +265,31 @@ const CVUploader = () => {
       });
     }
   };
+
+  const handleDownloadOptimizedCV = async () => {
+    if (!parsedData) return;
+
+    try {
+      const filename = `${parsedData.personal.fullName.replace(/[^a-z0-9]/gi, '_')}_CV_Optimized.pdf`;
+      await PDFGenerator.generateTextPDF(parsedData, selectedTemplate, filename);
+      
+      toast({
+        title: "Success",
+        description: "Optimized CV downloaded successfully!"
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download CV. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const templates = [
+    'Modern Professional', 'Executive', 'Creative', 'Technical', 'Academic'
+  ];
 
   return (
     <div className="space-y-6">
@@ -333,6 +359,27 @@ const CVUploader = () => {
                 <span className="text-green-700">CV analyzed successfully!</span>
               </div>
 
+              {/* Template Selector */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select Template for Download</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {templates.map((template, index) => (
+                      <Button
+                        key={index}
+                        variant={selectedTemplate === index ? "default" : "outline"}
+                        onClick={() => setSelectedTemplate(index)}
+                        className="text-sm"
+                      >
+                        {template}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* CV Content Editor */}
               <Card>
                 <CardHeader>
@@ -376,7 +423,7 @@ const CVUploader = () => {
                 <CardContent>
                   {editing ? (
                     <RichTextEditor
-                      content={editedContent}
+                      value={editedContent}
                       onChange={setEditedContent}
                       placeholder="Edit your CV content here..."
                     />
@@ -422,13 +469,24 @@ const CVUploader = () => {
                 </div>
               )}
 
-              <Button 
-                onClick={createResumeFromParsedData}
-                className="w-full"
-                size="lg"
-              >
-                Create Resume from CV
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={createResumeFromParsedData}
+                  className="flex-1"
+                  size="lg"
+                >
+                  Create Resume from CV
+                </Button>
+                <Button 
+                  onClick={handleDownloadOptimizedCV}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  size="lg"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Optimized CV
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
