@@ -511,6 +511,88 @@ export const MinimalistTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
   </div>
 );
 
+// Template 5: Corporate Classic
+export const CorporateClassicTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-serif max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Corporate Header */}
+    <div className="text-center mb-8 border-b-4 border-gray-800 pb-6">
+      <h1 className="text-4xl font-bold text-gray-900 mb-3">{data.personal.fullName || 'Your Name'}</h1>
+      <div className="text-gray-600 space-y-1">
+        {data.personal.email && <div>{data.personal.email}</div>}
+        {data.personal.phone && <div>{data.personal.phone}</div>}
+        {data.personal.location && <div>{data.personal.location}</div>}
+      </div>
+    </div>
+
+    <div className="space-y-8">
+      {/* Professional Summary */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-2">PROFESSIONAL SUMMARY</h2>
+          <p className="text-gray-700 leading-relaxed">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-2">PROFESSIONAL EXPERIENCE</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{exp.position}</h3>
+                    <p className="text-gray-700 font-semibold">{exp.company}, {exp.location}</p>
+                  </div>
+                  <span className="text-gray-600 font-medium">{exp.startDate} - {exp.endDate}</span>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Skills & Education Grid */}
+      <div className="grid grid-cols-2 gap-8">
+        {data.skills?.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-2">CORE COMPETENCIES</h2>
+            <div className="space-y-2">
+              {data.skills.map((skill, index) => (
+                <div key={index} className="text-gray-700">• {skill}</div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {data.education?.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-2">EDUCATION</h2>
+            <div className="space-y-4">
+              {data.education.map((edu, index) => (
+                <div key={index}>
+                  <h3 className="font-bold text-gray-900">{edu.degree}</h3>
+                  <div className="text-gray-700">{edu.school}</div>
+                  <div className="text-gray-600">{edu.endDate}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 // Template 6: Professional Blue (Inspired by first example)
 export const ProfessionalBlueTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
   <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
@@ -1074,6 +1156,308 @@ export const CleanModernTemplate: React.FC<ResumeTemplateProps> = ({ data }) => 
   </div>
 );
 
+// Template 12: Marketing Creative
+export const MarketingCreativeTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Creative Marketing Header */}
+    <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-8 mb-6">
+      <h1 className="text-4xl font-bold mb-2">{data.personal.fullName || 'Your Name'}</h1>
+      <p className="text-orange-100 text-xl mb-4">Marketing Creative Professional</p>
+      <div className="flex gap-6 text-orange-100">
+        {data.personal.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4" />{data.personal.email}</div>}
+        {data.personal.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4" />{data.personal.phone}</div>}
+        {data.personal.location && <div className="flex items-center gap-2"><MapPin className="w-4 h-4" />{data.personal.location}</div>}
+      </div>
+    </div>
+
+    <div className="p-8 space-y-8">
+      {/* Brand Story */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-2xl font-bold text-orange-600 mb-4">Brand Story</h2>
+          <p className="text-gray-700 leading-relaxed bg-orange-50 p-6 rounded-lg">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Campaign Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-orange-600 mb-6">Campaign Experience</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index} className="bg-orange-50 p-6 rounded-lg border-l-4 border-orange-500">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-orange-800">{exp.position}</h3>
+                    <p className="text-orange-600 font-semibold">{exp.company} • {exp.location}</p>
+                  </div>
+                  <span className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm">
+                    {exp.startDate} - {exp.endDate}
+                  </span>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Creative Skills */}
+      {data.skills?.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-orange-600 mb-6">Creative Arsenal</h2>
+          <div className="flex flex-wrap gap-3">
+            {data.skills.map((skill, index) => (
+              <span key={index} className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full font-medium">
+                {skill}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
+// Template 13: Academic Scholar
+export const AcademicScholarTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-serif max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Academic Header */}
+    <div className="text-center mb-8 border-b-2 border-blue-800 pb-6">
+      <h1 className="text-4xl font-bold text-blue-900 mb-2">{data.personal.fullName || 'Your Name'}</h1>
+      <p className="text-blue-700 text-lg mb-4">Academic Scholar & Researcher</p>
+      <div className="text-gray-600 space-y-1">
+        {data.personal.email && <div>{data.personal.email}</div>}
+        {data.personal.phone && <div>{data.personal.phone}</div>}
+        {data.personal.location && <div>{data.personal.location}</div>}
+      </div>
+    </div>
+
+    <div className="space-y-8">
+      {/* Research Profile */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-blue-300 pb-2">Research Profile</h2>
+          <p className="text-gray-700 leading-relaxed italic">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Academic Positions */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-blue-300 pb-2">Academic Positions</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-lg font-bold text-blue-900">{exp.position}</h3>
+                    <p className="text-blue-700 italic">{exp.company}, {exp.location}</p>
+                  </div>
+                  <span className="text-gray-600">{exp.startDate} - {exp.endDate}</span>
+                </div>
+                <p className="text-gray-700 leading-relaxed ml-4">{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Education & Research Interests */}
+      <div className="grid grid-cols-2 gap-8">
+        {data.education?.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-blue-300 pb-2">Education</h2>
+            <div className="space-y-4">
+              {data.education.map((edu, index) => (
+                <div key={index}>
+                  <h3 className="font-bold text-blue-900">{edu.degree}</h3>
+                  <div className="text-blue-700 italic">{edu.school}</div>
+                  <div className="text-gray-600">{edu.endDate}</div>
+                  {edu.gpa && <div className="text-gray-600 text-sm">GPA: {edu.gpa}</div>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {data.skills?.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-blue-300 pb-2">Research Interests</h2>
+            <div className="space-y-2">
+              {data.skills.map((skill, index) => (
+                <div key={index} className="text-gray-700">• {skill}</div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+// Template 14: Sales Champion
+export const SalesChampionTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Sales Header */}
+    <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-8 mb-6">
+      <h1 className="text-4xl font-bold mb-2">{data.personal.fullName || 'Your Name'}</h1>
+      <p className="text-green-100 text-xl mb-4">Sales Champion & Revenue Driver</p>
+      <div className="flex gap-6 text-green-100">
+        {data.personal.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4" />{data.personal.email}</div>}
+        {data.personal.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4" />{data.personal.phone}</div>}
+        {data.personal.location && <div className="flex items-center gap-2"><MapPin className="w-4 h-4" />{data.personal.location}</div>}
+      </div>
+    </div>
+
+    <div className="p-8 space-y-8">
+      {/* Sales Philosophy */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-2xl font-bold text-green-600 mb-4">Sales Philosophy</h2>
+          <p className="text-gray-700 leading-relaxed bg-green-50 p-6 rounded-lg border-l-4 border-green-500">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Sales Performance */}
+      <section>
+        <h2 className="text-2xl font-bold text-green-600 mb-6">Key Achievements</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center bg-green-50 p-6 rounded-lg">
+            <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
+            <h3 className="font-bold text-green-800 text-xl">150%</h3>
+            <p className="text-sm text-gray-600">Average Quota Achievement</p>
+          </div>
+          <div className="text-center bg-blue-50 p-6 rounded-lg">
+            <Award className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-bold text-blue-800 text-xl">$2M+</h3>
+            <p className="text-sm text-gray-600">Annual Revenue Generated</p>
+          </div>
+          <div className="text-center bg-green-50 p-6 rounded-lg">
+            <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
+            <h3 className="font-bold text-green-800 text-xl">95%</h3>
+            <p className="text-sm text-gray-600">Client Retention Rate</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Sales Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-green-600 mb-6">Sales Experience</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index} className="bg-gray-50 p-6 rounded-lg border-l-4 border-green-500">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-green-800">{exp.position}</h3>
+                    <p className="text-green-600 font-semibold">{exp.company} • {exp.location}</p>
+                  </div>
+                  <span className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm">
+                    {exp.startDate} - {exp.endDate}
+                  </span>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
+// Template 15: Consulting Elite
+export const ConsultingEliteTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Elite Header */}
+    <div className="text-center mb-8">
+      <h1 className="text-5xl font-light text-gray-900 mb-3 tracking-wide">{data.personal.fullName || 'Your Name'}</h1>
+      <div className="w-24 h-1 bg-gray-800 mx-auto mb-4"></div>
+      <p className="text-gray-600 text-lg mb-6">Strategic Consultant & Business Advisor</p>
+      <div className="flex justify-center gap-8 text-gray-600">
+        {data.personal.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4" />{data.personal.email}</div>}
+        {data.personal.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4" />{data.personal.phone}</div>}
+        {data.personal.location && <div className="flex items-center gap-2"><MapPin className="w-4 h-4" />{data.personal.location}</div>}
+      </div>
+    </div>
+
+    <div className="space-y-10">
+      {/* Executive Summary */}
+      {data.personal.summary && (
+        <section className="text-center">
+          <h2 className="text-2xl font-light text-gray-800 mb-6 tracking-wide">Executive Summary</h2>
+          <p className="text-gray-700 leading-loose max-w-4xl mx-auto text-lg">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Consulting Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-light text-gray-800 mb-8 text-center tracking-wide">Consulting Experience</h2>
+          <div className="space-y-8">
+            {data.experience.map((exp, index) => (
+              <div key={index} className="border-b border-gray-200 pb-6">
+                <div className="flex justify-between items-baseline mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">{exp.position}</h3>
+                    <p className="text-gray-600 text-lg">{exp.company}</p>
+                    <p className="text-gray-500">{exp.location}</p>
+                  </div>
+                  <span className="text-gray-500">{exp.startDate} — {exp.endDate}</span>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Core Competencies */}
+      {data.skills?.length > 0 && (
+        <section className="text-center">
+          <h2 className="text-2xl font-light text-gray-800 mb-8 tracking-wide">Core Competencies</h2>
+          <div className="grid grid-cols-3 gap-6">
+            {data.skills.map((skill, index) => (
+              <div key={index} className="bg-gray-50 p-4 rounded border-l-4 border-gray-800">
+                <span className="text-gray-800 font-medium">{skill}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
 // Export all templates
 export const templates = [
   ModernProfessionalTemplate,    // 0
@@ -1081,14 +1465,17 @@ export const templates = [
   CreativeTemplate,              // 2
   TechTemplate,                  // 3
   MinimalistTemplate,            // 4
-  ModernProfessionalTemplate,    // 5 (variation)
-  ProfessionalBlueTemplate,      // 6 - New
-  LegalProfessionalTemplate,     // 7 - New
-  EngineeringFocusTemplate,      // 8 - New
-  DataSpecialistTemplate,        // 9 - New
-  SupplyChainTemplate,           // 10 - New
-  CleanModernTemplate,           // 11 - New
-  // Add more templates here...
+  CorporateClassicTemplate,      // 5
+  ProfessionalBlueTemplate,      // 6
+  LegalProfessionalTemplate,     // 7
+  EngineeringFocusTemplate,      // 8
+  DataSpecialistTemplate,        // 9
+  SupplyChainTemplate,           // 10
+  CleanModernTemplate,           // 11
+  MarketingCreativeTemplate,     // 12
+  AcademicScholarTemplate,       // 13
+  SalesChampionTemplate,         // 14
+  ConsultingEliteTemplate,       // 15
 ];
 
 export const getTemplateName = (index: number): string => {
@@ -1099,12 +1486,12 @@ export const getTemplateName = (index: number): string => {
     'Tech Specialist',          // 3
     'Minimalist Clean',         // 4
     'Corporate Classic',        // 5
-    'Professional Blue',        // 6 - New
-    'Legal Professional',       // 7 - New
-    'Engineering Focus',        // 8 - New
-    'Data Specialist',          // 9 - New
-    'Supply Chain Manager',     // 10 - New
-    'Clean Modern',             // 11 - New
+    'Professional Blue',        // 6
+    'Legal Professional',       // 7
+    'Engineering Focus',        // 8
+    'Data Specialist',          // 9
+    'Supply Chain Manager',     // 10
+    'Clean Modern',             // 11
     'Marketing Creative',       // 12
     'Academic Scholar',         // 13
     'Sales Champion',           // 14
