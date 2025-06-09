@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Phone, MapPin, Calendar, ExternalLink, Award, Globe, Linkedin, Github } from 'lucide-react';
@@ -512,34 +511,604 @@ export const MinimalistTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
   </div>
 );
 
+// Template 6: Professional Blue (Inspired by first example)
+export const ProfessionalBlueTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Blue Header Section */}
+    <div className="bg-blue-800 text-white p-8 mb-6">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-2">{data.personal.fullName || 'John Masinde'}</h1>
+        <p className="text-blue-200 text-lg mb-4">
+          {data.personal.phone} | {data.personal.email} | {data.personal.location}
+        </p>
+      </div>
+    </div>
+
+    <div className="px-8 space-y-6">
+      {/* Education Section */}
+      {data.education?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-1">EDUCATION</h2>
+          <div className="space-y-4">
+            {data.education.map((edu, index) => (
+              <div key={index} className="flex justify-between">
+                <div>
+                  <h3 className="font-bold text-gray-800">{edu.school} ({edu.degree})</h3>
+                  <p className="text-gray-600 italic">{edu.degree}</p>
+                  <p className="text-gray-600">GPA: {edu.gpa || 'N/A'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">{edu.location}</p>
+                  <p className="text-gray-600">{edu.endDate}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Experience Section */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-1">WORK & LEADERSHIP EXPERIENCE</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between mb-2">
+                  <div>
+                    <h3 className="font-bold text-gray-800">{exp.company} ({exp.position})</h3>
+                    <p className="text-gray-600 italic">{exp.position}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-600">{exp.location}</p>
+                    <p className="text-gray-600">{exp.startDate} - {exp.endDate}</p>
+                  </div>
+                </div>
+                <ul className="text-gray-700 ml-4 space-y-1">
+                  {exp.description.split('.').filter(item => item.trim()).map((item, idx) => (
+                    <li key={idx} className="list-disc">{item.trim()}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Skills Section */}
+      {data.skills?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-1">SKILLS, ACTIVITIES & INTERESTS</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold mb-2">Technical Skills:</h3>
+              <ul className="text-gray-700 space-y-1">
+                {data.skills.slice(0, Math.ceil(data.skills.length/2)).map((skill, index) => (
+                  <li key={index} className="list-disc ml-4">{skill}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Additional Skills:</h3>
+              <ul className="text-gray-700 space-y-1">
+                {data.skills.slice(Math.ceil(data.skills.length/2)).map((skill, index) => (
+                  <li key={index} className="list-disc ml-4">{skill}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
+// Template 7: Legal Professional (Inspired by third example)
+export const LegalProfessionalTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-serif max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Header */}
+    <div className="text-center mb-8 border-b-2 border-orange-500 pb-6">
+      <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.personal.fullName || 'LAWRENCE SAHIHI'}</h1>
+      <p className="text-orange-600 text-lg font-medium mb-3">
+        Corporate Lawyer | Contract Negotiation | Compliance
+      </p>
+      <p className="text-gray-600">
+        {data.personal.phone} • {data.personal.email} • {data.personal.location}
+      </p>
+    </div>
+
+    <div className="space-y-8">
+      {/* Summary */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2">Summary</h2>
+          <p className="text-gray-700 leading-relaxed">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2">Experience</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-bold text-gray-800">{exp.company}</h3>
+                    <p className="text-orange-600 font-semibold">{exp.position}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-600">{exp.location}</p>
+                    <p className="text-gray-600">{exp.startDate} - {exp.endDate}</p>
+                  </div>
+                </div>
+                <ul className="text-gray-700 ml-4 space-y-1">
+                  {exp.description.split('.').filter(item => item.trim()).map((item, idx) => (
+                    <li key={idx} className="list-disc">{item.trim()}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Key Achievements */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2">Key Achievements</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center bg-orange-50 p-4 rounded">
+            <Award className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-bold text-orange-800">Contract Negotiation Savings</h3>
+            <p className="text-sm text-gray-600">Achieved over KES 150 million in annual savings</p>
+          </div>
+          <div className="text-center bg-orange-50 p-4 rounded">
+            <Award className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-bold text-orange-800">Compliance Training Implementation</h3>
+            <p className="text-sm text-gray-600">Reduced regulatory violations by 25%</p>
+          </div>
+          <div className="text-center bg-orange-50 p-4 rounded">
+            <Award className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-bold text-orange-800">Litigation Success Rate</h3>
+            <p className="text-sm text-gray-600">Maintained a 90% success rate in litigation</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Skills */}
+      {data.skills?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2">Skills</h2>
+          <div className="flex flex-wrap gap-2">
+            {data.skills.map((skill, index) => (
+              <span key={index} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
+                {skill}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
+// Template 8: Engineering Focus (Inspired by electrical engineer examples)
+export const EngineeringFocusTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Header */}
+    <div className="mb-8">
+      <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.personal.fullName || 'Jensen Barasa'}</h1>
+      <p className="text-blue-600 text-xl font-medium mb-3">Electrical Engineer | Power Systems Expert</p>
+      <p className="text-gray-600">{data.personal.email} {data.personal.location}</p>
+    </div>
+
+    <div className="space-y-8">
+      {/* Summary */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-blue-500 pb-2">SUMMARY</h2>
+          <p className="text-gray-700 leading-relaxed">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-blue-500 pb-2">EXPERIENCE</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-bold text-gray-800 text-lg">{exp.position}</h3>
+                    <p className="text-blue-600 font-medium">{exp.company}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-600">{exp.location}</p>
+                    <p className="text-gray-600">{exp.startDate} - {exp.endDate}</p>
+                  </div>
+                </div>
+                <div className="text-gray-700 ml-4">
+                  <p className="mb-2">{exp.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Strengths */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-blue-500 pb-2">STRENGTHS</h2>
+        <div className="grid grid-cols-3 gap-6">
+          <div>
+            <h3 className="text-blue-600 font-bold mb-2">Project Management</h3>
+            <p className="text-gray-700 text-sm">Successfully led and managed over 10 electrical infrastructure projects</p>
+          </div>
+          <div>
+            <h3 className="text-blue-600 font-bold mb-2">Technical Expertise</h3>
+            <p className="text-gray-700 text-sm">In-depth knowledge of power systems, heat tracing and electrical distribution</p>
+          </div>
+          <div>
+            <h3 className="text-blue-600 font-bold mb-2">Collaborative Leadership</h3>
+            <p className="text-gray-700 text-sm">Efficiently coordinated with cross-functional teams and engineering contractors</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Skills */}
+      {data.skills?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b-2 border-blue-500 pb-2">SKILLS</h2>
+          <div className="text-gray-700">
+            <p>{data.skills.join(', ')}</p>
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
+// Template 9: Data Specialist (Inspired by data collection specialist example)
+export const DataSpecialistTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Header */}
+    <div className="text-center mb-8 border-b-2 border-blue-600 pb-6">
+      <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.personal.fullName || 'BRIANNA SUBIRA PENDO'}</h1>
+      <p className="text-blue-600 text-lg font-medium mb-3">
+        Quantitative Field Interviewer | Data Collection Specialist
+      </p>
+      <p className="text-gray-600">
+        {data.personal.email} • {data.personal.location}
+      </p>
+    </div>
+
+    <div className="space-y-8">
+      {/* Summary */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Summary</h2>
+          <p className="text-gray-700 leading-relaxed">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Experience</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-blue-600 font-bold text-lg">{exp.company}</h3>
+                    <p className="font-semibold text-gray-800">{exp.position}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-600">{exp.location}</p>
+                    <p className="text-gray-600">{exp.startDate} - {exp.endDate}</p>
+                  </div>
+                </div>
+                <ul className="text-gray-700 ml-4 space-y-1">
+                  {exp.description.split('.').filter(item => item.trim()).map((item, idx) => (
+                    <li key={idx} className="list-disc">{item.trim()}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Skills */}
+      {data.skills?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Skills</h2>
+          <div className="text-gray-700">
+            <p>{data.skills.join(' • ')}</p>
+          </div>
+        </section>
+      )}
+
+      {/* Passions */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Passions</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-blue-800 mb-1">Data Integrity</h3>
+            <p className="text-sm text-gray-600">Maintaining high data integrity standards</p>
+          </div>
+          <div className="text-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-blue-800 mb-1">Field Research</h3>
+            <p className="text-sm text-gray-600">Passionate about conducting field research</p>
+          </div>
+          <div className="text-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-blue-800 mb-1">Community Engagement</h3>
+            <p className="text-sm text-gray-600">Dedicated to engaging with communities</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+);
+
+// Template 10: Supply Chain Manager (Inspired by supply chain example)
+export const SupplyChainTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-sans max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Header */}
+    <div className="text-center mb-8">
+      <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.personal.fullName || 'MILES OMARI'}</h1>
+      <p className="text-green-600 text-lg font-medium mb-3">
+        Supply Chain Manager | Continuous Improvement | Strategy Execution
+      </p>
+      <p className="text-gray-600">
+        {data.personal.phone} • {data.personal.email} • {data.personal.location}
+      </p>
+      <div className="w-24 h-1 bg-green-600 mx-auto mt-4"></div>
+    </div>
+
+    <div className="space-y-8">
+      {/* Summary */}
+      {data.personal.summary && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Summary</h2>
+          <p className="text-gray-700 leading-relaxed">{data.personal.summary}</p>
+        </section>
+      )}
+
+      {/* Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Experience</h2>
+          <div className="space-y-6">
+            {data.experience.map((exp, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-green-600 font-bold text-lg">{exp.company}</h3>
+                    <p className="font-semibold text-gray-800">{exp.position}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-600">{exp.location}</p>
+                    <p className="text-gray-600">{exp.startDate} - {exp.endDate}</p>
+                  </div>
+                </div>
+                <ul className="text-gray-700 ml-4 space-y-1">
+                  {exp.description.split('.').filter(item => item.trim()).map((item, idx) => (
+                    <li key={idx} className="list-disc">{item.trim()}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Key Achievements */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Key Achievements</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center bg-green-50 p-4 rounded">
+            <div className="w-8 h-8 bg-green-600 rounded mx-auto mb-2 flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-green-800">Redesigned Inventory Process</h3>
+            <p className="text-sm text-gray-600">Successfully improving cash flow by 40%</p>
+          </div>
+          <div className="text-center bg-green-50 p-4 rounded">
+            <div className="w-8 h-8 bg-green-600 rounded mx-auto mb-2 flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-green-800">Leader in Rapid Conflict Resolution</h3>
+            <p className="text-sm text-gray-600">Reducing downtime related to supplier disputes by 50%</p>
+          </div>
+          <div className="text-center bg-green-50 p-4 rounded">
+            <div className="w-8 h-8 bg-green-600 rounded mx-auto mb-2 flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-bold text-green-800">OEE Metrics Overhaul</h3>
+            <p className="text-sm text-gray-600">Increased Overall Equipment Effectiveness by 18%</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Skills */}
+      {data.skills?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-400 pb-2">Skills</h2>
+          <div className="text-gray-700">
+            <p>{data.skills.join(' • ')}</p>
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+);
+
+// Template 11: Clean Modern (Inspired by clean designs)
+export const CleanModernTemplate: React.FC<ResumeTemplateProps> = ({ data }) => (
+  <div className="bg-white text-gray-900 font-light max-w-4xl mx-auto">
+    {/* Hidden ATS Keywords */}
+    {data.jobDescription && (
+      <div className="hidden opacity-0 absolute -z-10 text-white text-xs">
+        {data.jobDescription}
+      </div>
+    )}
+    
+    {/* Clean Header */}
+    <div className="mb-12">
+      <h1 className="text-5xl font-thin text-gray-900 mb-4 tracking-wide">
+        {data.personal.fullName || 'Your Name'}
+      </h1>
+      <div className="h-px bg-gray-300 mb-6"></div>
+      <div className="flex justify-between items-start">
+        <div className="text-gray-600 space-y-1">
+          {data.personal.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4" />{data.personal.email}</div>}
+          {data.personal.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4" />{data.personal.phone}</div>}
+          {data.personal.location && <div className="flex items-center gap-2"><MapPin className="w-4 h-4" />{data.personal.location}</div>}
+        </div>
+        {data.personal.summary && (
+          <div className="max-w-lg">
+            <p className="text-gray-700 leading-loose">{data.personal.summary}</p>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <div className="space-y-12">
+      {/* Experience */}
+      {data.experience?.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-thin text-gray-900 mb-8 tracking-wide">Experience</h2>
+          <div className="space-y-8">
+            {data.experience.map((exp, index) => (
+              <div key={index} className="border-l-2 border-gray-200 pl-6">
+                <div className="flex justify-between items-baseline mb-2">
+                  <h3 className="text-xl font-normal text-gray-900">{exp.position}</h3>
+                  <span className="text-gray-500 text-sm">{exp.startDate} — {exp.endDate}</span>
+                </div>
+                <div className="text-gray-600 mb-3">{exp.company}, {exp.location}</div>
+                <p className="text-gray-700 leading-relaxed">{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Skills & Education Grid */}
+      <div className="grid grid-cols-2 gap-12">
+        {data.skills?.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-thin text-gray-900 mb-6 tracking-wide">Skills</h2>
+            <div className="space-y-2">
+              {data.skills.map((skill, index) => (
+                <div key={index} className="text-gray-700 py-1 border-b border-gray-100 text-sm">
+                  {skill}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {data.education?.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-thin text-gray-900 mb-6 tracking-wide">Education</h2>
+            <div className="space-y-4">
+              {data.education.map((edu, index) => (
+                <div key={index}>
+                  <h3 className="font-normal text-gray-900">{edu.degree}</h3>
+                  <div className="text-gray-600">{edu.school}</div>
+                  <div className="text-gray-500 text-sm">{edu.endDate}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 // Export all templates
 export const templates = [
-  ModernProfessionalTemplate,
-  ExecutiveTemplate,
-  CreativeTemplate,
-  TechTemplate,
-  MinimalistTemplate,
+  ModernProfessionalTemplate,    // 0
+  ExecutiveTemplate,             // 1
+  CreativeTemplate,              // 2
+  TechTemplate,                  // 3
+  MinimalistTemplate,            // 4
+  ModernProfessionalTemplate,    // 5 (variation)
+  ProfessionalBlueTemplate,      // 6 - New
+  LegalProfessionalTemplate,     // 7 - New
+  EngineeringFocusTemplate,      // 8 - New
+  DataSpecialistTemplate,        // 9 - New
+  SupplyChainTemplate,           // 10 - New
+  CleanModernTemplate,           // 11 - New
   // Add more templates here...
 ];
 
 export const getTemplateName = (index: number): string => {
   const names = [
-    'Modern Professional',
-    'Executive Leadership', 
-    'Creative Designer',
-    'Tech Specialist',
-    'Minimalist Clean',
-    'Corporate Classic',
-    'Two Column Layout',
-    'Academic Scholar',
-    'Sales Champion',
-    'Startup Innovator',
-    'Healthcare Professional',
-    'Finance Expert',
-    'Marketing Creative',
-    'Engineering Focus',
-    'Legal Professional',
-    'Consulting Elite'
+    'Modern Professional',       // 0
+    'Executive Leadership',      // 1
+    'Creative Designer',         // 2
+    'Tech Specialist',          // 3
+    'Minimalist Clean',         // 4
+    'Corporate Classic',        // 5
+    'Professional Blue',        // 6 - New
+    'Legal Professional',       // 7 - New
+    'Engineering Focus',        // 8 - New
+    'Data Specialist',          // 9 - New
+    'Supply Chain Manager',     // 10 - New
+    'Clean Modern',             // 11 - New
+    'Marketing Creative',       // 12
+    'Academic Scholar',         // 13
+    'Sales Champion',           // 14
+    'Consulting Elite'          // 15
   ];
   return names[index] || 'Modern Professional';
 };

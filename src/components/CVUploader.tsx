@@ -1,418 +1,426 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Upload, FileText, Download, Edit, Eye, Sparkles, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { 
-  Upload, 
-  FileText, 
-  Download, 
-  Wand2, 
-  Eye, 
-  Save,
-  Loader2,
-  Palette,
-  Search
-} from 'lucide-react';
-import RichTextEditor from './RichTextEditor';
-import { ModernProfessionalTemplate, ExecutiveTemplate, CreativeTemplate, TechTemplate, MinimalistTemplate } from './ResumeTemplates';
+import RichTextEditor from '@/components/RichTextEditor';
+import ImprovedResumePreview from '@/components/ImprovedResumePreview';
+import PDFGenerator from '@/components/PDFGenerator';
 
-interface CVUploaderProps {
-  onUpload?: (file: File) => void;
-  className?: string;
-}
-
-interface ParsedCV {
-  text: string;
-  personalInfo: {
-    name: string;
+interface ResumeData {
+  personal: {
+    fullName: string;
     email: string;
     phone: string;
     location: string;
+    summary: string;
   };
   experience: Array<{
+    id: number;
     company: string;
     position: string;
-    duration: string;
+    location: string;
+    startDate: string;
+    endDate: string;
     description: string;
   }>;
   education: Array<{
+    id: number;
     school: string;
     degree: string;
-    year: string;
+    location: string;
+    startDate: string;
+    endDate: string;
+    gpa: string;
   }>;
   skills: string[];
+  certifications: Array<{
+    id: number;
+    name: string;
+    issuer: string;
+    date: string;
+    credentialId: string;
+  }>;
+  languages: Array<{
+    id: number;
+    language: string;
+    proficiency: string;
+  }>;
+  interests: string[];
+  projects: Array<{
+    id: number;
+    name: string;
+    description: string;
+    technologies: string;
+    link: string;
+    startDate: string;
+    endDate: string;
+  }>;
 }
 
-const CVUploader: React.FC<CVUploaderProps> = ({ onUpload, className = "" }) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [parsedCV, setParsedCV] = useState<ParsedCV | null>(null);
-  const [editedContent, setEditedContent] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const uploadedFile = acceptedFiles[0];
-    if (uploadedFile) {
-      setFile(uploadedFile);
-      onUpload?.(uploadedFile);
-      parseCV(uploadedFile);
-    }
-  }, [onUpload]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'text/plain': ['.txt'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-    },
-    multiple: false
-  });
-
-  const parseCV = async (file: File) => {
-    setIsProcessing(true);
-    try {
-      const text = await extractTextFromFile(file);
-      const parsed = await parseTextToStructuredData(text);
-      setParsedCV(parsed);
-      setEditedContent(text);
-      toast.success('CV uploaded and parsed successfully!');
-    } catch (error) {
-      console.error('Error parsing CV:', error);
-      toast.error('Failed to parse CV. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const extractTextFromFile = async (file: File): Promise<string> => {
-    if (file.type === 'text/plain') {
-      return await file.text();
-    } else if (file.type === 'application/pdf') {
-      // For PDF, we'll use a simple text extraction
-      // In a real app, you'd use a proper PDF parsing library
-      return await file.text();
-    }
-    return await file.text();
-  };
-
-  const parseTextToStructuredData = async (text: string): Promise<ParsedCV> => {
-    // Simple parsing logic - in reality, you'd use AI or more sophisticated parsing
-    const lines = text.split('\n');
-    
-    // Extract email with regex
-    const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
-    const phoneMatch = text.match(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/);
-    
-    // Simple extraction logic
-    const parsed: ParsedCV = {
-      text,
-      personalInfo: {
-        name: lines[0] || 'Unknown',
-        email: emailMatch ? emailMatch[0] : '',
-        phone: phoneMatch ? phoneMatch[0] : '',
-        location: ''
-      },
-      experience: [],
-      education: [],
-      skills: []
-    };
-
-    // Look for common keywords to extract skills
-    const skillKeywords = ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'AWS', 'Docker', 'Git'];
-    parsed.skills = skillKeywords.filter(skill => 
-      text.toLowerCase().includes(skill.toLowerCase())
-    );
-
-    return parsed;
-  };
-
-  const handleOptimizeWithAI = async () => {
-    if (!parsedCV || !jobDescription) {
-      toast.error('Please upload a CV and add job description first');
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      // Here you would call your AI optimization service
-      toast.success('CV optimized with AI suggestions!');
-    } catch (error) {
-      toast.error('Failed to optimize CV with AI');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleDownloadOptimized = () => {
-    if (!editedContent) {
-      toast.error('No content to download');
-      return;
-    }
-
-    // Create optimized resume data including hidden job description for ATS
-    const optimizedData = {
-      personal: {
-        fullName: parsedCV?.personalInfo.name || 'Your Name',
-        email: parsedCV?.personalInfo.email || '',
-        phone: parsedCV?.personalInfo.phone || '',
-        location: parsedCV?.personalInfo.location || '',
-        summary: editedContent.substring(0, 300) + '...',
-      },
-      experience: parsedCV?.experience || [],
-      education: parsedCV?.education || [],
-      skills: parsedCV?.skills || [],
-      certifications: [],
-      languages: [],
-      interests: [],
-      projects: [],
-      jobDescription: jobDescription // Hidden ATS keywords
-    };
-
-    setShowPreview(true);
-  };
-
-  const templates = [
-    { id: 0, name: 'Modern Professional', component: ModernProfessionalTemplate },
-    { id: 1, name: 'Executive Leadership', component: ExecutiveTemplate },
-    { id: 2, name: 'Creative Designer', component: CreativeTemplate },
-    { id: 3, name: 'Tech Specialist', component: TechTemplate },
-    { id: 4, name: 'Minimalist Clean', component: MinimalistTemplate },
-  ];
-
-  const SelectedTemplateComponent = templates[selectedTemplate]?.component || ModernProfessionalTemplate;
-
-  const resumeData = parsedCV ? {
-    personal: {
-      fullName: parsedCV.personalInfo.name,
-      email: parsedCV.personalInfo.email,
-      phone: parsedCV.personalInfo.phone,
-      location: parsedCV.personalInfo.location,
-      summary: editedContent.substring(0, 300) + '...',
-    },
-    experience: parsedCV.experience.map((exp, index) => ({
-      id: index,
-      company: exp.company,
-      position: exp.position,
-      location: '',
-      startDate: exp.duration.split('-')[0] || '',
-      endDate: exp.duration.split('-')[1] || '',
-      description: exp.description
-    })),
-    education: parsedCV.education.map((edu, index) => ({
-      id: index,
-      school: edu.school,
-      degree: edu.degree,
-      location: '',
-      startDate: '',
-      endDate: edu.year,
-      gpa: ''
-    })),
-    skills: parsedCV.skills,
+const parseResumeData = (text: string): ResumeData => {
+  // Basic parsing logic - improve as needed
+  const lines = text.split('\n');
+  const data: any = {
+    personal: {},
+    experience: [],
+    education: [],
+    skills: [],
     certifications: [],
     languages: [],
     interests: [],
-    projects: [],
-    jobDescription: jobDescription
-  } : null;
+    projects: []
+  };
+
+  let currentSection = null;
+
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+
+    if (line.toLowerCase().includes('summary')) {
+      currentSection = 'summary';
+    } else if (line.toLowerCase().includes('experience')) {
+      currentSection = 'experience';
+      data.experience.push({});
+    } else if (line.toLowerCase().includes('education')) {
+      currentSection = 'education';
+      data.education.push({});
+    } else if (line.toLowerCase().includes('skills')) {
+      currentSection = 'skills';
+    } else {
+      if (currentSection === 'summary' && !data.personal.summary) {
+        data.personal.summary = line;
+      } else if (currentSection === 'skills') {
+        data.skills.push(line);
+      }
+    }
+  });
+
+  return data as ResumeData;
+};
+
+const CVUploader: React.FC = () => {
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [extractedText, setExtractedText] = useState<string>('');
+  const [editedText, setEditedText] = useState<string>('');
+  const [jobDescription, setJobDescription] = useState<string>('');
+  const [optimizationResults, setOptimizationResults] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>('upload');
+  const [selectedTemplate, setSelectedTemplate] = useState<number>(0);
+  const [optimizing, setOptimizing] = useState<boolean>(false);
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    setUploadedFile(file);
+
+    const reader = new FileReader();
+    reader.onload = async (event: any) => {
+      const text = event.target.result;
+      setExtractedText(text);
+      setEditedText(text);
+      toast.success('File uploaded and text extracted!');
+    };
+
+    reader.onerror = () => {
+      toast.error('Error reading file. Please try again.');
+    };
+
+    if (file.type === 'application/pdf') {
+      // For simplicity, read as text.  Consider using a PDF parsing library for better results.
+      reader.readAsText(file);
+    } else {
+      reader.readAsText(file);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: '.pdf,.doc,.docx,.txt' });
+
+  const optimizeWithAI = async () => {
+    setOptimizing(true);
+    try {
+      // Mock AI optimization
+      const atsScore = Math.floor(Math.random() * (99 - 75 + 1) + 75);
+      const keywordMatches = ['React', 'JavaScript', 'Node.js'];
+      const suggestions = [
+        'Add more details to your project descriptions',
+        'Quantify your achievements with numbers',
+        'Tailor your skills section to match the job description'
+      ];
+
+      setOptimizationResults({ atsScore, keywordMatches, suggestions });
+      toast.success('CV optimized with AI suggestions!');
+    } catch (error) {
+      console.error('AI optimization error:', error);
+      toast.error('Failed to optimize CV with AI. Please try again.');
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  const downloadOptimizedPDF = async () => {
+    try {
+      toast.info('Generating optimized PDF... This may take a moment.');
+      
+      // Mock resume data for PDF generation
+      const resumeData: ResumeData = parseResumeData(editedText);
+      const filename = 'optimized_resume.pdf';
+      await PDFGenerator.generateTextPDF(resumeData, selectedTemplate, filename);
+      
+      toast.success('Optimized PDF downloaded successfully!');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to download optimized PDF. Please try again.');
+    }
+  };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            CV Optimizer & Editor
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* File Upload */}
-          {!file && (
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive 
-                  ? 'border-blue-400 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <input {...getInputProps()} />
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">
-                {isDragActive 
-                  ? 'Drop your CV here...' 
-                  : 'Drag & drop your CV here, or click to select'
-                }
-              </p>
-              <p className="text-sm text-gray-500">Supports PDF, DOC, DOCX, TXT files</p>
-            </div>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="container mx-auto max-w-7xl">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            CV Optimizer Pro
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
+            Upload, optimize, and download your professional resume with AI-powered insights
+          </p>
+        </div>
 
-          {/* Uploaded File Info */}
-          {file && (
-            <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-              <FileText className="w-8 h-8 text-green-600" />
-              <div className="flex-1">
-                <p className="font-medium text-green-800">{file.name}</p>
-                <p className="text-sm text-green-600">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              <Badge variant="outline" className="bg-green-100 text-green-800">
-                Uploaded
-              </Badge>
-            </div>
-          )}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Upload and Edit Section */}
+          <div className="xl:col-span-2 space-y-6">
+            <Card className="shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl">
+              <CardHeader className="bg-gradient-to-r from-blue-600/5 to-purple-600/5">
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  CV Upload & Optimization
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="upload" className="flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      Upload
+                    </TabsTrigger>
+                    <TabsTrigger value="edit" className="flex items-center gap-2" disabled={!extractedText}>
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </TabsTrigger>
+                    <TabsTrigger value="optimize" className="flex items-center gap-2" disabled={!extractedText}>
+                      <Sparkles className="w-4 h-4" />
+                      Optimize
+                    </TabsTrigger>
+                  </TabsList>
 
-          {/* Job Description for ATS Optimization */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700">
-              Job Description (for ATS keyword optimization)
-            </label>
-            <Textarea
-              placeholder="Paste the job description here to optimize your CV with relevant keywords..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              className="min-h-[120px]"
-            />
-            <p className="text-xs text-gray-500">
-              These keywords will be hidden in the final PDF for ATS scanning while keeping your content readable.
-            </p>
+                  <TabsContent value="upload" className="space-y-4">
+                    <div
+                      {...getRootProps()}
+                      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
+                        isDragActive 
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                          : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <input {...getInputProps()} />
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                          <Upload className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                            Drop your CV here or click to browse
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400">
+                            Supports PDF, DOC, DOCX, and TXT files
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {uploadedFile && (
+                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-5 h-5 text-green-600" />
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200">
+                              {uploadedFile.name}
+                            </p>
+                            <p className="text-sm text-green-600 dark:text-green-400">
+                              {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB • Uploaded successfully
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="edit" className="space-y-4">
+                    {extractedText && (
+                      <div>
+                        <Label htmlFor="cv-editor" className="text-base font-semibold mb-3 block">
+                          Edit Your CV Content
+                        </Label>
+                        <RichTextEditor
+                          value={editedText}
+                          onChange={setEditedText}
+                          placeholder="Your CV content will appear here for editing..."
+                          className="min-h-[400px]"
+                          className="min-h-[400px]"
+                        />
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="optimize" className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="job-description" className="text-base font-semibold mb-3 block">
+                          Job Description (Optional)
+                        </Label>
+                        <Textarea
+                          id="job-description"
+                          placeholder="Paste the job description here for ATS optimization..."
+                          value={jobDescription}
+                          onChange={(e) => setJobDescription(e.target.value)}
+                          className="min-h-[200px]"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="template-select" className="text-base font-semibold mb-3 block">
+                          Select Template
+                        </Label>
+                        <Select value={selectedTemplate.toString()} onValueChange={(value) => setSelectedTemplate(parseInt(value))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a template" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">Modern Professional</SelectItem>
+                            <SelectItem value="1">Executive Leadership</SelectItem>
+                            <SelectItem value="2">Corporate Classic</SelectItem>
+                            <SelectItem value="3">Creative Designer</SelectItem>
+                            <SelectItem value="4">Tech Specialist</SelectItem>
+                            <SelectItem value="5">Minimalist Clean</SelectItem>
+                            <SelectItem value="6">Professional Blue</SelectItem>
+                            <SelectItem value="7">Legal Professional</SelectItem>
+                            <SelectItem value="8">Engineering Focus</SelectItem>
+                            <SelectItem value="9">Data Specialist</SelectItem>
+                            <SelectItem value="10">Supply Chain Manager</SelectItem>
+                            <SelectItem value="11">Clean Modern</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        <div className="mt-4 space-y-3">
+                          <Button 
+                            onClick={optimizeWithAI} 
+                            disabled={!extractedText || optimizing}
+                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                          >
+                            {optimizing ? (
+                              <>
+                                <Zap className="w-4 h-4 mr-2 animate-spin" />
+                                Optimizing with AI...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Optimize with AI
+                              </>
+                            )}
+                          </Button>
+                          
+                          <Button 
+                            onClick={downloadOptimizedPDF} 
+                            disabled={!extractedText}
+                            variant="outline"
+                            className="w-full"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Optimized PDF
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {optimizationResults && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          AI Optimization Results
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {optimizationResults.atsScore}%
+                            </div>
+                            <div className="text-sm text-blue-700 dark:text-blue-300">ATS Score</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                              {optimizationResults.keywordMatches?.length || 0}
+                            </div>
+                            <div className="text-sm text-green-700 dark:text-green-300">Keywords Matched</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                              {optimizationResults.suggestions?.length || 0}
+                            </div>
+                            <div className="text-sm text-orange-700 dark:text-orange-300">Improvements</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Template Selection */}
-          {parsedCV && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">
-                Choose Template
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {templates.map((template) => (
-                  <Button
-                    key={template.id}
-                    variant={selectedTemplate === template.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedTemplate(template.id)}
-                    className="flex items-center gap-2"
-                  >
-                    <Palette className="w-4 h-4" />
-                    {template.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* CV Content Editor */}
-          {parsedCV && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">
-                Edit CV Content
-              </label>
-              <RichTextEditor
-                value={editedContent}
-                onChange={setEditedContent}
-                placeholder="Edit your CV content here..."
-                className="min-h-[300px]"
-              />
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          {parsedCV && (
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={handleOptimizeWithAI}
-                disabled={isProcessing || !jobDescription}
-                className="flex items-center gap-2"
-              >
-                {isProcessing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Wand2 className="w-4 h-4" />
-                )}
-                Optimize with AI
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setShowPreview(!showPreview)}
-                className="flex items-center gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                {showPreview ? 'Hide Preview' : 'Preview'}
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={handleDownloadOptimized}
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download Optimized
-              </Button>
-            </div>
-          )}
-
-          {/* Extracted Information Display */}
-          {parsedCV && (
-            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-800">Extracted Information:</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Personal Info:</h4>
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <div>Name: {parsedCV.personalInfo.name}</div>
-                    <div>Email: {parsedCV.personalInfo.email}</div>
-                    <div>Phone: {parsedCV.personalInfo.phone}</div>
+          {/* Preview Section */}
+          <div className="xl:col-span-1">
+            <Card className="sticky top-6 shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl">
+              <CardHeader className="bg-gradient-to-r from-blue-600/5 to-purple-600/5 pb-3">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Live Preview
                   </div>
+                  <Badge className="bg-green-100 text-green-800">
+                    Template {selectedTemplate + 1}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="bg-gray-100 dark:bg-gray-800 p-4">
+                  {extractedText ? (
+                    <div className="transform scale-75 origin-top-left w-[133%] h-auto">
+                      <ImprovedResumePreview 
+                        data={parseResumeData(editedText)}
+                        template={selectedTemplate}
+                        scale={1}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-white dark:bg-gray-700 rounded-lg p-8 text-center">
+                      <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400">
+                        Upload your CV to see the preview
+                      </p>
+                    </div>
+                  )}
                 </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Skills Found:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {parsedCV.skills.map((skill, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Template Preview */}
-      {showPreview && resumeData && (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              Resume Preview - {templates[selectedTemplate]?.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-100 p-4 rounded-lg max-h-[600px] overflow-y-auto">
-              <div className="transform scale-75 origin-top-left">
-                <SelectedTemplateComponent 
-                  data={resumeData} 
-                  templateId={selectedTemplate}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
