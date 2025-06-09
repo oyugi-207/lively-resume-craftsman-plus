@@ -6,12 +6,17 @@ import {
   CreativeTemplate, 
   TechTemplate, 
   MinimalistTemplate,
+  CorporateClassicTemplate,
   ProfessionalBlueTemplate,
   LegalProfessionalTemplate,
   EngineeringFocusTemplate,
   DataSpecialistTemplate,
   SupplyChainTemplate,
-  CleanModernTemplate
+  CleanModernTemplate,
+  MarketingCreativeTemplate,
+  AcademicScholarTemplate,
+  SalesChampionTemplate,
+  ConsultingEliteTemplate
 } from './ResumeTemplates';
 
 interface ResumeData {
@@ -83,24 +88,24 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     height: `${100 / scale}%`,
   };
 
-  // Updated template components mapping with new templates
+  // Updated template components mapping with all 16 templates
   const templates = [
     ModernProfessionalTemplate,     // 0 - Modern Professional
     ExecutiveTemplate,              // 1 - Executive Leadership  
     CreativeTemplate,               // 2 - Creative Designer
     TechTemplate,                   // 3 - Tech Specialist
     MinimalistTemplate,             // 4 - Minimalist Clean
-    ModernProfessionalTemplate,     // 5 - Corporate Classic (variation)
-    ProfessionalBlueTemplate,       // 6 - Professional Blue (New)
-    LegalProfessionalTemplate,      // 7 - Legal Professional (New)
-    EngineeringFocusTemplate,       // 8 - Engineering Focus (New)
-    DataSpecialistTemplate,         // 9 - Data Specialist (New)
-    SupplyChainTemplate,            // 10 - Supply Chain Manager (New)
-    CleanModernTemplate,            // 11 - Clean Modern (New)
-    CreativeTemplate,               // 12 - Marketing Creative (variation)
-    TechTemplate,                   // 13 - Academic Scholar (variation)
-    MinimalistTemplate,             // 14 - Sales Champion (variation)
-    ModernProfessionalTemplate,     // 15 - Consulting Elite (variation)
+    CorporateClassicTemplate,       // 5 - Corporate Classic
+    ProfessionalBlueTemplate,       // 6 - Professional Blue
+    LegalProfessionalTemplate,      // 7 - Legal Professional
+    EngineeringFocusTemplate,       // 8 - Engineering Focus
+    DataSpecialistTemplate,         // 9 - Data Specialist
+    SupplyChainTemplate,            // 10 - Supply Chain Manager
+    CleanModernTemplate,            // 11 - Clean Modern
+    MarketingCreativeTemplate,      // 12 - Marketing Creative
+    AcademicScholarTemplate,        // 13 - Academic Scholar
+    SalesChampionTemplate,          // 14 - Sales Champion
+    ConsultingEliteTemplate,        // 15 - Consulting Elite
   ];
 
   const SelectedTemplate = templates[template] || ModernProfessionalTemplate;

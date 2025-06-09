@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,20 +24,17 @@ import {
   FileText,
   Sparkles,
   ArrowLeft,
-  Home,
   Search,
-  Zap,
   Crown,
   Shield,
   Loader2,
-  Monitor,
-  Tablet,
-  Smartphone
+  Upload,
+  Zap
 } from 'lucide-react';
 
 // Import all form components
 import PersonalInfoForm from '@/components/PersonalInfoForm';
-import ExperienceForm from '@/components/ExperienceForm';
+import ExperienceFormEnhanced from '@/components/ExperienceFormEnhanced';
 import EducationForm from '@/components/EducationForm';
 import SkillsForm from '@/components/SkillsForm';
 import ProjectsForm from '@/components/ProjectsForm';
@@ -103,13 +101,106 @@ interface ResumeData {
   }>;
 }
 
+// CV parsing function
+const parseResumeData = (text: string): Partial<ResumeData> => {
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  const data: Partial<ResumeData> = {
+    personal: {
+      fullName: '',
+      email: '',
+      phone: '',
+      location: '',
+      summary: ''
+    },
+    experience: [],
+    education: [],
+    skills: [],
+    certifications: [],
+    languages: [],
+    interests: [],
+    projects: []
+  };
+
+  let currentSection = '';
+  let currentExperience: any = null;
+  let currentEducation: any = null;
+
+  lines.forEach((line, index) => {
+    const lowerLine = line.toLowerCase();
+    
+    // Detect sections
+    if (lowerLine.includes('experience') || lowerLine.includes('work history')) {
+      currentSection = 'experience';
+      return;
+    } else if (lowerLine.includes('education')) {
+      currentSection = 'education';
+      return;
+    } else if (lowerLine.includes('skills')) {
+      currentSection = 'skills';
+      return;
+    } else if (lowerLine.includes('summary') || lowerLine.includes('objective')) {
+      currentSection = 'summary';
+      return;
+    }
+
+    // Extract email and phone from anywhere in the text
+    const emailMatch = line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const phoneMatch = line.match(/[\+]?[1-9]?[\d\s\-\(\)]{10,}/);
+    
+    if (emailMatch && !data.personal!.email) {
+      data.personal!.email = emailMatch[0];
+    }
+    if (phoneMatch && !data.personal!.phone) {
+      data.personal!.phone = phoneMatch[0];
+    }
+
+    // Extract name (usually first line or line without special characters)
+    if (index < 3 && !data.personal!.fullName && /^[a-zA-Z\s]+$/.test(line) && line.length > 3) {
+      data.personal!.fullName = line;
+    }
+
+    // Parse based on current section
+    if (currentSection === 'summary' && !data.personal!.summary) {
+      data.personal!.summary = line;
+    } else if (currentSection === 'skills') {
+      // Split skills by common separators
+      const skills = line.split(/[,|•·‣▪▫-]/).map(s => s.trim()).filter(s => s && s.length > 1);
+      data.skills!.push(...skills);
+    } else if (currentSection === 'experience') {
+      // Simple experience parsing - detect company/position patterns
+      if (line.includes('|') || line.includes('-') || /\d{4}/.test(line)) {
+        if (currentExperience) {
+          data.experience!.push(currentExperience);
+        }
+        currentExperience = {
+          id: Date.now() + Math.random(),
+          company: line.split(/[||-]/)[0]?.trim() || '',
+          position: line.split(/[||-]/)[1]?.trim() || '',
+          location: '',
+          startDate: '',
+          endDate: '',
+          description: ''
+        };
+      } else if (currentExperience && line.length > 10) {
+        currentExperience.description += (currentExperience.description ? '\n' : '') + line;
+      }
+    }
+  });
+
+  // Add last experience if exists
+  if (currentExperience) {
+    data.experience!.push(currentExperience);
+  }
+
+  return data;
+};
+
 const Builder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { apiKey } = useAPIKey();
   const resumeIdParam = searchParams.get('id');
-  const isPreview = searchParams.get('preview') === 'true';
   const initialTemplate = parseInt(searchParams.get('template') || '0');
   
   const [resumeData, setResumeData] = useState<ResumeData>({
@@ -139,7 +230,63 @@ const Builder: React.FC = () => {
   const [importingProfile, setImportingProfile] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const [previewScale, setPreviewScale] = useState(0.3);
-  const [isMobilePreview, setIsMobilePreview] = useState(false);
+  const [uploadingCV, setUploadingCV] = useState(false);
+  const [showCVUpload, setShowCVUpload] = useState(false);
+
+  // CV Upload functionality
+  const onCVDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    setUploadingCV(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event: any) => {
+        const text = event.target.result;
+        const parsedData = parseResumeData(text);
+        
+        // Merge parsed data with existing resume data
+        setResumeData(prev => ({
+          personal: { ...prev.personal, ...parsedData.personal },
+          experience: [...prev.experience, ...(parsedData.experience || [])],
+          education: [...prev.education, ...(parsedData.education || [])],
+          skills: [...new Set([...prev.skills, ...(parsedData.skills || [])])],
+          certifications: [...prev.certifications, ...(parsedData.certifications || [])],
+          languages: [...prev.languages, ...(parsedData.languages || [])],
+          interests: [...new Set([...prev.interests, ...(parsedData.interests || [])])],
+          projects: [...prev.projects, ...(parsedData.projects || [])]
+        }));
+        
+        toast.success('CV uploaded and parsed successfully!');
+        setShowCVUpload(false);
+      };
+
+      reader.onerror = () => {
+        toast.error('Error reading file. Please try again.');
+      };
+
+      if (file.type === 'application/pdf') {
+        reader.readAsText(file);
+      } else {
+        reader.readAsText(file);
+      }
+    } catch (error) {
+      console.error('CV upload error:', error);
+      toast.error('Failed to parse CV. Please try again.');
+    } finally {
+      setUploadingCV(false);
+    }
+  }, []);
+
+  const { getRootProps: getCVRootProps, getInputProps: getCVInputProps, isDragActive: isCVDragActive } = useDropzone({
+    onDrop: onCVDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt']
+    },
+    multiple: false
+  });
 
   useEffect(() => {
     if (user) {
@@ -244,12 +391,30 @@ const Builder: React.FC = () => {
     }
   };
 
-  const updatePersonalInfo = (data: any) => {
-    setResumeData(prev => ({ ...prev, personal: data }));
+  const updateExperience = (data: any[]) => {
+    // Auto-format experience descriptions with bullet points
+    const formattedData = data.map(exp => ({
+      ...exp,
+      description: exp.description ? formatWithBullets(exp.description) : ''
+    }));
+    setResumeData(prev => ({ ...prev, experience: formattedData }));
   };
 
-  const updateExperience = (data: any[]) => {
-    setResumeData(prev => ({ ...prev, experience: data }));
+  const formatWithBullets = (text: string): string => {
+    if (!text) return '';
+    
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    return lines.map(line => {
+      // If line doesn't start with bullet point, add one
+      if (!line.match(/^[•·‣▪▫-]\s/)) {
+        return `• ${line}`;
+      }
+      return line;
+    }).join('\n');
+  };
+
+  const updatePersonalInfo = (data: any) => {
+    setResumeData(prev => ({ ...prev, personal: data }));
   };
 
   const updateEducation = (data: any[]) => {
@@ -433,7 +598,7 @@ const Builder: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-7xl">
         
-        {/* Responsive Header */}
+        {/* Enhanced Header with CV Upload */}
         <div className="relative mb-4 sm:mb-6 lg:mb-8 p-3 sm:p-4 lg:p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 rounded-2xl"></div>
           
@@ -466,8 +631,18 @@ const Builder: React.FC = () => {
               </div>
             </div>
             
-            {/* Action Buttons - Responsive Grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-8 lg:flex lg:flex-wrap gap-1 sm:gap-2">
+            {/* Action Buttons with CV Upload */}
+            <div className="grid grid-cols-5 sm:grid-cols-10 lg:flex lg:flex-wrap gap-1 sm:gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCVUpload(true)}
+                className="flex flex-col sm:flex-row items-center gap-1 text-xs hover:bg-green-50 border-green-200 px-1 sm:px-2 lg:px-3 py-2 min-h-[2.5rem] sm:min-h-0"
+                size="sm"
+              >
+                <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="text-xs">Upload CV</span>
+              </Button>
+              
               <Button
                 variant="outline"
                 onClick={handleImportFromProfile}
@@ -544,6 +719,55 @@ const Builder: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* CV Upload Modal */}
+        {showCVUpload && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="max-w-md w-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Upload Your CV
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  {...getCVRootProps()}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
+                    isCVDragActive 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                      : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <input {...getCVInputProps()} />
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      {uploadingCV ? (
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      ) : (
+                        <Upload className="w-6 h-6 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white mb-1">
+                        {uploadingCV ? 'Processing...' : 'Drop your CV here or click to browse'}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Supports PDF, DOC, DOCX, and TXT files
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={() => setShowCVUpload(false)} variant="outline" className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Status Cards - Enhanced Mobile Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -627,22 +851,67 @@ const Builder: React.FC = () => {
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Tab Content - Keep existing */}
                   <TabsContent value="personal">
                     <PersonalInfoForm 
                       data={resumeData.personal} 
-                      onChange={updatePersonalInfo} 
+                      onChange={(data) => setResumeData(prev => ({ ...prev, personal: data }))} 
                     />
                   </TabsContent>
 
-                  {/* ... keep existing code for all other TabsContent */}
+                  <TabsContent value="experience">
+                    <ExperienceFormEnhanced 
+                      data={resumeData.experience} 
+                      onChange={updateExperience} 
+                    />
+                  </TabsContent>
 
+                  <TabsContent value="education">
+                    <EducationForm 
+                      data={resumeData.education} 
+                      onChange={updateEducation} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="skills">
+                    <SkillsForm 
+                      data={resumeData.skills} 
+                      onChange={updateSkills} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="projects">
+                    <ProjectsForm 
+                      data={resumeData.projects} 
+                      onChange={updateProjects} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="certifications">
+                    <CertificationsForm 
+                      data={resumeData.certifications} 
+                      onChange={updateCertifications} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="languages">
+                    <LanguagesForm 
+                      data={resumeData.languages} 
+                      onChange={updateLanguages} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="interests">
+                    <InterestsForm 
+                      data={resumeData.interests} 
+                      onChange={updateInterests} 
+                    />
+                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
           </div>
 
-          {/* Preview Section - Enhanced Mobile Support */}
+          {/* Enhanced Preview Section */}
           <div className="xl:col-span-1 order-first xl:order-last">
             <Card className="overflow-hidden shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl sticky top-6">
               <CardHeader className="pb-3 bg-gradient-to-r from-blue-600/5 to-purple-600/5">
@@ -652,35 +921,9 @@ const Builder: React.FC = () => {
                     Live Preview
                   </CardTitle>
                   
-                  {/* Preview Controls */}
                   <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="hidden sm:flex items-center gap-1">
-                      <Button
-                        variant={!isMobilePreview ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setIsMobilePreview(false);
-                          setPreviewScale(0.3);
-                        }}
-                        className="p-1"
-                      >
-                        <Monitor className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant={isMobilePreview ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setIsMobilePreview(true);
-                          setPreviewScale(0.6);
-                        }}
-                        className="p-1"
-                      >
-                        <Smartphone className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    
                     <Badge variant="secondary" className="text-xs">
-                      Premium
+                      Template {selectedTemplate + 1}
                     </Badge>
                   </div>
                 </div>
@@ -688,18 +931,11 @@ const Builder: React.FC = () => {
               
               <CardContent className="p-0">
                 <div className="bg-gray-100 dark:bg-gray-800 p-2 sm:p-4">
-                  <div 
-                    id="resume-preview" 
-                    className={`transform-gpu transition-all duration-300 ${
-                      isMobilePreview ? 'max-w-sm mx-auto' : ''
-                    }`}
-                  >
-                    <ImprovedResumePreview 
-                      data={resumeData} 
-                      template={selectedTemplate}
-                      scale={previewScale}
-                    />
-                  </div>
+                  <ImprovedResumePreview 
+                    data={resumeData} 
+                    template={selectedTemplate}
+                    scale={previewScale}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -743,19 +979,19 @@ const getTemplateName = (index: number): string => {
   const names = [
     'Modern Professional',     // 0
     'Executive Leadership',    // 1  
-    'Classic Corporate',       // 2
-    'Creative Designer',       // 3
-    'Tech Specialist',         // 4
-    'Minimalist Clean',        // 5
-    'Two Column Layout',       // 6
-    'Academic Scholar',        // 7
-    'Sales Champion',          // 8
-    'Startup Innovator',       // 9
-    'Healthcare Professional', // 10
-    'Finance Expert',          // 11
+    'Creative Designer',       // 2
+    'Tech Specialist',         // 3
+    'Minimalist Clean',        // 4
+    'Corporate Classic',       // 5
+    'Professional Blue',       // 6
+    'Legal Professional',      // 7
+    'Engineering Focus',       // 8
+    'Data Specialist',         // 9
+    'Supply Chain Manager',    // 10
+    'Clean Modern',            // 11
     'Marketing Creative',      // 12
-    'Engineering Focus',       // 13
-    'Legal Professional',      // 14
+    'Academic Scholar',        // 13
+    'Sales Champion',          // 14
     'Consulting Elite'         // 15
   ];
   return names[index] || 'Modern Professional';
