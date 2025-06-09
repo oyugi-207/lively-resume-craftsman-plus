@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,6 +46,7 @@ import JobDescriptionParser from '@/components/JobDescriptionParser';
 import JobScanner from '@/components/JobScanner';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import PDFGenerator from '@/components/PDFGenerator';
+import CVParser from '@/components/CVParser';
 import { ProfileIntegrationService } from '@/services/profileIntegration';
 import { useAPIKey } from '@/hooks/useAPIKey';
 
@@ -101,100 +101,6 @@ interface ResumeData {
   }>;
 }
 
-// CV parsing function
-const parseResumeData = (text: string): Partial<ResumeData> => {
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-  const data: Partial<ResumeData> = {
-    personal: {
-      fullName: '',
-      email: '',
-      phone: '',
-      location: '',
-      summary: ''
-    },
-    experience: [],
-    education: [],
-    skills: [],
-    certifications: [],
-    languages: [],
-    interests: [],
-    projects: []
-  };
-
-  let currentSection = '';
-  let currentExperience: any = null;
-  let currentEducation: any = null;
-
-  lines.forEach((line, index) => {
-    const lowerLine = line.toLowerCase();
-    
-    // Detect sections
-    if (lowerLine.includes('experience') || lowerLine.includes('work history')) {
-      currentSection = 'experience';
-      return;
-    } else if (lowerLine.includes('education')) {
-      currentSection = 'education';
-      return;
-    } else if (lowerLine.includes('skills')) {
-      currentSection = 'skills';
-      return;
-    } else if (lowerLine.includes('summary') || lowerLine.includes('objective')) {
-      currentSection = 'summary';
-      return;
-    }
-
-    // Extract email and phone from anywhere in the text
-    const emailMatch = line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-    const phoneMatch = line.match(/[\+]?[1-9]?[\d\s\-\(\)]{10,}/);
-    
-    if (emailMatch && !data.personal!.email) {
-      data.personal!.email = emailMatch[0];
-    }
-    if (phoneMatch && !data.personal!.phone) {
-      data.personal!.phone = phoneMatch[0];
-    }
-
-    // Extract name (usually first line or line without special characters)
-    if (index < 3 && !data.personal!.fullName && /^[a-zA-Z\s]+$/.test(line) && line.length > 3) {
-      data.personal!.fullName = line;
-    }
-
-    // Parse based on current section
-    if (currentSection === 'summary' && !data.personal!.summary) {
-      data.personal!.summary = line;
-    } else if (currentSection === 'skills') {
-      // Split skills by common separators
-      const skills = line.split(/[,|•·‣▪▫-]/).map(s => s.trim()).filter(s => s && s.length > 1);
-      data.skills!.push(...skills);
-    } else if (currentSection === 'experience') {
-      // Simple experience parsing - detect company/position patterns
-      if (line.includes('|') || line.includes('-') || /\d{4}/.test(line)) {
-        if (currentExperience) {
-          data.experience!.push(currentExperience);
-        }
-        currentExperience = {
-          id: Date.now() + Math.random(),
-          company: line.split(/[||-]/)[0]?.trim() || '',
-          position: line.split(/[||-]/)[1]?.trim() || '',
-          location: '',
-          startDate: '',
-          endDate: '',
-          description: ''
-        };
-      } else if (currentExperience && line.length > 10) {
-        currentExperience.description += (currentExperience.description ? '\n' : '') + line;
-      }
-    }
-  });
-
-  // Add last experience if exists
-  if (currentExperience) {
-    data.experience!.push(currentExperience);
-  }
-
-  return data;
-};
-
 const Builder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -230,63 +136,7 @@ const Builder: React.FC = () => {
   const [importingProfile, setImportingProfile] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const [previewScale, setPreviewScale] = useState(0.3);
-  const [uploadingCV, setUploadingCV] = useState(false);
-  const [showCVUpload, setShowCVUpload] = useState(false);
-
-  // CV Upload functionality
-  const onCVDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    setUploadingCV(true);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event: any) => {
-        const text = event.target.result;
-        const parsedData = parseResumeData(text);
-        
-        // Merge parsed data with existing resume data
-        setResumeData(prev => ({
-          personal: { ...prev.personal, ...parsedData.personal },
-          experience: [...prev.experience, ...(parsedData.experience || [])],
-          education: [...prev.education, ...(parsedData.education || [])],
-          skills: [...new Set([...prev.skills, ...(parsedData.skills || [])])],
-          certifications: [...prev.certifications, ...(parsedData.certifications || [])],
-          languages: [...prev.languages, ...(parsedData.languages || [])],
-          interests: [...new Set([...prev.interests, ...(parsedData.interests || [])])],
-          projects: [...prev.projects, ...(parsedData.projects || [])]
-        }));
-        
-        toast.success('CV uploaded and parsed successfully!');
-        setShowCVUpload(false);
-      };
-
-      reader.onerror = () => {
-        toast.error('Error reading file. Please try again.');
-      };
-
-      if (file.type === 'application/pdf') {
-        reader.readAsText(file);
-      } else {
-        reader.readAsText(file);
-      }
-    } catch (error) {
-      console.error('CV upload error:', error);
-      toast.error('Failed to parse CV. Please try again.');
-    } finally {
-      setUploadingCV(false);
-    }
-  }, []);
-
-  const { getRootProps: getCVRootProps, getInputProps: getCVInputProps, isDragActive: isCVDragActive } = useDropzone({
-    onDrop: onCVDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt']
-    },
-    multiple: false
-  });
+  const [showCVParser, setShowCVParser] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -582,6 +432,33 @@ const Builder: React.FC = () => {
     }
   };
 
+  const handleCVDataExtracted = (extractedData: any) => {
+    // Merge extracted data with existing resume data
+    setResumeData(prev => ({
+      personal: { 
+        ...prev.personal, 
+        ...extractedData.personal,
+        // Only update if new values are not empty
+        fullName: extractedData.personal.fullName || prev.personal.fullName,
+        email: extractedData.personal.email || prev.personal.email,
+        phone: extractedData.personal.phone || prev.personal.phone,
+        location: extractedData.personal.location || prev.personal.location,
+        summary: extractedData.personal.summary || prev.personal.summary
+      },
+      experience: [...prev.experience, ...extractedData.experience],
+      education: [...prev.education, ...extractedData.education],
+      skills: [...new Set([...prev.skills, ...extractedData.skills])],
+      certifications: [...prev.certifications, ...(extractedData.certifications || [])],
+      languages: [...prev.languages, ...(extractedData.languages || [])],
+      interests: [...new Set([...prev.interests, ...(extractedData.interests || [])])],
+      projects: [...prev.projects, ...extractedData.projects]
+    }));
+    
+    // Switch to personal tab to show imported data
+    setActiveTab('personal');
+    toast.success('CV data successfully imported! Review and edit as needed.');
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -635,7 +512,7 @@ const Builder: React.FC = () => {
             <div className="grid grid-cols-5 sm:grid-cols-10 lg:flex lg:flex-wrap gap-1 sm:gap-2">
               <Button
                 variant="outline"
-                onClick={() => setShowCVUpload(true)}
+                onClick={() => setShowCVParser(true)}
                 className="flex flex-col sm:flex-row items-center gap-1 text-xs hover:bg-green-50 border-green-200 px-1 sm:px-2 lg:px-3 py-2 min-h-[2.5rem] sm:min-h-0"
                 size="sm"
               >
@@ -719,55 +596,6 @@ const Builder: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* CV Upload Modal */}
-        {showCVUpload && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-md w-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5" />
-                  Upload Your CV
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  {...getCVRootProps()}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
-                    isCVDragActive 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                      : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <input {...getCVInputProps()} />
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                      {uploadingCV ? (
-                        <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      ) : (
-                        <Upload className="w-6 h-6 text-white" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white mb-1">
-                        {uploadingCV ? 'Processing...' : 'Drop your CV here or click to browse'}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Supports PDF, DOC, DOCX, and TXT files
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={() => setShowCVUpload(false)} variant="outline" className="flex-1">
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Status Cards - Enhanced Mobile Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -969,6 +797,13 @@ const Builder: React.FC = () => {
             toast.success('Job requirements applied to resume!');
             setShowJobScanner(false);
           }}
+        />
+      )}
+
+      {showCVParser && (
+        <CVParser
+          onDataExtracted={handleCVDataExtracted}
+          onClose={() => setShowCVParser(false)}
         />
       )}
     </div>

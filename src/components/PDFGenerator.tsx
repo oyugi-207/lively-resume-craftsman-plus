@@ -27,6 +27,20 @@ export class PDFGenerator {
         pdf.setTextColor(0, 0, 0); // Back to black text
       }
 
+      // Helper function to automatically format text with bullet points
+      const formatWithBullets = (text: string): string => {
+        if (!text) return '';
+        
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+        return lines.map(line => {
+          // If line doesn't start with bullet point, add one
+          if (!line.match(/^[•·‣▪▫-]\s/)) {
+            return `• ${line}`;
+          }
+          return line;
+        }).join('\n');
+      };
+
       // Helper function to check if new page is needed
       const checkNewPage = (requiredSpace: number = 20) => {
         if (yPosition > pageHeight - margin - requiredSpace) {
@@ -176,7 +190,7 @@ export class PDFGenerator {
         yPosition += 5;
       }
 
-      // Experience with improved formatting
+      // Experience with improved formatting and automatic bullets
       if (resumeData.experience?.length > 0) {
         addSectionHeader('Professional Experience', colors.primary);
         
@@ -205,13 +219,15 @@ export class PDFGenerator {
           }
           yPosition += 8;
           
-          // Description
+          // Description with automatic bullet formatting
           if (exp.description) {
             pdf.setTextColor(0, 0, 0);
-            const descriptions = exp.description.split('.').filter((desc: string) => desc.trim().length > 0);
+            const formattedDescription = formatWithBullets(exp.description);
+            const descriptions = formattedDescription.split('\n').filter((desc: string) => desc.trim().length > 0);
+            
             descriptions.forEach((desc: string) => {
               if (desc.trim()) {
-                addText(`• ${desc.trim()}`, 10, 'normal', 'black', 5);
+                addText(desc.trim(), 10, 'normal', 'black', 5);
               }
             });
           }
@@ -286,7 +302,9 @@ export class PDFGenerator {
           yPosition += 5;
           
           if (proj.description) {
-            addText(proj.description, 10, 'normal', 'black', 5);
+            // Auto-format project descriptions with bullets
+            const formattedDescription = formatWithBullets(proj.description);
+            addText(formattedDescription, 10, 'normal', 'black', 5);
           }
           
           if (proj.technologies) {
