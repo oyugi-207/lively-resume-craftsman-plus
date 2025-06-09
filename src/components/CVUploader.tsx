@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,7 +141,15 @@ const CVUploader: React.FC = () => {
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: '.pdf,.doc,.docx,.txt' });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop, 
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt']
+    }
+  });
 
   const optimizeWithAI = async () => {
     setOptimizing(true);
@@ -170,8 +179,15 @@ const CVUploader: React.FC = () => {
       
       // Mock resume data for PDF generation
       const resumeData: ResumeData = parseResumeData(editedText);
+      
+      // Add job description for ATS optimization
+      const resumeDataWithJob = {
+        ...resumeData,
+        jobDescription: jobDescription
+      };
+      
       const filename = 'optimized_resume.pdf';
-      await PDFGenerator.generateTextPDF(resumeData, selectedTemplate, filename);
+      await PDFGenerator.generateTextPDF(resumeDataWithJob, selectedTemplate, filename);
       
       toast.success('Optimized PDF downloaded successfully!');
     } catch (error) {
@@ -272,7 +288,6 @@ const CVUploader: React.FC = () => {
                           onChange={setEditedText}
                           placeholder="Your CV content will appear here for editing..."
                           className="min-h-[400px]"
-                          className="min-h-[400px]"
                         />
                       </div>
                     )}
@@ -304,16 +319,20 @@ const CVUploader: React.FC = () => {
                           <SelectContent>
                             <SelectItem value="0">Modern Professional</SelectItem>
                             <SelectItem value="1">Executive Leadership</SelectItem>
-                            <SelectItem value="2">Corporate Classic</SelectItem>
-                            <SelectItem value="3">Creative Designer</SelectItem>
-                            <SelectItem value="4">Tech Specialist</SelectItem>
-                            <SelectItem value="5">Minimalist Clean</SelectItem>
+                            <SelectItem value="2">Creative Designer</SelectItem>
+                            <SelectItem value="3">Tech Specialist</SelectItem>
+                            <SelectItem value="4">Minimalist Clean</SelectItem>
+                            <SelectItem value="5">Corporate Classic</SelectItem>
                             <SelectItem value="6">Professional Blue</SelectItem>
                             <SelectItem value="7">Legal Professional</SelectItem>
                             <SelectItem value="8">Engineering Focus</SelectItem>
                             <SelectItem value="9">Data Specialist</SelectItem>
                             <SelectItem value="10">Supply Chain Manager</SelectItem>
                             <SelectItem value="11">Clean Modern</SelectItem>
+                            <SelectItem value="12">Marketing Creative</SelectItem>
+                            <SelectItem value="13">Academic Scholar</SelectItem>
+                            <SelectItem value="14">Sales Champion</SelectItem>
+                            <SelectItem value="15">Consulting Elite</SelectItem>
                           </SelectContent>
                         </Select>
                         
