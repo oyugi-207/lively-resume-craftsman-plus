@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,7 @@ import JobScanner from '@/components/JobScanner';
 import ATSOptimizer from '@/components/ATSOptimizer';
 import PDFGenerator from '@/components/PDFGenerator';
 import CVParser from '@/components/CVParser';
+import JobDescriptionEmbedder from '@/components/JobDescriptionEmbedder';
 import { ProfileIntegrationService } from '@/services/profileIntegration';
 import { useAPIKey } from '@/hooks/useAPIKey';
 
