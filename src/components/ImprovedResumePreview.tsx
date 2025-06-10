@@ -88,7 +88,7 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     height: `${100 / scale}%`,
   };
 
-  // Updated template components mapping with all 16 templates
+  // Complete template mapping with all 16 templates
   const templates = [
     ModernProfessionalTemplate,     // 0 - Modern Professional
     ExecutiveTemplate,              // 1 - Executive Leadership  
@@ -108,14 +108,52 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     ConsultingEliteTemplate,        // 15 - Consulting Elite
   ];
 
+  // Ensure we have a valid template
   const SelectedTemplate = templates[template] || ModernProfessionalTemplate;
+
+  // Add sample data for empty sections to ensure preview shows all capabilities
+  const enhancedData = {
+    ...data,
+    // Add sample skills if none exist
+    skills: data.skills.length > 0 ? data.skills : [
+      'Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management'
+    ],
+    // Add sample project if none exist
+    projects: data.projects.length > 0 ? data.projects : [{
+      id: 1,
+      name: 'Sample Project',
+      description: 'Professional project showcasing skills and expertise',
+      technologies: 'Various Technologies',
+      link: '',
+      startDate: '2023',
+      endDate: '2024'
+    }],
+    // Add sample certifications if none exist
+    certifications: data.certifications.length > 0 ? data.certifications : [{
+      id: 1,
+      name: 'Professional Certification',
+      issuer: 'Industry Organization',
+      date: '2024',
+      credentialId: ''
+    }],
+    // Add sample languages if none exist
+    languages: data.languages.length > 0 ? data.languages : [{
+      id: 1,
+      language: 'English',
+      proficiency: 'Native'
+    }],
+    // Add sample interests if none exist
+    interests: data.interests.length > 0 ? data.interests : [
+      'Professional Development', 'Technology', 'Innovation'
+    ]
+  };
 
   return (
     <div style={containerStyle} className="w-full">
       <div className="bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-200" 
            style={{ width: '210mm', minHeight: '297mm' }}>
-        <div className="p-8 h-full">
-          <SelectedTemplate data={data} templateId={template} />
+        <div className="p-6 h-full">
+          <SelectedTemplate data={enhancedData} templateId={template} />
         </div>
       </div>
     </div>
