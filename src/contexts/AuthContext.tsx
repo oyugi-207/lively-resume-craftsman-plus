@@ -46,17 +46,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Send welcome email for new users
+      // Send welcome email for new users - use the correct enum value
       if (event === 'SIGNED_UP' && session?.user) {
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
-        await sendWelcomeEmail(session.user.email!, fullName);
-        toast.success('Welcome! Check your email for a welcome message.');
+        setTimeout(() => {
+          sendWelcomeEmail(session.user.email!, fullName);
+          toast.success('Welcome! Check your email for a welcome message.');
+        }, 0);
       }
 
       // Show notification for successful sign in
