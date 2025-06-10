@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
@@ -80,10 +79,10 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       interests: [] as string[]
     };
 
-    // Clean the text first
+    // Clean the text first - FIXED REGEX
     const cleanText = text
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s@.,-()]/g, ' ')
+      .replace(/[^\w\s@.,\-()]/g, ' ') // Fixed: moved dash to end to avoid range issues
       .trim();
 
     const lines = cleanText.split(/[.\n]/).map(line => line.trim()).filter(line => line.length > 3);
@@ -94,7 +93,7 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
     if (emailMatch) data.personal.email = emailMatch[0];
 
     // Extract phone with improved regex
-    const phoneRegex = /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
+    const phoneRegex = /(\+?\d{1,3}[\-.\s]?)?\(?\d{3}\)?[\-.\s]?\d{3}[\-.\s]?\d{4}/g;
     const phoneMatch = cleanText.match(phoneRegex);
     if (phoneMatch) data.personal.phone = phoneMatch[0];
 
