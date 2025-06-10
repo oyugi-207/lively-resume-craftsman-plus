@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -27,12 +28,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const sendWelcomeEmail = async (email: string, fullName: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-welcome-email', {
+        body: { email, fullName }
+      });
+      
+      if (error) {
+        console.error('Error sending welcome email:', error);
+      } else {
+        console.log('Welcome email sent successfully');
+      }
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Send welcome email for new users
+      if (event === 'SIGNED_UP' && session?.user) {
+        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+        await sendWelcomeEmail(session.user.email!, fullName);
+        toast.success('Welcome! Check your email for a welcome message.');
+      }
+
+      // Show notification for successful sign in
+      if (event === 'SIGNED_IN' && session?.user) {
+        toast.success('Successfully signed in!');
+      }
     });
 
     // Get initial session
@@ -46,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -71,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    toast.success('Successfully signed out!');
   };
 
   const value = {

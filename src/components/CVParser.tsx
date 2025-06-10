@@ -28,21 +28,50 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
           if (file.type === 'text/plain') {
             text = e.target?.result as string;
           } else if (file.type === 'application/pdf') {
-            // For PDF files, read as text and clean up
-            const content = e.target?.result as string;
-            // Extract readable text patterns and remove binary data
-            text = content
-              .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]/g, ' ') // Remove control characters
-              .replace(/[^\x20-\x7E\s]/g, ' ') // Keep only printable ASCII
-              .replace(/\s+/g, ' ') // Normalize whitespace
-              .trim();
+            // For PDF files, we'll use a different approach
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            const uint8Array = new Uint8Array(arrayBuffer);
+            
+            // Try to extract text from PDF by looking for text objects
+            let pdfText = '';
+            const decoder = new TextDecoder('latin1');
+            const content = decoder.decode(uint8Array);
+            
+            // Extract text between stream objects and clean it
+            const textMatches = content.match(/BT[\s\S]*?ET/g) || [];
+            textMatches.forEach(match => {
+              // Extract text between parentheses or brackets
+              const textParts = match.match(/\((.*?)\)/g) || [];
+              textParts.forEach(part => {
+                const cleanText = part.replace(/[()]/g, '').trim();
+                if (cleanText.length > 2) {
+                  pdfText += cleanText + ' ';
+                }
+              });
+            });
+            
+            // Also try to extract readable ASCII text
+            const asciiText = content.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ');
+            const words = asciiText.split(' ').filter(word => 
+              word.length > 2 && 
+              /^[a-zA-Z@.\-]+$/.test(word)
+            );
+            
+            text = (pdfText + ' ' + words.join(' ')).trim();
           } else {
             // For DOC/DOCX files, try to extract readable content
-            const content = e.target?.result as string;
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const decoder = new TextDecoder('utf-8');
+            const content = decoder.decode(uint8Array);
+            
+            // Extract readable text and clean up
             text = content
-              .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]/g, ' ')
               .replace(/[^\x20-\x7E\s]/g, ' ')
               .replace(/\s+/g, ' ')
+              .split(' ')
+              .filter(word => word.length > 1 && /^[a-zA-Z@.\-]+$/.test(word))
+              .join(' ')
               .trim();
           }
           
@@ -54,13 +83,17 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       
       reader.onerror = () => reject(new Error('Failed to read file'));
       
-      // Read file as text to avoid binary issues
-      reader.readAsText(file, 'UTF-8');
+      // Use ArrayBuffer for PDF and DOC files for better parsing
+      if (file.type === 'application/pdf' || file.type.includes('document')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file, 'UTF-8');
+      }
     });
   };
 
   const parseResumeData = (text: string) => {
-    console.log('Parsing text:', text.substring(0, 500)); // Debug log
+    console.log('Parsing text:', text.substring(0, 500));
     
     const data = {
       personal: {
@@ -79,16 +112,16 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       interests: [] as string[]
     };
 
-    // Clean the text first - FIXED REGEX
+    // Clean the text first
     const cleanText = text
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s@.,\-()]/g, ' ') // Fixed: moved dash to end to avoid range issues
+      .replace(/[^\w\s@.,\-()]/g, ' ')
       .trim();
 
     const lines = cleanText.split(/[.\n]/).map(line => line.trim()).filter(line => line.length > 3);
 
     // Extract email with improved regex
-    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+    const emailRegex = /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b/g;
     const emailMatch = cleanText.match(emailRegex);
     if (emailMatch) data.personal.email = emailMatch[0];
 
@@ -106,6 +139,20 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       }
     }
 
+    // If no name found, try alternative patterns
+    if (!data.personal.fullName) {
+      const nameWords = cleanText.split(' ').slice(0, 10);
+      for (let i = 0; i < nameWords.length - 1; i++) {
+        const firstName = nameWords[i];
+        const lastName = nameWords[i + 1];
+        if (firstName.length > 2 && lastName.length > 2 && 
+            /^[A-Z][a-z]+$/.test(firstName) && /^[A-Z][a-z]+$/.test(lastName)) {
+          data.personal.fullName = `${firstName} ${lastName}`;
+          break;
+        }
+      }
+    }
+
     // Extract location
     const locationRegex = /([A-Z][a-z]+(,\s*[A-Z]{2})?)|([A-Z][a-z]+\s+[A-Z][a-z]+,?\s*[A-Z]{2,})/g;
     const locationMatch = cleanText.match(locationRegex);
@@ -115,24 +162,25 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
 
     // Extract skills - look for technical skills and common job skills
     const skillKeywords = [
-      'javascript', 'python', 'java', 'react', 'nodejs', 'html', 'css', 'sql', 'aws', 'docker',
-      'management', 'leadership', 'communication', 'teamwork', 'problem solving', 'analytical',
-      'project management', 'agile', 'scrum', 'git', 'mongodb', 'postgresql', 'kubernetes'
+      'JavaScript', 'Python', 'Java', 'React', 'NodeJS', 'HTML', 'CSS', 'SQL', 'AWS', 'Docker',
+      'Management', 'Leadership', 'Communication', 'Teamwork', 'Problem solving', 'Analytical',
+      'Project management', 'Agile', 'Scrum', 'Git', 'MongoDB', 'PostgreSQL', 'Kubernetes',
+      'TypeScript', 'Angular', 'Vue', 'Express', 'Django', 'Flask', 'Spring', 'Laravel',
+      'Microsoft Office', 'Excel', 'PowerPoint', 'Photoshop', 'Illustrator', 'Figma'
     ];
 
     const textLower = cleanText.toLowerCase();
     skillKeywords.forEach(skill => {
       if (textLower.includes(skill.toLowerCase())) {
-        const properCase = skill.charAt(0).toUpperCase() + skill.slice(1);
-        if (!data.skills.includes(properCase)) {
-          data.skills.push(properCase);
+        if (!data.skills.some(existingSkill => existingSkill.toLowerCase() === skill.toLowerCase())) {
+          data.skills.push(skill);
         }
       }
     });
 
-    // Extract experience entries
-    const expKeywords = ['experience', 'work', 'employment', 'career'];
-    const eduKeywords = ['education', 'academic', 'university', 'college', 'degree'];
+    // Extract experience and education sections
+    const expKeywords = ['experience', 'work', 'employment', 'career', 'professional'];
+    const eduKeywords = ['education', 'academic', 'university', 'college', 'degree', 'school'];
     
     let currentSection = '';
     let tempExperience: any = null;
@@ -152,17 +200,22 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       const datePattern = /(20\d{2}|19\d{2})/g;
       const dates = line.match(datePattern);
 
-      if (currentSection === 'experience' && line.length > 10) {
-        if (dates || line.includes('Manager') || line.includes('Developer') || line.includes('Engineer')) {
-          if (tempExperience) {
-            data.experience.push(tempExperience);
-          }
-          
+      // Extract job titles and companies
+      const jobTitles = ['engineer', 'developer', 'manager', 'analyst', 'consultant', 'coordinator', 'specialist', 'director', 'supervisor'];
+      const hasJobTitle = jobTitles.some(title => lineLower.includes(title));
+
+      if (currentSection === 'experience' && (dates || hasJobTitle || line.length > 15)) {
+        if ((dates || hasJobTitle) && tempExperience) {
+          data.experience.push(tempExperience);
+        }
+        
+        if (dates || hasJobTitle) {
+          const parts = line.split(/[,\-|]/);
           tempExperience = {
             id: Date.now() + Math.random(),
-            position: line.split(/[,-]/)[0].trim(),
-            company: line.split(/[,-]/)[1]?.trim() || 'Company',
-            location: '',
+            position: parts[0]?.trim() || 'Position',
+            company: parts[1]?.trim() || 'Company',
+            location: parts[2]?.trim() || '',
             startDate: dates?.[0] || '',
             endDate: dates?.[1] || dates?.[0] || '',
             description: ''
@@ -172,22 +225,20 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
         }
       }
 
-      if (currentSection === 'education' && line.length > 10) {
-        if (line.includes('University') || line.includes('College') || line.includes('Bachelor') || line.includes('Master')) {
-          if (tempEducation) {
-            data.education.push(tempEducation);
-          }
-          
-          tempEducation = {
-            id: Date.now() + Math.random(),
-            degree: line.includes('Bachelor') || line.includes('Master') ? line : 'Degree',
-            school: line.includes('University') || line.includes('College') ? line : 'Institution',
-            location: '',
-            startDate: dates?.[0] || '',
-            endDate: dates?.[1] || dates?.[0] || '',
-            gpa: ''
-          };
+      if (currentSection === 'education' && (line.includes('University') || line.includes('College') || line.includes('Bachelor') || line.includes('Master') || dates)) {
+        if (tempEducation) {
+          data.education.push(tempEducation);
         }
+        
+        tempEducation = {
+          id: Date.now() + Math.random(),
+          degree: line.includes('Bachelor') || line.includes('Master') || line.includes('PhD') ? line : 'Degree',
+          school: line.includes('University') || line.includes('College') ? line : 'Institution',
+          location: '',
+          startDate: dates?.[0] || '',
+          endDate: dates?.[1] || dates?.[0] || '',
+          gpa: ''
+        };
       }
     });
 
@@ -196,19 +247,19 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
     if (tempEducation) data.education.push(tempEducation);
 
     // Generate a basic summary if none found
-    if (!data.personal.summary && data.experience.length > 0) {
+    if (!data.personal.summary && (data.experience.length > 0 || data.skills.length > 0)) {
       const topSkills = data.skills.slice(0, 3).join(', ');
       const years = data.experience.length > 1 ? `${data.experience.length}+ years` : 'Experienced';
-      data.personal.summary = `${years} professional with expertise in ${topSkills}. Proven track record in delivering high-quality results and contributing to team success.`;
+      data.personal.summary = `${years} professional with expertise in ${topSkills || 'various technologies'}. Proven track record in delivering high-quality results and contributing to team success.`;
     }
 
-    // Add some common projects if experience exists
+    // Add default project if experience exists
     if (data.experience.length > 0 && data.projects.length === 0) {
       data.projects.push({
         id: Date.now(),
         name: 'Professional Project',
         description: 'Contributed to key business initiatives and process improvements.',
-        technologies: data.skills.slice(0, 3).join(', '),
+        technologies: data.skills.slice(0, 3).join(', ') || 'Various technologies',
         link: '',
         startDate: '',
         endDate: ''
@@ -229,8 +280,8 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       const text = await extractTextFromFile(file);
       setProgress(50);
       
-      if (!text || text.length < 50) {
-        throw new Error('Could not extract readable text from file');
+      if (!text || text.length < 20) {
+        throw new Error('Could not extract readable text from file. Please try a different file format or ensure the file contains text.');
       }
       
       toast.info('Analyzing CV content...');
@@ -238,8 +289,8 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       setProgress(75);
       
       // Validate extracted data
-      if (!parsedData.personal.fullName && !parsedData.personal.email) {
-        throw new Error('Could not find key information in CV');
+      if (!parsedData.personal.fullName && !parsedData.personal.email && parsedData.skills.length === 0) {
+        throw new Error('Could not find sufficient information in CV. Please check the file content.');
       }
       
       setExtractedData(parsedData);
@@ -249,7 +300,7 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       
     } catch (error) {
       console.error('Error processing CV:', error);
-      toast.error('Failed to parse CV. Please ensure the file contains readable text.');
+      toast.error((error as Error).message || 'Failed to parse CV. Please ensure the file contains readable text.');
     } finally {
       setIsProcessing(false);
     }
