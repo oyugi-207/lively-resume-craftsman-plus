@@ -127,28 +127,37 @@ export class PDFGenerator {
         if (!text) return yPosition;
         
         const cleanText = cleanAndFormatText(text);
-        // Split by actual line breaks and bullet characters
-        const bullets = cleanText.split(/\n|•/).filter(line => line.trim());
+        // Handle different bullet formats and line breaks properly
+        const lines = cleanText.split('\n').filter(line => line.trim());
         
-        bullets.forEach((bullet: string) => {
-          const cleanBullet = bullet.trim();
-          if (cleanBullet) {
+        lines.forEach((line: string) => {
+          const trimmedLine = line.trim();
+          if (trimmedLine) {
             addNewPageIfNeeded(fontSize + 2);
             
             pdf.setFontSize(fontSize);
             pdf.setFont(style.fontFamily, 'normal');
             pdf.setTextColor(0, 0, 0);
             
+            // Check if line already has a bullet
+            let bulletLine = trimmedLine;
+            if (!bulletLine.match(/^[•·‣▪▫-]\s/)) {
+              bulletLine = `• ${bulletLine}`;
+            }
+            
             // Add bullet point
             pdf.text('•', margin + 5, yPosition);
             
+            // Remove bullet from text and add the rest
+            const textWithoutBullet = bulletLine.replace(/^[•·‣▪▫-]\s*/, '');
+            
             // Add bullet text with proper wrapping
             const maxWidth = pageWidth - 2 * margin - 15;
-            const lines = pdf.splitTextToSize(cleanBullet, maxWidth);
+            const wrappedLines = pdf.splitTextToSize(textWithoutBullet, maxWidth);
             
-            lines.forEach((line: string, index: number) => {
+            wrappedLines.forEach((wrappedLine: string, index: number) => {
               if (index > 0) addNewPageIfNeeded(fontSize * 0.7);
-              pdf.text(line, margin + 15, yPosition);
+              pdf.text(wrappedLine, margin + 15, yPosition);
               yPosition += fontSize * 0.6;
             });
             
@@ -423,19 +432,18 @@ export class PDFGenerator {
         }
       }
 
-      // Add hidden job description for ATS optimization only if there's content
-      if (resumeData.jobDescription) {
-        // Only add if we're on the first page and have space
-        if (currentPage === 1 && yPosition < pageHeight - 20) {
+      // Add hidden job description for ATS optimization - only add substantial content
+      if (resumeData.jobDescription && resumeData.jobDescription.trim().length > 50) {
+        // Check if we have space on current page
+        if (yPosition < pageHeight - 30) {
           addHiddenJobDescription();
         } else {
-          // Add on a new page only if we have significant content
-          const contentLength = resumeData.jobDescription.length;
-          if (contentLength > 100) { // Only add extra page if job description is substantial
+          // Only add new page if job description is substantial (more than 200 chars)
+          if (resumeData.jobDescription.length > 200) {
             pdf.addPage();
             pdf.setTextColor(255, 255, 255); // White text
             pdf.setFontSize(1);
-            const hiddenContent = `ATS_OPTIMIZATION_DATA: ${cleanAndFormatText(resumeData.jobDescription)}`;
+            const hiddenContent = `ATS_OPTIMIZATION: ${cleanAndFormatText(resumeData.jobDescription)}`;
             pdf.text(hiddenContent, margin, margin);
           }
         }
