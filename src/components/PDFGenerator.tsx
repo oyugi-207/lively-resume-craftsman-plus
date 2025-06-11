@@ -84,7 +84,7 @@ export class PDFGenerator {
           .trim();
       };
 
-      const addSectionHeader = (title: string, yPos: number) => {
+      const addSectionHeader = (title: string) => {
         addNewPageIfNeeded(15);
         
         pdf.setFontSize(12);
@@ -127,13 +127,32 @@ export class PDFGenerator {
         if (!text) return yPosition;
         
         const cleanText = cleanAndFormatText(text);
-        const bullets = cleanText.split('\n').filter(line => line.trim());
+        // Split by actual line breaks and bullet characters
+        const bullets = cleanText.split(/\n|•/).filter(line => line.trim());
         
         bullets.forEach((bullet: string) => {
           const cleanBullet = bullet.trim();
           if (cleanBullet) {
-            const formattedBullet = cleanBullet.startsWith('•') ? cleanBullet : `• ${cleanBullet}`;
-            yPosition = addText(formattedBullet, fontSize, 'normal', [0, 0, 0], 5);
+            addNewPageIfNeeded(fontSize + 2);
+            
+            pdf.setFontSize(fontSize);
+            pdf.setFont(style.fontFamily, 'normal');
+            pdf.setTextColor(0, 0, 0);
+            
+            // Add bullet point
+            pdf.text('•', margin + 5, yPosition);
+            
+            // Add bullet text with proper wrapping
+            const maxWidth = pageWidth - 2 * margin - 15;
+            const lines = pdf.splitTextToSize(cleanBullet, maxWidth);
+            
+            lines.forEach((line: string, index: number) => {
+              if (index > 0) addNewPageIfNeeded(fontSize * 0.7);
+              pdf.text(line, margin + 15, yPosition);
+              yPosition += fontSize * 0.6;
+            });
+            
+            yPosition += 2; // Space between bullets
           }
         });
         
@@ -207,14 +226,14 @@ export class PDFGenerator {
 
       // Professional Summary
       if (resumeData.personal?.summary) {
-        yPosition = addSectionHeader('Professional Summary', yPosition);
+        yPosition = addSectionHeader('Professional Summary');
         yPosition = addText(resumeData.personal.summary, 10, 'normal', [0, 0, 0]);
         yPosition += 5;
       }
 
       // Professional Experience - Enhanced with better formatting
       if (resumeData.experience?.length > 0) {
-        yPosition = addSectionHeader('Professional Experience', yPosition);
+        yPosition = addSectionHeader('Professional Experience');
         
         resumeData.experience.forEach((exp: any) => {
           addNewPageIfNeeded(25);
@@ -238,7 +257,7 @@ export class PDFGenerator {
           
           // Add hidden job description context for ATS
           if (resumeData.jobDescription && exp.description) {
-            const relevantKeywords = extractRelevantKeywords(resumeData.jobDescription, exp.description);
+            const relevantKeywords = PDFGenerator.extractRelevantKeywords(resumeData.jobDescription, exp.description);
             if (relevantKeywords.length > 0) {
               pdf.setTextColor(255, 255, 255); // Hidden white text
               pdf.setFontSize(1);
@@ -253,7 +272,7 @@ export class PDFGenerator {
 
       // Projects Section - Enhanced
       if (resumeData.projects?.length > 0) {
-        yPosition = addSectionHeader('Key Projects', yPosition);
+        yPosition = addSectionHeader('Key Projects');
         
         resumeData.projects.forEach((project: any) => {
           addNewPageIfNeeded(20);
@@ -278,7 +297,7 @@ export class PDFGenerator {
 
       // Education - Enhanced
       if (resumeData.education?.length > 0) {
-        yPosition = addSectionHeader('Education', yPosition);
+        yPosition = addSectionHeader('Education');
         
         resumeData.education.forEach((edu: any) => {
           addNewPageIfNeeded(15);
@@ -300,7 +319,7 @@ export class PDFGenerator {
 
       // Skills Section - Enhanced
       if (resumeData.skills?.length > 0) {
-        yPosition = addSectionHeader('Core Competencies', yPosition);
+        yPosition = addSectionHeader('Core Competencies');
         
         // Group skills into lines for better presentation
         const skillsPerLine = templateId === 3 ? 4 : 6;
@@ -309,7 +328,7 @@ export class PDFGenerator {
           
           const skillGroup = resumeData.skills.slice(i, i + skillsPerLine);
           const skillText = templateId === 3 ? 
-            skillGroup.map(skill => `• ${skill}`).join('  ') : 
+            skillGroup.map((skill: string) => `• ${skill}`).join('  ') : 
             skillGroup.join(' • ');
           
           yPosition = addText(skillText, 9, 'normal', [0, 0, 0]);
@@ -317,18 +336,25 @@ export class PDFGenerator {
         yPosition += 5;
       }
 
-      // Remaining sections in compact format if space allows
+      // Check if we need more space for remaining sections
       const remainingSpace = pageHeight - yPosition - 20;
+      const hasMoreSections = (resumeData.certifications?.length > 0) || 
+                             (resumeData.languages?.length > 0) || 
+                             (resumeData.interests?.length > 0);
       
-      if (remainingSpace > 25 || currentPage > 1) {
-        // Two-column layout for remaining sections or use new page
+      if (hasMoreSections && remainingSpace < 30) {
+        addNewPageIfNeeded(30);
+      }
+
+      // Remaining sections in compact format
+      if (hasMoreSections) {
+        // Two-column layout for remaining sections
         const columnWidth = (pageWidth - 3 * margin) / 2;
         let leftColumnY = yPosition;
         let rightColumnY = yPosition;
         
         // Left column - Certifications
         if (resumeData.certifications?.length > 0) {
-          addNewPageIfNeeded(15);
           leftColumnY = yPosition;
           
           pdf.setFontSize(10);
@@ -397,17 +423,21 @@ export class PDFGenerator {
         }
       }
 
-      // Add hidden job description for ATS optimization on the last page
-      if (currentPage === 1) {
-        addHiddenJobDescription();
-      } else {
-        // Add on a separate hidden page for ATS
-        pdf.addPage();
-        pdf.setTextColor(255, 255, 255); // White text
-        pdf.setFontSize(1);
-        if (resumeData.jobDescription) {
-          const hiddenContent = `ATS_OPTIMIZATION_DATA: ${cleanAndFormatText(resumeData.jobDescription)}`;
-          pdf.text(hiddenContent, margin, margin);
+      // Add hidden job description for ATS optimization only if there's content
+      if (resumeData.jobDescription) {
+        // Only add if we're on the first page and have space
+        if (currentPage === 1 && yPosition < pageHeight - 20) {
+          addHiddenJobDescription();
+        } else {
+          // Add on a new page only if we have significant content
+          const contentLength = resumeData.jobDescription.length;
+          if (contentLength > 100) { // Only add extra page if job description is substantial
+            pdf.addPage();
+            pdf.setTextColor(255, 255, 255); // White text
+            pdf.setFontSize(1);
+            const hiddenContent = `ATS_OPTIMIZATION_DATA: ${cleanAndFormatText(resumeData.jobDescription)}`;
+            pdf.text(hiddenContent, margin, margin);
+          }
         }
       }
 

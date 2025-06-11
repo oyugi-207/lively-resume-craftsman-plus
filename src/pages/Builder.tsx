@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -139,6 +138,7 @@ const Builder: React.FC = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [previewScale, setPreviewScale] = useState(0.3);
   const [showCVParser, setShowCVParser] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -370,7 +370,14 @@ const Builder: React.FC = () => {
       toast.info('Generating PDF... This may take a moment.');
       
       const filename = `${resumeData.personal.fullName.replace(/[^a-z0-9]/gi, '_')}_Resume.pdf`;
-      await PDFGenerator.generateTextPDF(resumeData, selectedTemplate, filename);
+      
+      // Include job description in resume data for ATS embedding
+      const resumeWithJobDescription = {
+        ...resumeData,
+        jobDescription: jobDescription
+      };
+      
+      await PDFGenerator.generateTextPDF(resumeWithJobDescription, selectedTemplate, filename);
       
       toast.success('PDF downloaded successfully!');
     } catch (error) {
@@ -597,6 +604,20 @@ const Builder: React.FC = () => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Job Description Embedder - Add this component */}
+        <div className="mb-4 sm:mb-6">
+          <JobDescriptionEmbedder 
+            jobDescription={jobDescription}
+            onJobDescriptionChange={setJobDescription}
+            onOptimize={() => {
+              // Trigger ATS optimization when job description is analyzed
+              if (atsOptimization) {
+                setAtsOptimization({ ...atsOptimization, score: Math.min(100, atsOptimization.score + 5) });
+              }
+            }}
+          />
         </div>
 
         {/* Status Cards - Enhanced Mobile Layout */}
