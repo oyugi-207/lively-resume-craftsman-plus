@@ -34,6 +34,7 @@ function App() {
                   <Route path="/templates" element={<Templates />} />
                   <Route path="/cv-optimizer" element={<CVOptimizer />} />
                   <Route path="/cover-letter" element={<CoverLetterBuilder />} />
+                  <Route path="/cover-letter-builder" element={<CoverLetterBuilder />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

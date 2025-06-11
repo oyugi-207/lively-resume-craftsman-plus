@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,8 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Send welcome email for new users - check for SIGNED_UP event
-      if (event === 'SIGNED_UP' && session?.user) {
+      // Send welcome email for new users - check for SIGNED_UP event using startsWith
+      if (event && event.toString().startsWith('SIGNED_UP') && session?.user) {
         const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
         try {
           await sendWelcomeEmail(session.user.email!, fullName);
@@ -63,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Show notification for successful sign in
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event && event.toString().startsWith('SIGNED_IN') && session?.user) {
         toast.success('Successfully signed in!');
       }
     });

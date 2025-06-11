@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -51,7 +50,7 @@ export class PDFGenerator {
             fontFamily: 'times'
           }
         };
-        return styles[templateId] || styles[0];
+        return styles[templateId as keyof typeof styles] || styles[0];
       };
 
       const style = getTemplateStyle(templateId);
@@ -127,45 +126,58 @@ export class PDFGenerator {
         if (!text) return yPosition;
         
         const cleanText = cleanAndFormatText(text);
-        // Handle different bullet formats and line breaks properly
-        const lines = cleanText.split('\n').filter(line => line.trim());
         
-        lines.forEach((line: string) => {
-          const trimmedLine = line.trim();
-          if (trimmedLine) {
-            addNewPageIfNeeded(fontSize + 2);
+        // Split by line breaks and clean up
+        const rawLines = cleanText.split('\n');
+        const processedLines: string[] = [];
+        
+        rawLines.forEach(line => {
+          const trimmed = line.trim();
+          if (trimmed) {
+            // Remove existing bullets and clean the text
+            const cleanedLine = trimmed.replace(/^[•·‣▪▫-]\s*/, '');
+            if (cleanedLine) {
+              processedLines.push(cleanedLine);
+            }
+          }
+        });
+        
+        // If no line breaks, try to split by bullet characters
+        if (processedLines.length === 1 && processedLines[0].includes('•')) {
+          const bulletSplit = processedLines[0].split('•').map(item => item.trim()).filter(item => item);
+          processedLines.splice(0, 1, ...bulletSplit);
+        }
+        
+        processedLines.forEach((bulletText: string) => {
+          if (bulletText.trim()) {
+            addNewPageIfNeeded(fontSize + 3);
             
             pdf.setFontSize(fontSize);
             pdf.setFont(style.fontFamily, 'normal');
             pdf.setTextColor(0, 0, 0);
             
-            // Check if line already has a bullet
-            let bulletLine = trimmedLine;
-            if (!bulletLine.match(/^[•·‣▪▫-]\s/)) {
-              bulletLine = `• ${bulletLine}`;
-            }
-            
             // Add bullet point
             pdf.text('•', margin + 5, yPosition);
             
-            // Remove bullet from text and add the rest
-            const textWithoutBullet = bulletLine.replace(/^[•·‣▪▫-]\s*/, '');
-            
             // Add bullet text with proper wrapping
             const maxWidth = pageWidth - 2 * margin - 15;
-            const wrappedLines = pdf.splitTextToSize(textWithoutBullet, maxWidth);
+            const wrappedLines = pdf.splitTextToSize(bulletText.trim(), maxWidth);
             
             wrappedLines.forEach((wrappedLine: string, index: number) => {
-              if (index > 0) addNewPageIfNeeded(fontSize * 0.7);
+              if (index > 0) {
+                addNewPageIfNeeded(fontSize * 0.7);
+              }
               pdf.text(wrappedLine, margin + 15, yPosition);
-              yPosition += fontSize * 0.6;
+              if (index < wrappedLines.length - 1) {
+                yPosition += fontSize * 0.6;
+              }
             });
             
-            yPosition += 2; // Space between bullets
+            yPosition += fontSize * 0.8; // Space between bullet points
           }
         });
         
-        return yPosition;
+        return yPosition + 2;
       };
 
       // Add hidden job description for ATS (invisible text)
@@ -262,17 +274,6 @@ export class PDFGenerator {
           // Description with improved bullet point handling
           if (exp.description) {
             yPosition = addBulletPoints(exp.description, 9);
-          }
-          
-          // Add hidden job description context for ATS
-          if (resumeData.jobDescription && exp.description) {
-            const relevantKeywords = PDFGenerator.extractRelevantKeywords(resumeData.jobDescription, exp.description);
-            if (relevantKeywords.length > 0) {
-              pdf.setTextColor(255, 255, 255); // Hidden white text
-              pdf.setFontSize(1);
-              pdf.text(`KEYWORDS: ${relevantKeywords.join(' ')}`, margin, yPosition);
-              pdf.setTextColor(0, 0, 0); // Reset to black
-            }
           }
           
           yPosition += 5;
