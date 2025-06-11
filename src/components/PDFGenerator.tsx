@@ -1,8 +1,9 @@
 
+
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
-  static async generateTextPDF(resumeData: any, templateId: number = 0, filename: string = 'resume.pdf'): Promise<void> {
+  static async generateTextPDF(resumeData: any, templateId: number = 0, filename: string = 'resume.pdf', jobDescription?: string): Promise<void> {
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -164,11 +165,11 @@ export class PDFGenerator {
       };
 
       // Add hidden job description for ATS (invisible text)
-      const addHiddenJobDescription = () => {
-        if (resumeData.jobDescription && resumeData.jobDescription.trim().length > 20) {
+      const addHiddenJobDescription = (jobDesc?: string) => {
+        if (jobDesc && jobDesc.trim().length > 20) {
           pdf.setTextColor(255, 255, 255); // White text (invisible)
           pdf.setFontSize(1); // Tiny font
-          const hiddenText = `ATS_KEYWORDS: ${cleanAndFormatText(resumeData.jobDescription)}`;
+          const hiddenText = `ATS_KEYWORDS: ${cleanAndFormatText(jobDesc)}`;
           
           // Split into smaller chunks to avoid PDF rendering issues
           const chunks = hiddenText.match(/.{1,100}/g) || [hiddenText];
@@ -422,7 +423,7 @@ export class PDFGenerator {
       }
 
       // Add hidden job description for ATS optimization
-      addHiddenJobDescription();
+      addHiddenJobDescription(jobDescription);
 
       // Set clean PDF metadata
       pdf.setProperties({
@@ -461,8 +462,8 @@ export class PDFGenerator {
     return [...new Set(relevantWords)].slice(0, 10);
   }
 
-  static async generateAdvancedPDF(resumeData: any, templateId: number = 0, filename: string = 'resume.pdf'): Promise<void> {
-    return this.generateTextPDF(resumeData, templateId, filename);
+  static async generateAdvancedPDF(resumeData: any, templateId: number = 0, filename: string = 'resume.pdf', jobDescription?: string): Promise<void> {
+    return this.generateTextPDF(resumeData, templateId, filename, jobDescription);
   }
 }
 
