@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -155,7 +156,7 @@ export class PDFGenerator {
               }
             }
             
-            yPosition += fontSize * 0.4; // Reduced spacing between bullet points
+            yPosition += fontSize * 0.3; // Reduced spacing between bullet points
           }
         }
         
@@ -249,8 +250,8 @@ export class PDFGenerator {
           yPosition = addText(exp.position || 'Position', 11, 'bold', [0, 0, 0]);
           
           // Company and dates with improved formatting
-          const startDate = exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
-          const endDate = exp.endDate ? (exp.endDate.toLowerCase() === 'present' ? 'Present' : new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })) : 'Present';
+          const startDate = exp.startDate ? new Date(exp.startDate + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+          const endDate = exp.endDate ? (exp.endDate.toLowerCase() === 'present' ? 'Present' : new Date(exp.endDate + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })) : 'Present';
           const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : '';
           
           const companyLine = `${exp.company || 'Company'}${dateRange ? ` | ${dateRange}` : ''}`;
@@ -303,7 +304,7 @@ export class PDFGenerator {
           addNewPageIfNeeded(15);
           
           yPosition = addText(edu.degree || 'Degree', 10, 'bold', [0, 0, 0]);
-          const schoolLine = `${edu.school || 'School'}${edu.endDate ? ` | ${new Date(edu.endDate).getFullYear()}` : ''}`;
+          const schoolLine = `${edu.school || 'School'}${edu.endDate ? ` | ${new Date(edu.endDate + '-01').getFullYear()}` : ''}`;
           yPosition = addText(schoolLine, 9, 'normal', style.primaryColor);
           
           if (edu.location) {
@@ -466,5 +467,3 @@ export class PDFGenerator {
 }
 
 export default PDFGenerator;
-
-}

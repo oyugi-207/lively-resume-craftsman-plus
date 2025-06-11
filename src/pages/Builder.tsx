@@ -874,5 +874,3 @@ const getTemplateName = (index: number): string => {
 };
 
 export default Builder;
-
-}
