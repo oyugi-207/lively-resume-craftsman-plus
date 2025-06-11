@@ -212,6 +212,7 @@ const Builder: React.FC = () => {
         languages: resumeData.languages,
         interests: resumeData.interests,
         projects: resumeData.projects,
+        job_description: jobDescription, // Automatically include job description
         updated_at: new Date().toISOString()
       };
 
@@ -234,7 +235,11 @@ const Builder: React.FC = () => {
         setResumeId(data.id);
       }
 
-      toast.success('Resume saved successfully!');
+      if (jobDescription) {
+        toast.success('Resume saved with ATS optimization!');
+      } else {
+        toast.success('Resume saved successfully!');
+      }
     } catch (error: any) {
       console.error('Error saving resume:', error);
       toast.error('Failed to save resume');
@@ -367,19 +372,27 @@ const Builder: React.FC = () => {
     }
 
     try {
-      toast.info('Generating PDF... This may take a moment.');
+      if (jobDescription) {
+        toast.info('Generating ATS-optimized PDF with embedded job keywords...');
+      } else {
+        toast.info('Generating PDF... This may take a moment.');
+      }
       
       const filename = `${resumeData.personal.fullName.replace(/[^a-z0-9]/gi, '_')}_Resume.pdf`;
       
-      // Include job description in resume data for ATS embedding
-      const resumeWithJobDescription = {
+      // Automatically include job description for ATS optimization
+      const resumeWithATS = {
         ...resumeData,
         jobDescription: jobDescription
       };
       
-      await PDFGenerator.generateTextPDF(resumeWithJobDescription, selectedTemplate, filename);
+      await PDFGenerator.generateTextPDF(resumeWithATS, selectedTemplate, filename);
       
-      toast.success('PDF downloaded successfully!');
+      if (jobDescription) {
+        toast.success('ATS-optimized PDF downloaded with hidden keywords for better matching!');
+      } else {
+        toast.success('PDF downloaded successfully!');
+      }
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Failed to download PDF. Please try again.');
@@ -606,16 +619,21 @@ const Builder: React.FC = () => {
           </div>
         </div>
 
-        {/* Job Description Embedder - Add this component */}
+        {/* Job Description Embedder - Enhanced with auto-save notification */}
         <div className="mb-4 sm:mb-6">
           <JobDescriptionEmbedder 
             jobDescription={jobDescription}
-            onJobDescriptionChange={setJobDescription}
+            onJobDescriptionChange={(description) => {
+              setJobDescription(description);
+              if (description && description.length > 50) {
+                toast.info('Job description will be automatically embedded in your resume for ATS optimization');
+              }
+            }}
             onOptimize={() => {
-              // Trigger ATS optimization when job description is analyzed
               if (atsOptimization) {
                 setAtsOptimization({ ...atsOptimization, score: Math.min(100, atsOptimization.score + 5) });
               }
+              toast.success('Resume optimized with job description keywords!');
             }}
           />
         </div>
@@ -856,3 +874,5 @@ const getTemplateName = (index: number): string => {
 };
 
 export default Builder;
+
+}

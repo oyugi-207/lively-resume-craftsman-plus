@@ -1,15 +1,13 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, Sparkles, Wand2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import EnhancedExperienceTextarea from './EnhancedExperienceTextarea';
+import { Plus, Trash2, Briefcase, MapPin, Calendar, Building } from 'lucide-react';
 import { toast } from 'sonner';
-import RichTextEditor from './RichTextEditor';
-import { useAPIKey } from '@/hooks/useAPIKey';
-import { supabase } from '@/integrations/supabase/client';
 
 interface Experience {
   id: number;
@@ -23,15 +21,16 @@ interface Experience {
 
 interface ExperienceFormEnhancedProps {
   data: Experience[];
-  onChange: (data: Experience[]) => void;
+  onChange: (experiences: Experience[]) => void;
 }
 
 const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, onChange }) => {
-  const { apiKey } = useAPIKey();
-  const [optimizingIndex, setOptimizingIndex] = useState<number | null>(null);
+  const [experiences, setExperiences] = useState<Experience[]>(
+    data.length > 0 ? data : [createNewExperience()]
+  );
 
-  const addExperience = () => {
-    const newExperience: Experience = {
+  function createNewExperience(): Experience {
+    return {
       id: Date.now(),
       company: '',
       position: '',
@@ -40,231 +39,217 @@ const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, o
       endDate: '',
       description: ''
     };
-    onChange([...data, newExperience]);
+  }
+
+  const updateExperience = (id: number, field: keyof Experience, value: string) => {
+    const updatedExperiences = experiences.map(exp => 
+      exp.id === id ? { ...exp, [field]: value } : exp
+    );
+    setExperiences(updatedExperiences);
+    onChange(updatedExperiences);
   };
 
-  const updateExperience = (index: number, field: keyof Experience, value: string) => {
-    const updated = [...data];
-    updated[index] = { ...updated[index], [field]: value };
-    
-    // Auto-format description with bullet points if it's the description field
-    if (field === 'description') {
-      updated[index].description = formatWithBullets(value);
-    }
-    
-    onChange(updated);
+  const addExperience = () => {
+    const newExp = createNewExperience();
+    const updatedExperiences = [...experiences, newExp];
+    setExperiences(updatedExperiences);
+    onChange(updatedExperiences);
+    toast.success('New experience added');
   };
 
-  const removeExperience = (index: number) => {
-    onChange(data.filter((_, i) => i !== index));
-  };
-
-  const formatWithBullets = (text: string): string => {
-    if (!text) return '';
-    
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    return lines.map(line => {
-      // If line doesn't start with bullet point, add one
-      if (!line.match(/^[•·‣▪▫-]\s/)) {
-        return `• ${line}`;
-      }
-      return line;
-    }).join('\n');
-  };
-
-  const optimizeWithAI = async (index: number) => {
-    const experience = data[index];
-    if (!experience.position || !experience.company) {
-      toast.error('Please add position and company first');
+  const removeExperience = (id: number) => {
+    if (experiences.length === 1) {
+      toast.error('At least one experience entry is required');
       return;
     }
+    const updatedExperiences = experiences.filter(exp => exp.id !== id);
+    setExperiences(updatedExperiences);
+    onChange(updatedExperiences);
+    toast.success('Experience removed');
+  };
 
-    if (!apiKey) {
-      toast.error('Please set your Gemini API key in Settings first');
-      return;
-    }
-
-    setOptimizingIndex(index);
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
     try {
-      const { data: result, error } = await supabase.functions.invoke('gemini-ai-optimize', {
-        body: {
-          experienceData: experience,
-          type: 'experience',
-          apiKey
-        }
+      return new Date(dateString).toLocaleDateString('en-US', { 
+        month: 'short', 
+        year: 'numeric' 
       });
-
-      if (error) throw error;
-
-      if (result?.optimizedDescription) {
-        const formattedDescription = formatWithBullets(result.optimizedDescription);
-        updateExperience(index, 'description', formattedDescription);
-        toast.success('Experience optimized with AI!');
-      }
-    } catch (error) {
-      console.error('AI optimization error:', error);
-      toast.error('Failed to optimize experience. Please check your API key.');
-    } finally {
-      setOptimizingIndex(null);
-    }
-  };
-
-  const generateBulletPoints = (index: number) => {
-    const experience = data[index];
-    if (!experience.description) {
-      // Add sample bullet points
-      const sampleBullets = [
-        '• Achieved significant results in key performance areas',
-        '• Collaborated with cross-functional teams to deliver projects',
-        '• Implemented process improvements that increased efficiency',
-        '• Managed stakeholder relationships and communication'
-      ];
-      updateExperience(index, 'description', sampleBullets.join('\n'));
-    } else {
-      // Format existing text with bullet points
-      updateExperience(index, 'description', experience.description);
+    } catch {
+      return dateString;
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Work Experience</h3>
-        <Button onClick={addExperience} className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Briefcase className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Professional Experience
+          </h2>
+          <Badge variant="secondary">{experiences.length}</Badge>
+        </div>
+        <Button onClick={addExperience} size="sm" className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add Experience
         </Button>
       </div>
 
-      {data.map((experience, index) => (
-        <Card key={experience.id} className="relative">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">
-                Experience {index + 1}
-              </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => generateBulletPoints(index)}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1 text-xs"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  Bullets
-                </Button>
-                <Button
-                  onClick={() => optimizeWithAI(index)}
-                  disabled={optimizingIndex === index}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1 text-xs"
-                >
-                  {optimizingIndex === index ? (
-                    <Wand2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-3 h-3" />
+      <div className="space-y-6">
+        {experiences.map((experience, index) => (
+          <Card key={experience.id} className="shadow-md hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-600 font-semibold text-sm">{index + 1}</span>
+                  </div>
+                  Experience {index + 1}
+                  {experience.position && (
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-normal">
+                      - {experience.position}
+                    </span>
                   )}
-                  AI
-                </Button>
-                <Button
-                  onClick={() => removeExperience(index)}
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                </CardTitle>
+                {experiences.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeExperience(experience.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor={`position-${index}`}>Position</Label>
-                <Input
-                  id={`position-${index}`}
-                  value={experience.position}
-                  onChange={(e) => updateExperience(index, 'position', e.target.value)}
-                  placeholder="Software Engineer"
-                />
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {/* Company and Position Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor={`company-${experience.id}`} className="flex items-center gap-2">
+                    <Building className="w-4 h-4" />
+                    Company *
+                  </Label>
+                  <Input
+                    id={`company-${experience.id}`}
+                    value={experience.company}
+                    onChange={(e) => updateExperience(experience.id, 'company', e.target.value)}
+                    placeholder="e.g., Google, Microsoft, Startup Inc."
+                    className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor={`position-${experience.id}`} className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4" />
+                    Position *
+                  </Label>
+                  <Input
+                    id={`position-${experience.id}`}
+                    value={experience.position}
+                    onChange={(e) => updateExperience(experience.id, 'position', e.target.value)}
+                    placeholder="e.g., Software Engineer, Product Manager"
+                    className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor={`company-${index}`}>Company</Label>
-                <Input
-                  id={`company-${index}`}
-                  value={experience.company}
-                  onChange={(e) => updateExperience(index, 'company', e.target.value)}
-                  placeholder="Tech Corp"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor={`location-${index}`}>Location</Label>
+              {/* Location Row */}
+              <div className="space-y-2">
+                <Label htmlFor={`location-${experience.id}`} className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Location
+                </Label>
                 <Input
-                  id={`location-${index}`}
+                  id={`location-${experience.id}`}
                   value={experience.location}
-                  onChange={(e) => updateExperience(index, 'location', e.target.value)}
-                  placeholder="New York, NY"
+                  onChange={(e) => updateExperience(experience.id, 'location', e.target.value)}
+                  placeholder="e.g., San Francisco, CA | Remote | New York, NY"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <Label htmlFor={`start-date-${index}`}>Start Date</Label>
-                <Input
-                  id={`start-date-${index}`}
-                  type="month"
-                  value={experience.startDate}
-                  onChange={(e) => updateExperience(index, 'startDate', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor={`end-date-${index}`}>End Date</Label>
-                <Input
-                  id={`end-date-${index}`}
-                  type="month"
-                  value={experience.endDate}
-                  onChange={(e) => updateExperience(index, 'endDate', e.target.value)}
-                  placeholder="Leave blank if current"
-                />
-              </div>
-            </div>
 
-            <div>
-              <Label htmlFor={`description-${index}`}>Description</Label>
-              <Textarea
-                id={`description-${index}`}
-                value={experience.description}
-                onChange={(e) => updateExperience(index, 'description', e.target.value)}
-                placeholder="• Describe your responsibilities and achievements&#10;• Use bullet points for better readability&#10;• Include quantifiable results when possible"
-                className="min-h-[120px]"
-                rows={6}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: Each line will automatically be formatted with bullet points
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+              {/* Dates Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor={`startDate-${experience.id}`} className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Start Date *
+                  </Label>
+                  <Input
+                    id={`startDate-${experience.id}`}
+                    type="month"
+                    value={experience.startDate}
+                    onChange={(e) => updateExperience(experience.id, 'startDate', e.target.value)}
+                    className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  />
+                  {experience.startDate && (
+                    <p className="text-xs text-gray-600">Will display as: {formatDate(experience.startDate)}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor={`endDate-${experience.id}`} className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    End Date
+                  </Label>
+                  <div className="space-y-2">
+                    <Input
+                      id={`endDate-${experience.id}`}
+                      type="month"
+                      value={experience.endDate === 'Present' ? '' : experience.endDate}
+                      onChange={(e) => updateExperience(experience.id, 'endDate', e.target.value)}
+                      className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                      disabled={experience.endDate === 'Present'}
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={`current-${experience.id}`}
+                        checked={experience.endDate === 'Present'}
+                        onChange={(e) => 
+                          updateExperience(experience.id, 'endDate', e.target.checked ? 'Present' : '')
+                        }
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <Label htmlFor={`current-${experience.id}`} className="text-sm">
+                        I currently work here
+                      </Label>
+                    </div>
+                    {experience.endDate && experience.endDate !== 'Present' && (
+                      <p className="text-xs text-gray-600">Will display as: {formatDate(experience.endDate)}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-      {data.length === 0 && (
-        <Card className="p-8 text-center border-dashed">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-              <Plus className="w-6 h-6 text-gray-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">No work experience added</h3>
-              <p className="text-gray-600 text-sm">Add your professional experience to get started</p>
-            </div>
-            <Button onClick={addExperience} className="mt-2">
-              Add Your First Experience
-            </Button>
-          </div>
-        </Card>
-      )}
+              {/* Enhanced Description */}
+              <div className="space-y-2">
+                <Label htmlFor={`description-${experience.id}`} className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Job Description & Achievements *</span>
+                  <Badge variant="outline" className="text-xs">Enhanced Editor</Badge>
+                </Label>
+                <EnhancedExperienceTextarea
+                  value={experience.description}
+                  onChange={(value) => updateExperience(experience.id, 'description', value)}
+                  placeholder="• Developed and maintained backend systems using Laravel and PHP
+• Collaborated with cross-functional teams to deliver high-quality software solutions
+• Implemented automated testing procedures that improved code quality by 30%
+• Led a team of 5 developers in agile development practices"
+                  className="focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="text-xs text-gray-600 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                  <strong>Pro Tips:</strong> Use bullet points for better readability • Include quantifiable achievements • 
+                  Start each point with action verbs • Focus on results and impact
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
