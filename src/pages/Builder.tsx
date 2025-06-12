@@ -50,6 +50,7 @@ import CVParser from '@/components/CVParser';
 import JobDescriptionEmbedder from '@/components/JobDescriptionEmbedder';
 import { ProfileIntegrationService } from '@/services/profileIntegration';
 import { useAPIKey } from '@/hooks/useAPIKey';
+import ComingSoonFeatures from '@/components/ComingSoonFeatures';
 
 interface ResumeData {
   personal: {
@@ -672,6 +673,11 @@ const Builder: React.FC = () => {
             resumeData={resumeData} 
             onOptimize={handleATSOptimization}
           />
+        </div>
+
+        {/* Coming Soon Features Section */}
+        <div className="mb-4 sm:mb-6">
+          <ComingSoonFeatures />
         </div>
 
         {/* Main Content - Improved Responsive Layout */}
