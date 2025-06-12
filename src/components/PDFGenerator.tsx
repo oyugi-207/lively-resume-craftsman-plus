@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -83,7 +82,7 @@ export class PDFGenerator {
       };
 
       const addSectionHeader = (title: string) => {
-        addNewPageIfNeeded(12);
+        addNewPageIfNeeded(16);
         
         pdf.setFontSize(12);
         pdf.setFont(style.fontFamily, 'bold');
@@ -94,7 +93,7 @@ export class PDFGenerator {
         pdf.setLineWidth(0.5);
         pdf.line(margin, yPosition + 2, pageWidth - margin, yPosition + 2);
         
-        yPosition += 5;
+        yPosition += 8; // Increased spacing after headers
         return yPosition;
       };
 
@@ -102,7 +101,7 @@ export class PDFGenerator {
         if (!text) return yPosition;
         
         const cleanText = cleanAndFormatText(text);
-        addNewPageIfNeeded(fontSize + 2);
+        addNewPageIfNeeded(fontSize + 4);
         
         pdf.setFontSize(fontSize);
         pdf.setFont(style.fontFamily, fontWeight);
@@ -112,12 +111,12 @@ export class PDFGenerator {
         const lines = pdf.splitTextToSize(cleanText, maxWidth);
         
         for (const line of lines) {
-          addNewPageIfNeeded(fontSize * 0.5);
+          addNewPageIfNeeded(fontSize * 0.6);
           pdf.text(line, margin + indent, yPosition);
-          yPosition += fontSize * 0.35;
+          yPosition += fontSize * 0.5; // Increased line spacing
         }
         
-        return yPosition + 1;
+        return yPosition + 3; // Increased spacing after text blocks
       };
 
       const addBulletPoints = (text: string, fontSize = 9) => {
@@ -129,12 +128,12 @@ export class PDFGenerator {
         const sentences = cleanText
           .split(/[.\n]/)
           .map(sentence => sentence.trim())
-          .filter(sentence => sentence && sentence.length > 10); // Only include meaningful sentences
+          .filter(sentence => sentence && sentence.length > 10);
         
         for (let i = 0; i < sentences.length; i++) {
           const sentence = sentences[i];
           if (sentence) {
-            addNewPageIfNeeded(fontSize + 1);
+            addNewPageIfNeeded(fontSize + 3);
             
             pdf.setFontSize(fontSize);
             pdf.setFont(style.fontFamily, 'normal');
@@ -152,18 +151,18 @@ export class PDFGenerator {
             
             for (let j = 0; j < wrappedLines.length; j++) {
               if (j > 0) {
-                addNewPageIfNeeded(fontSize * 0.4);
-                yPosition += fontSize * 0.4;
+                addNewPageIfNeeded(fontSize * 0.5);
+                yPosition += fontSize * 0.5;
               }
               pdf.text(wrappedLines[j], margin + 15, yPosition);
             }
             
-            // Move to next bullet point with tight vertical spacing
-            yPosition += fontSize * 0.5;
+            // Move to next bullet point with better spacing
+            yPosition += fontSize * 0.7; // Increased spacing between bullets
           }
         }
         
-        return yPosition + 1;
+        return yPosition + 2; // Added spacing after bullet section
       };
 
       // Add hidden job description for ATS (invisible text)
@@ -189,12 +188,12 @@ export class PDFGenerator {
       // Template-specific header rendering
       if (templateId === 2 || templateId === 3) {
         pdf.setFillColor(style.primaryColor[0], style.primaryColor[1], style.primaryColor[2]);
-        pdf.rect(0, 0, pageWidth, 30, 'F');
+        pdf.rect(0, 0, pageWidth, 35, 'F'); // Increased header height
         
         pdf.setFontSize(20);
         pdf.setFont(style.fontFamily, 'bold');
         pdf.setTextColor(255, 255, 255);
-        pdf.text(resumeData.personal?.fullName || 'Your Name', margin, 18);
+        pdf.text(resumeData.personal?.fullName || 'Your Name', margin, 20);
         
         pdf.setFontSize(10);
         pdf.setTextColor(240, 240, 240);
@@ -203,16 +202,16 @@ export class PDFGenerator {
           resumeData.personal?.phone,
           resumeData.personal?.location
         ].filter(Boolean).join(' • ');
-        pdf.text(contactInfo, margin, 26);
+        pdf.text(contactInfo, margin, 30);
         
-        yPosition = 35;
+        yPosition = 40; // More space after header
       } else {
         pdf.setFontSize(22);
         pdf.setFont(style.fontFamily, 'bold');
         setColor(style.primaryColor);
         const nameWidth = pdf.getTextWidth(resumeData.personal?.fullName || 'Your Name');
         pdf.text(resumeData.personal?.fullName || 'Your Name', (pageWidth - nameWidth) / 2, yPosition);
-        yPosition += 5;
+        yPosition += 6; // More spacing
 
         pdf.setFontSize(10);
         pdf.setFont(style.fontFamily, 'normal');
@@ -226,28 +225,28 @@ export class PDFGenerator {
         if (contactInfo) {
           const contactWidth = pdf.getTextWidth(contactInfo);
           pdf.text(contactInfo, (pageWidth - contactWidth) / 2, yPosition);
-          yPosition += 5;
+          yPosition += 6; // More spacing
         }
 
         pdf.setDrawColor(style.primaryColor[0], style.primaryColor[1], style.primaryColor[2]);
         pdf.setLineWidth(0.8);
         pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 5;
+        yPosition += 8; // More space after line
       }
 
       // Professional Summary
       if (resumeData.personal?.summary) {
         yPosition = addSectionHeader('Professional Summary');
         yPosition = addText(resumeData.personal.summary, 10, 'normal', [0, 0, 0]);
-        yPosition += 2;
+        yPosition += 4; // More spacing between sections
       }
 
-      // Professional Experience - Enhanced with better date formatting
+      // Professional Experience - Enhanced with better spacing
       if (resumeData.experience?.length > 0) {
         yPosition = addSectionHeader('Professional Experience');
         
         for (const exp of resumeData.experience) {
-          addNewPageIfNeeded(15);
+          addNewPageIfNeeded(20);
           
           // Job title
           yPosition = addText(exp.position || 'Position', 11, 'bold', [0, 0, 0]);
@@ -270,7 +269,7 @@ export class PDFGenerator {
             yPosition = addBulletPoints(exp.description, 9);
           }
           
-          yPosition += 2;
+          yPosition += 4; // More spacing between experiences
         }
       }
 
