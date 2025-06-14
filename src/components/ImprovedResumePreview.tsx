@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   ModernProfessionalTemplate, 
@@ -18,6 +17,7 @@ import {
   SalesChampionTemplate,
   ConsultingEliteTemplate
 } from './ResumeTemplates';
+import ModernCreativeTemplate from './ResumeTemplates/ModernCreativeTemplate';
 
 interface ResumeData {
   personal: {
@@ -88,7 +88,7 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     height: `${100 / scale}%`,
   };
 
-  // Complete template mapping with all 16 templates
+  // Complete template mapping with all templates including the new one
   const templates = [
     ModernProfessionalTemplate,     // 0 - Modern Professional
     ExecutiveTemplate,              // 1 - Executive Leadership  
@@ -106,6 +106,7 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     AcademicScholarTemplate,        // 13 - Academic Scholar
     SalesChampionTemplate,          // 14 - Sales Champion
     ConsultingEliteTemplate,        // 15 - Consulting Elite
+    ModernCreativeTemplate,         // 16 - Modern Creative (New)
   ];
 
   // Ensure we have a valid template
@@ -152,8 +153,8 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     <div style={containerStyle} className="w-full">
       <div className="bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-200" 
            style={{ width: '210mm', minHeight: '297mm' }}>
-        <div className="p-6 h-full">
-          <SelectedTemplate data={enhancedData} templateId={template} />
+        <div className="w-full h-full">
+          <SelectedTemplate data={enhancedData} />
         </div>
       </div>
     </div>

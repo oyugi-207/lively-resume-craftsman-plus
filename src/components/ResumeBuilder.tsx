@@ -24,9 +24,9 @@ import {
   Brain
 } from 'lucide-react';
 import PersonalInfoForm from './PersonalInfoForm';
-import ExperienceForm from './ExperienceForm';
+import ExperienceFormEnhanced from './ExperienceFormEnhanced';
 import EducationForm from './EducationForm';
-import SkillsForm from './SkillsForm';
+import EnhancedSkillsForm from './EnhancedSkillsForm';
 import ProjectsForm from './ProjectsForm';
 import CertificationsForm from './CertificationsForm';
 import LanguagesForm from './LanguagesForm';
@@ -474,7 +474,7 @@ const ResumeBuilder: React.FC = () => {
                 </TabsContent>
 
                 <TabsContent value="experience">
-                  <ExperienceForm 
+                  <ExperienceFormEnhanced 
                     data={resumeData.experience} 
                     onChange={updateExperience} 
                   />
@@ -488,7 +488,7 @@ const ResumeBuilder: React.FC = () => {
                 </TabsContent>
 
                 <TabsContent value="skills">
-                  <SkillsForm 
+                  <EnhancedSkillsForm 
                     data={resumeData.skills} 
                     onChange={updateSkills} 
                   />

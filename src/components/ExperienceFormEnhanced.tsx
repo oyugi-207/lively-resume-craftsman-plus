@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import EnhancedExperienceTextarea from './EnhancedExperienceTextarea';
-import { Plus, Trash2, Briefcase, MapPin, Calendar, Building } from 'lucide-react';
+import AIExperienceGenerator from './AIExperienceGenerator';
+import { Plus, Trash2, Briefcase, MapPin, Calendar, Building, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Experience {
@@ -28,6 +29,8 @@ const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, o
   const [experiences, setExperiences] = useState<Experience[]>(
     data.length > 0 ? data : [createNewExperience()]
   );
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const [activeExperienceId, setActiveExperienceId] = useState<number | null>(null);
 
   function createNewExperience(): Experience {
     return {
@@ -68,6 +71,19 @@ const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, o
     toast.success('Experience removed');
   };
 
+  const handleAIGenerate = (experienceId: number) => {
+    setActiveExperienceId(experienceId);
+    setShowAIGenerator(true);
+  };
+
+  const handleAIGenerated = (generatedText: string) => {
+    if (activeExperienceId) {
+      updateExperience(activeExperienceId, 'description', generatedText);
+    }
+    setShowAIGenerator(false);
+    setActiveExperienceId(null);
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     try {
@@ -78,6 +94,10 @@ const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, o
     } catch {
       return dateString;
     }
+  };
+
+  const getCurrentExperience = () => {
+    return experiences.find(exp => exp.id === activeExperienceId);
   };
 
   return (
@@ -226,12 +246,23 @@ const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, o
                 </div>
               </div>
 
-              {/* Enhanced Description */}
+              {/* Enhanced Description with AI */}
               <div className="space-y-2">
-                <Label htmlFor={`description-${experience.id}`} className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Job Description & Achievements *</span>
-                  <Badge variant="outline" className="text-xs">Enhanced Editor</Badge>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`description-${experience.id}`} className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Job Description & Achievements *</span>
+                    <Badge variant="outline" className="text-xs">Enhanced Editor</Badge>
+                  </Label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAIGenerate(experience.id)}
+                    className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                  >
+                    <Brain className="w-3 h-3" />
+                    AI Generate
+                  </Button>
+                </div>
                 <EnhancedExperienceTextarea
                   value={experience.description}
                   onChange={(value) => updateExperience(experience.id, 'description', value)}
@@ -243,13 +274,25 @@ const ExperienceFormEnhanced: React.FC<ExperienceFormEnhancedProps> = ({ data, o
                 />
                 <div className="text-xs text-gray-600 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
                   <strong>Pro Tips:</strong> Use bullet points for better readability • Include quantifiable achievements • 
-                  Start each point with action verbs • Focus on results and impact
+                  Start each point with action verbs • Focus on results and impact • Use AI Generate for professional descriptions
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* AI Experience Generator Modal */}
+      <AIExperienceGenerator
+        isOpen={showAIGenerator}
+        onClose={() => {
+          setShowAIGenerator(false);
+          setActiveExperienceId(null);
+        }}
+        onGenerated={handleAIGenerated}
+        currentPosition={getCurrentExperience()?.position}
+        currentCompany={getCurrentExperience()?.company}
+      />
     </div>
   );
 };
