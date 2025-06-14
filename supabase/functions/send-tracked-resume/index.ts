@@ -108,11 +108,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email via Resend...");
     const emailResponse = await resend.emails.send({
-      from: `${senderName} <${senderEmail}>`,
+      from: `${senderName} <onboarding@resend.dev>`,
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,
       text: emailContent,
+      reply_to: senderEmail,
       attachments: [
         {
           filename: `${senderName.replace(/\s+/g, '_')}_Resume.pdf`,
