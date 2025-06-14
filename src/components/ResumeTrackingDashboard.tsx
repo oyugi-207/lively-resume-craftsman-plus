@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Send, BarChart3, Copy, ExternalLink, FileText, Link2, X, Upload } from 'lucide-react';
+import { Eye, Download, Send, BarChart3, Copy, ExternalLink, FileText, Link2, X, Upload, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,10 +37,19 @@ const ResumeTrackingDashboard: React.FC = () => {
   const [customMessage, setCustomMessage] = useState('');
   const [attachmentFiles, setAttachmentFiles] = useState<AttachmentFile[]>([]);
   const [attachmentLinks, setAttachmentLinks] = useState<string[]>(['']);
+  const [senderEmail, setSenderEmail] = useState('');
+  const [senderName, setSenderName] = useState('');
+  const [useAuthEmail, setUseAuthEmail] = useState(true);
 
   useEffect(() => {
     loadTrackingData();
-  }, []);
+    
+    // Initialize sender info with auth data
+    if (user?.email) {
+      setSenderEmail(user.email);
+      setSenderName(user.email.split('@')[0] || 'Professional');
+    }
+  }, [user]);
 
   const loadTrackingData = async () => {
     if (!user) return;
@@ -145,6 +153,9 @@ const ResumeTrackingDashboard: React.FC = () => {
   };
 
   const createEmailTemplate = (attachments: { name: string; url: string }[]) => {
+    const fromEmail = useAuthEmail ? user?.email : senderEmail;
+    const fromName = useAuthEmail ? (user?.email?.split('@')[0] || 'Professional') : senderName;
+
     return `
 Subject: Application for ${jobTitle || 'the position'}${companyName ? ` at ${companyName}` : ''}
 
@@ -157,13 +168,22 @@ ${attachments.length > 0 ? `\nAttachments/Links:\n${attachments.map((a) => `- ${
 Thank you for considering my application. I look forward to hearing from you.
 
 Best regards,
-${user?.email}
+${fromName}
+${fromEmail}
     `.trim();
   };
 
   const sendTrackedResume = async () => {
+    const finalSenderEmail = useAuthEmail ? user?.email : senderEmail;
+    const finalSenderName = useAuthEmail ? (user?.email?.split('@')[0] || 'Professional') : senderName;
+
     if (!recipientEmail || !user) {
       toast.error('Please provide a recipient email address');
+      return;
+    }
+
+    if (!useAuthEmail && (!senderEmail || !senderName)) {
+      toast.error('Please provide sender email and name');
       return;
     }
 
@@ -178,8 +198,8 @@ ${user?.email}
       // Create resume data with user info and application details
       const resumeData = {
         personal: {
-          fullName: user.email?.split('@')[0] || 'Professional',
-          email: user.email || '',
+          fullName: finalSenderName,
+          email: finalSenderEmail || '',
           phone: ''
         },
         jobTitle: jobTitle || 'Position Application',
@@ -198,8 +218,8 @@ ${user?.email}
           resumeData: resumeData,
           trackingId,
           trackingUrl,
-          senderName: user.email?.split('@')[0] || 'Professional',
-          senderEmail: user.email || ''
+          senderName: finalSenderName,
+          senderEmail: finalSenderEmail || ''
         },
       });
 
@@ -221,8 +241,8 @@ ${user?.email}
             tracking_url: trackingUrl,
             sent_at: new Date().toISOString(),
             status: 'sent',
-            sender_email: user.email || '',
-            sender_name: user.email?.split('@')[0] || 'Professional',
+            sender_email: finalSenderEmail || '',
+            sender_name: finalSenderName,
             resume_data: resumeData,
           },
         ]);
@@ -238,6 +258,10 @@ ${user?.email}
       setCustomMessage('');
       setAttachmentFiles([]);
       setAttachmentLinks(['']);
+      if (!useAuthEmail) {
+        setSenderEmail('');
+        setSenderName('');
+      }
       
       loadTrackingData();
     } catch (error: any) {
@@ -267,6 +291,56 @@ ${user?.email}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Send Application</h3>
+                
+                {/* Sender Information */}
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Sender Information
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="use-auth-email"
+                        checked={useAuthEmail}
+                        onChange={() => setUseAuthEmail(true)}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="use-auth-email" className="text-sm">
+                        Use my account email ({user?.email})
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="use-custom-email"
+                        checked={!useAuthEmail}
+                        onChange={() => setUseAuthEmail(false)}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="use-custom-email" className="text-sm">
+                        Use custom sender information
+                      </label>
+                    </div>
+                    {!useAuthEmail && (
+                      <div className="space-y-2 ml-6">
+                        <Input
+                          type="email"
+                          placeholder="sender@example.com"
+                          value={senderEmail}
+                          onChange={e => setSenderEmail(e.target.value)}
+                        />
+                        <Input
+                          placeholder="Your Full Name"
+                          value={senderName}
+                          onChange={e => setSenderName(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Recipient Email *</label>
                   <Input
@@ -378,6 +452,7 @@ ${user?.email}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Email Preview</h3>
                 <div className="bg-gray-50 p-4 rounded-lg border text-sm min-h-[300px]">
+                  <strong>From:</strong> {useAuthEmail ? user?.email : (senderEmail || '[sender email]')} ({useAuthEmail ? (user?.email?.split('@')[0] || 'Professional') : (senderName || '[sender name]')})<br />
                   <strong>To:</strong> {recipientEmail || '[recipient]'}<br />
                   <strong>Subject:</strong> Application for {jobTitle || '[Job Title]'}{companyName ? ` at ${companyName}` : ''}<br />
                   <br />
