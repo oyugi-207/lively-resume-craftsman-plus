@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,14 +39,12 @@ const ResumeTrackingDashboard: React.FC = () => {
 
   const loadTrackingData = async () => {
     if (!user) return;
-
     try {
       const { data, error } = await supabase
         .from('resume_tracking')
         .select('*')
         .eq('user_id', user.id)
         .order('sent_at', { ascending: false });
-
       if (error) throw error;
       setTrackingData(data || []);
     } catch (error) {
@@ -56,15 +53,17 @@ const ResumeTrackingDashboard: React.FC = () => {
   };
 
   const generateTrackingId = () => {
-    // Proper UUID
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    // fallback
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
+    // fallback for real UUID format
+    let dt = new Date().getTime();
+    let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = (dt + Math.random() * 16) % 16 | 0;
+      dt = Math.floor(dt / 16);
+      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
     });
+    return uuid;
   };
 
   const handleFileInput = (evt: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +73,7 @@ const ResumeTrackingDashboard: React.FC = () => {
   };
 
   const handleLinkChange = (idx: number, val: string) => {
-    setAttachmentLinks(links => {
+    setAttachmentLinks((links) => {
       const next = [...links];
       next[idx] = val;
       return next;
@@ -87,23 +86,25 @@ const ResumeTrackingDashboard: React.FC = () => {
     setUploading(true);
     const uploaded: { name: string; url: string }[] = [];
 
-    // Only if files exist
-    for (const file of attachmentFiles) {
-      // We'll use Supabase Storage - you must have a 'attachments' bucket; if you don't, let us know to create one.
-      const path = `${trackingId}/${file.name}`;
-      const { data, error } = await supabase.storage.from('attachments').upload(path, file, { upsert: true });
-      if (error) {
-        toast.error(`File upload failed: ${error.message}`);
-        setUploading(false);
-        return [];
+    // If files exist
+    if (attachmentFiles.length > 0) {
+      // NOTE: Ensure attachments bucket exists in Supabase Storage
+      for (const file of attachmentFiles) {
+        const path = `${trackingId}/${file.name}`;
+        const { data, error } = await supabase.storage.from('attachments').upload(path, file, { upsert: true });
+        if (error) {
+          toast.error(`File upload failed: ${error.message}`);
+          setUploading(false);
+          return [];
+        }
+        // Construct public URL (assumes bucket is public)
+        const url = supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl;
+        uploaded.push({ name: file.name, url });
       }
-      // Construct public URL (assumes bucket is public)
-      const url = supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl;
-      uploaded.push({ name: file.name, url });
     }
 
     // Add links if provided
-    attachmentLinks.forEach(link => {
+    attachmentLinks.forEach((link) => {
       if (link && link.trim().length > 0) uploaded.push({ name: `Link`, url: link.trim() });
     });
 
@@ -120,7 +121,7 @@ Dear Hiring Manager,
 ${customMessage || `Please find my resume and attachments below.`}
 
 Attachments/Links:
-${attachments.map(a => `- ${a.name}: ${a.url}`).join('\n')}
+${attachments.map((a) => `- ${a.name}: ${a.url}`).join('\n')}
 
 Thank you for considering my application.
 
@@ -134,7 +135,6 @@ ${user?.email}
       toast.error('Please fill in all required fields');
       return;
     }
-
     setLoading(true);
     try {
       const trackingId = generateTrackingId();
@@ -142,7 +142,7 @@ ${user?.email}
       // upload files/links
       const attachments = await uploadAttachments(trackingId);
 
-      // Call edge function to send email with tracking (add attachments as info in body, file upload/public links/references)
+      // Call edge function to send email with tracking (attachments as info in body, file upload/public links/references)
       const { data, error } = await supabase.functions.invoke('send-tracked-resume', {
         body: {
           recipientEmail,
@@ -150,26 +150,34 @@ ${user?.email}
           emailContent: createEmailTemplate(attachments),
           trackingId,
           trackingUrl,
-          attachments
-        }
+          attachments,
+        },
       });
-
       if (error) throw error;
 
-      // Save record
+      // Save record - fix: add required fields (resume_data, sender_email, sender_name)
       const { error: trackingError } = await supabase
         .from('resume_tracking')
-        .insert([{
-          id: trackingId,
-          user_id: user.id,
-          recipient_email: recipientEmail,
-          subject: `Application for ${jobTitle}${companyName ? ` at ${companyName}` : ''}`,
-          email_content: createEmailTemplate(attachments),
-          tracking_url: trackingUrl,
-          sent_at: new Date().toISOString(),
-          status: 'sent'
-        }]);
-
+        .insert([
+          {
+            id: trackingId,
+            user_id: user.id,
+            recipient_email: recipientEmail,
+            subject: `Application for ${jobTitle}${companyName ? ` at ${companyName}` : ''}`,
+            email_content: createEmailTemplate(attachments),
+            tracking_url: trackingUrl,
+            sent_at: new Date().toISOString(),
+            status: 'sent',
+            sender_email: user.email || 'noreply@resumeapp.com',
+            sender_name: user.email?.split('@')[0] || 'Unknown',
+            resume_data: {
+              jobTitle,
+              companyName,
+              customMessage,
+              attachments,
+            },
+          },
+        ]);
       if (trackingError) throw trackingError;
 
       toast.success('Resume and files sent successfully with tracking!');
@@ -278,7 +286,6 @@ ${user?.email}
                   {loading || uploading ? 'Sending...' : 'Send with Tracking'}
                 </Button>
               </div>
-
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Preview Email</h3>
                 <div className="bg-gray-50 p-4 rounded-lg border text-sm min-h-[200px]">
@@ -286,7 +293,11 @@ ${user?.email}
                   <strong>Subject:</strong> Application for {jobTitle || '[Job Title]'}{companyName ? ` at ${companyName}` : ''}<br />
                   <strong>Message:</strong>
                   <div className="whitespace-pre-line text-xs border-t pt-2 mt-2">
-                    {createEmailTemplate(attachmentLinks.filter(Boolean).map(link => ({ name: 'Link', url: link })))}
+                    {createEmailTemplate(
+                      attachmentLinks
+                        .filter(Boolean)
+                        .map(link => ({ name: 'Link', url: link }))
+                    )}
                   </div>
                 </div>
               </div>
@@ -305,7 +316,7 @@ ${user?.email}
                 No tracked resumes yet.
               </div>
             )}
-            {trackingData.map((item) => (
+            {trackingData.map(item => (
               <Card key={item.id} className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
