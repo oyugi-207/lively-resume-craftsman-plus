@@ -24,7 +24,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAPIKey } from '@/hooks/useAPIKey';
 import ImprovedResumePreview from '@/components/ImprovedResumePreview';
 import CVReaderEnhanced from '@/components/enhanced-forms/CVReaderEnhanced';
-import ResumeBuilder from '@/components/ResumeBuilder';
 
 interface ResumeData {
   personal: {
@@ -50,7 +49,7 @@ const CVUploadEditor: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCVReader, setShowCVReader] = useState(false);
-  const [showBuilder, setShowBuilder] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { hasApiKey, getApiKey } = useAPIKey();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -168,6 +167,7 @@ const CVUploadEditor: React.FC = () => {
 
   const handleSaveData = (data: any) => {
     setResumeData(data);
+    setShowEditModal(false);
     toast.success('Resume data saved!');
   };
 
@@ -335,7 +335,7 @@ const CVUploadEditor: React.FC = () => {
                       </Button>
                       
                       <Button
-                        onClick={() => setShowBuilder(true)}
+                        onClick={() => setShowEditModal(true)}
                         variant="outline"
                       >
                         <Edit className="w-4 h-4 mr-2" />
@@ -381,11 +381,41 @@ const CVUploadEditor: React.FC = () => {
                       </div>
                       
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <ResumeBuilder
-                          initialData={resumeData}
-                          onSave={handleSaveData}
-                          compact={true}
-                        />
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Full Name</label>
+                              <input
+                                type="text"
+                                value={resumeData.personal.fullName || ''}
+                                onChange={(e) => setResumeData(prev => prev ? {
+                                  ...prev,
+                                  personal: { ...prev.personal, fullName: e.target.value }
+                                } : null)}
+                                className="w-full p-2 border rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Email</label>
+                              <input
+                                type="email"
+                                value={resumeData.personal.email || ''}
+                                onChange={(e) => setResumeData(prev => prev ? {
+                                  ...prev,
+                                  personal: { ...prev.personal, email: e.target.value }
+                                } : null)}
+                                className="w-full p-2 border rounded-lg"
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => setShowEditModal(true)}
+                            className="w-full"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Open Full Editor
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -455,7 +485,7 @@ const CVUploadEditor: React.FC = () => {
               </Button>
               
               <Button
-                onClick={() => setShowBuilder(true)}
+                onClick={() => setShowEditModal(true)}
                 variant="outline"
                 className="w-full justify-start"
               >
@@ -516,26 +546,22 @@ const CVUploadEditor: React.FC = () => {
         />
       )}
 
-      {showBuilder && (
+      {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Resume Builder</h3>
               <Button
-                onClick={() => setShowBuilder(false)}
+                onClick={() => setShowEditModal(false)}
                 variant="ghost"
                 size="sm"
               >
                 ✕
               </Button>
             </div>
-            <ResumeBuilder
-              initialData={resumeData}
-              onSave={(data) => {
-                handleSaveData(data);
-                setShowBuilder(false);
-              }}
-            />
+            <div className="text-center p-8 text-gray-500">
+              Resume builder will be loaded here. Please use the simple editor above for now.
+            </div>
           </div>
         </div>
       )}

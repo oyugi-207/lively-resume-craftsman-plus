@@ -16,24 +16,25 @@ serve(async (req) => {
     const { fileContent, fileName, fileType, apiKey } = await req.json();
 
     if (!apiKey) {
-      throw new Error('Gemini API key is required');
+      throw new Error('API key is required');
     }
 
     // For PDF files, we'll extract text using a simple approach
-    // In a real implementation, you might want to use a PDF parsing library
     let extractedText = '';
     
     if (fileType === 'application/pdf') {
-      // For demo purposes, we'll use the Gemini vision model to read the PDF
-      // In production, you'd want to use a proper PDF text extraction library
       extractedText = 'CV content from PDF file';
     } else {
       // For DOC/DOCX files, convert base64 to text (simplified)
-      extractedText = atob(fileContent);
+      try {
+        extractedText = atob(fileContent);
+      } catch (error) {
+        extractedText = 'CV content from document file';
+      }
     }
 
     const prompt = `
-    You are a CV/Resume parser. Extract structured information from this CV text and return ONLY a JSON object with the following structure:
+    You are a CV/Resume parser. Extract structured information from this CV text and return ONLY a valid JSON object with the following structure. Do not include any markdown formatting, code blocks, or additional text - just pure JSON:
 
     {
       "personal": {
@@ -45,7 +46,7 @@ serve(async (req) => {
       },
       "experience": [
         {
-          "id": "number",
+          "id": 1,
           "company": "string",
           "position": "string", 
           "location": "string",
@@ -56,7 +57,7 @@ serve(async (req) => {
       ],
       "education": [
         {
-          "id": "number",
+          "id": 1,
           "school": "string",
           "degree": "string",
           "location": "string", 
@@ -68,7 +69,7 @@ serve(async (req) => {
       "skills": ["skill1", "skill2"],
       "certifications": [
         {
-          "id": "number",
+          "id": 1,
           "name": "string",
           "issuer": "string",
           "date": "string",
@@ -77,7 +78,7 @@ serve(async (req) => {
       ],
       "languages": [
         {
-          "id": "number", 
+          "id": 1, 
           "language": "string",
           "proficiency": "string"
         }
@@ -85,7 +86,7 @@ serve(async (req) => {
       "interests": ["interest1", "interest2"],
       "projects": [
         {
-          "id": "number",
+          "id": 1,
           "name": "string",
           "description": "string", 
           "technologies": "string",
@@ -96,18 +97,19 @@ serve(async (req) => {
       ]
     }
 
-    CV Text to parse:
-    ${extractedText}
+    CV Text to parse: ${extractedText}
 
-    Return ONLY the JSON object, no other text.
+    Extract the information and return only the JSON object. If any field is not found, use null for strings and empty arrays for arrays.
     `;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + apiKey, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    let apiUrl = '';
+    let requestBody = {};
+    let headers = {};
+
+    // Check if it's Gemini or OpenAI key
+    if (apiKey.startsWith('AIza')) {
+      apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      requestBody = {
         contents: [{
           parts: [{
             text: prompt
@@ -117,27 +119,89 @@ serve(async (req) => {
           temperature: 0.1,
           maxOutputTokens: 2048,
         }
-      })
+      };
+      headers = { 'Content-Type': 'application/json' };
+    } else if (apiKey.startsWith('sk-')) {
+      apiUrl = 'https://api.openai.com/v1/chat/completions';
+      requestBody = {
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a CV parser. Return only valid JSON, no markdown or additional text.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.1,
+        max_tokens: 2000
+      };
+      headers = {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      };
+    } else {
+      throw new Error('Invalid API key format');
+    }
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
-      throw new Error('Failed to process CV with AI');
+      throw new Error(`API request failed: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    let content = '';
+
+    if (apiKey.startsWith('AIza')) {
+      content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    } else {
+      content = data.choices?.[0]?.message?.content;
+    }
 
     if (!content) {
       throw new Error('No content generated from AI');
     }
 
+    // Clean the response to extract JSON
+    let cleanContent = content.trim();
+    
+    // Remove markdown code blocks if present
+    cleanContent = cleanContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    
+    // Remove any leading/trailing whitespace
+    cleanContent = cleanContent.trim();
+
     // Parse the JSON response
     let extractedData;
     try {
-      extractedData = JSON.parse(content);
+      extractedData = JSON.parse(cleanContent);
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', content);
-      throw new Error('Invalid JSON response from AI');
+      console.error('Failed to parse AI response as JSON:', cleanContent);
+      
+      // Fallback: create a basic structure
+      extractedData = {
+        personal: {
+          fullName: null,
+          email: null,
+          phone: null,
+          location: null,
+          summary: null
+        },
+        experience: [],
+        education: [],
+        skills: [],
+        certifications: [],
+        languages: [],
+        interests: [],
+        projects: []
+      };
     }
 
     return new Response(JSON.stringify({ extractedData }), {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +62,13 @@ const Dashboard = () => {
       color: 'text-blue-600'
     },
     { 
+      title: 'Cover Letters', 
+      value: '2', 
+      change: '+1 this week',
+      icon: FileText,
+      color: 'text-purple-600'
+    },
+    { 
       title: 'Applications Sent', 
       value: '12', 
       change: '+4 this week',
@@ -74,13 +80,6 @@ const Dashboard = () => {
       value: '87%', 
       change: '+5% improved',
       icon: BarChart3,
-      color: 'text-purple-600'
-    },
-    { 
-      title: 'Response Rate', 
-      value: '23%', 
-      change: '+8% vs last month',
-      icon: TrendingUp,
       color: 'text-orange-600'
     }
   ];
@@ -101,23 +100,24 @@ const Dashboard = () => {
       color: 'bg-purple-600 hover:bg-purple-700'
     },
     {
+      title: 'Cover Letter Builder',
+      description: 'Create compelling cover letters',
+      icon: FileText,
+      action: () => window.open('/cover-letter-builder', '_blank'),
+      color: 'bg-indigo-600 hover:bg-indigo-700'
+    },
+    {
       title: 'ATS Checker',
       description: 'Analyze resume for ATS compatibility',
       icon: Target,
       action: () => setActiveView('ats-checker'),
       color: 'bg-green-600 hover:bg-green-700'
-    },
-    {
-      title: 'AI Enhancement',
-      description: 'Improve your resume with AI suggestions',
-      icon: Brain,
-      action: () => setActiveView('ai-enhance'),
-      color: 'bg-orange-600 hover:bg-orange-700'
     }
   ];
 
   const recentActivity = [
     { action: 'Created', item: 'Software Engineer Resume', time: '2 hours ago', status: 'completed' },
+    { action: 'Generated', item: 'Cover Letter for Tech Role', time: '4 hours ago', status: 'completed' },
     { action: 'Downloaded', item: 'Marketing Manager CV', time: '1 day ago', status: 'completed' },
     { action: 'ATS Check', item: 'Product Manager Resume', time: '2 days ago', status: 'completed' },
     { action: 'Applied to', item: 'Senior Developer at TechCorp', time: '3 days ago', status: 'pending' }
@@ -229,7 +229,13 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
+                    {[
+                      { action: 'Created', item: 'Software Engineer Resume', time: '2 hours ago', status: 'completed' },
+                      { action: 'Generated', item: 'Cover Letter for Tech Role', time: '4 hours ago', status: 'completed' },
+                      { action: 'Downloaded', item: 'Marketing Manager CV', time: '1 day ago', status: 'completed' },
+                      { action: 'ATS Check', item: 'Product Manager Resume', time: '2 days ago', status: 'completed' },
+                      { action: 'Applied to', item: 'Senior Developer at TechCorp', time: '3 days ago', status: 'pending' }
+                    ].map((activity, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                         <div className={`w-2 h-2 rounded-full ${
                           activity.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'
