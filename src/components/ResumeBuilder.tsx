@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ import LanguagesForm from './LanguagesForm';
 import InterestsForm from './InterestsForm';
 import ImprovedResumePreview from './ImprovedResumePreview';
 import EnhancedTemplateSelector from './EnhancedTemplateSelector';
-import EnhancedCVParser from './EnhancedCVParser';
+import EnhancedCVExtractor from './EnhancedCVExtractor';
 import EnhancedJobDescriptionParser from './EnhancedJobDescriptionParser';
 import ComingSoonFeatures from './ComingSoonFeatures';
 import LiveFeatures from './LiveFeatures';
@@ -111,7 +112,7 @@ const ResumeBuilder: React.FC = () => {
   
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
-  const [showCVParser, setShowCVParser] = useState(false);
+  const [showCVExtractor, setShowCVExtractor] = useState(false);
   const [showJobParser, setShowJobParser] = useState(false);
   const [showAIIntegration, setShowAIIntegration] = useState(false);
   const [showLiveFeatures, setShowLiveFeatures] = useState(false);
@@ -129,11 +130,10 @@ const ResumeBuilder: React.FC = () => {
     if (!user) return;
 
     try {
-      // Add proper user filtering to ensure data isolation
       const { data, error } = await supabase
         .from('resumes')
         .select('*')
-        .eq('user_id', user.id) // Ensure only user's own resumes
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
         .limit(1);
 
@@ -144,7 +144,6 @@ const ResumeBuilder: React.FC = () => {
         setResumeId(resume.id);
         setSelectedTemplate(resume.template_id || 0);
         
-        // Safely handle the JSON data with proper type checking
         setResumeData({
           personal: resume.personal_info && typeof resume.personal_info === 'object' && !Array.isArray(resume.personal_info) 
             ? resume.personal_info as ResumeData['personal']
@@ -179,7 +178,7 @@ const ResumeBuilder: React.FC = () => {
     setSaving(true);
     try {
       const resumePayload = {
-        user_id: user.id, // Ensure user ownership
+        user_id: user.id,
         title: resumeData.personal.fullName ? `${resumeData.personal.fullName}'s Resume` : 'Untitled Resume',
         template_id: selectedTemplate,
         personal_info: resumeData.personal,
@@ -194,12 +193,11 @@ const ResumeBuilder: React.FC = () => {
       };
 
       if (resumeId) {
-        // Update only if user owns the resume
         const { error } = await supabase
           .from('resumes')
           .update(resumePayload)
           .eq('id', resumeId)
-          .eq('user_id', user.id); // Additional security check
+          .eq('user_id', user.id);
         
         if (error) throw error;
       } else {
@@ -272,7 +270,6 @@ const ResumeBuilder: React.FC = () => {
   };
 
   const handleJobDescriptionParsed = (data: any) => {
-    // Apply job description insights to resume
     if (data.summary) {
       setResumeData(prev => ({
         ...prev,
@@ -321,7 +318,7 @@ const ResumeBuilder: React.FC = () => {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => setShowCVParser(true)}
+              onClick={() => setShowCVExtractor(true)}
               className="flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
@@ -408,7 +405,7 @@ const ResumeBuilder: React.FC = () => {
                 Back to Builder
               </Button>
             </div>
-            <LiveFeatures />
+            <LiveFeatures resumeData={resumeData} onUpdateResume={setResumeData} />
           </div>
         ) : showAIIntegration ? (
           <div className="space-y-6">
@@ -552,11 +549,11 @@ const ResumeBuilder: React.FC = () => {
         )}
       </div>
 
-      {/* Enhanced CV Parser Modal */}
-      {showCVParser && (
-        <EnhancedCVParser
+      {/* Enhanced CV Extractor Modal */}
+      {showCVExtractor && (
+        <EnhancedCVExtractor
           onDataExtracted={handleCVDataExtracted}
-          onClose={() => setShowCVParser(false)}
+          onClose={() => setShowCVExtractor(false)}
         />
       )}
 
@@ -580,13 +577,13 @@ const ResumeBuilder: React.FC = () => {
 
 const getTemplateName = (index: number): string => {
   const names = [
-    'Modern Professional',     // 0
-    'Executive Leadership',    // 1  
-    'Classic Corporate',       // 2
-    'Creative Designer',       // 3
-    'Tech Specialist',         // 4
-    'Minimalist',              // 5
-    'Two Column'               // 6
+    'Modern Professional',
+    'Executive Leadership',    
+    'Classic Corporate',
+    'Creative Designer',
+    'Tech Specialist',
+    'Minimalist',
+    'Two Column'
   ];
   return names[index] || 'Modern Professional';
 };
