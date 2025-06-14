@@ -55,19 +55,25 @@ export class PDFGenerator {
         return false;
       };
 
-      // Section header helper
+      // Section header helper - NOW CENTERED
       const addSectionHeader = (title: string) => {
         checkPageBreak(15);
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(31, 81, 140);
-        pdf.text(title.toUpperCase(), margin, yPosition);
+        
+        // Center the text
+        const textWidth = pdf.getStringUnitWidth(title.toUpperCase()) * pdf.internal.getFontSize() / pdf.internal.scaleFactor;
+        const textX = (pageWidth - textWidth) / 2;
+        pdf.text(title.toUpperCase(), textX, yPosition);
         yPosition += 6;
         
-        // Underline
+        // Underline - also centered
+        const underlineWidth = textWidth + 10; // slightly wider than text
+        const underlineX = (pageWidth - underlineWidth) / 2;
         pdf.setDrawColor(31, 81, 140);
         pdf.setLineWidth(0.3);
-        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        pdf.line(underlineX, yPosition, underlineX + underlineWidth, yPosition);
         yPosition += 8;
       };
 
@@ -316,7 +322,7 @@ export class PDFGenerator {
         }
       }
 
-      // Additional sections in compact layout
+      // Additional sections with centered headers
       const hasAdditionalSections = (resumeData.certifications?.length > 0) || 
                                    (resumeData.languages?.length > 0) || 
                                    (resumeData.interests?.length > 0);
@@ -328,14 +334,19 @@ export class PDFGenerator {
         let rightColumnY = yPosition;
         const columnWidth = (pageWidth - 3 * margin) / 2;
 
-        // Left column - Certifications
+        // Left column - Certifications with centered header
         if (resumeData.certifications?.length > 0) {
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(31, 81, 140);
-          pdf.text('CERTIFICATIONS', margin, leftColumnY);
+          
+          // Center the certifications header within the left column
+          const certHeaderWidth = pdf.getStringUnitWidth('CERTIFICATIONS') * pdf.internal.getFontSize() / pdf.internal.scaleFactor;
+          const certHeaderX = margin + (columnWidth - certHeaderWidth) / 2;
+          pdf.text('CERTIFICATIONS', certHeaderX, leftColumnY);
           leftColumnY += 6;
           
+          // Certifications content
           for (const cert of resumeData.certifications) {
             if (leftColumnY > pageHeight - 25) break;
             
@@ -353,16 +364,21 @@ export class PDFGenerator {
           }
         }
 
-        // Right column - Languages
+        // Right column - Languages with centered header
         if (resumeData.languages?.length > 0) {
           const rightColumnX = margin + columnWidth + margin;
           
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(31, 81, 140);
-          pdf.text('LANGUAGES', rightColumnX, rightColumnY);
+          
+          // Center the languages header within the right column
+          const langHeaderWidth = pdf.getStringUnitWidth('LANGUAGES') * pdf.internal.getFontSize() / pdf.internal.scaleFactor;
+          const langHeaderX = rightColumnX + (columnWidth - langHeaderWidth) / 2;
+          pdf.text('LANGUAGES', langHeaderX, rightColumnY);
           rightColumnY += 6;
           
+          // Languages content
           for (const lang of resumeData.languages) {
             if (rightColumnY > pageHeight - 25) break;
             
@@ -376,16 +392,21 @@ export class PDFGenerator {
 
         yPosition = Math.max(leftColumnY, rightColumnY) + 8;
 
-        // Interests
+        // Interests with centered header
         if (resumeData.interests?.length > 0) {
           checkPageBreak(12);
           
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(31, 81, 140);
-          pdf.text('INTERESTS', margin, yPosition);
+          
+          // Center the interests header
+          const interestsHeaderWidth = pdf.getStringUnitWidth('INTERESTS') * pdf.internal.getFontSize() / pdf.internal.scaleFactor;
+          const interestsHeaderX = (pageWidth - interestsHeaderWidth) / 2;
+          pdf.text('INTERESTS', interestsHeaderX, yPosition);
           yPosition += 6;
           
+          // Interests content
           const interestsText = resumeData.interests
             .filter((interest: string) => interest && interest.trim())
             .map((interest: string) => cleanText(interest))
