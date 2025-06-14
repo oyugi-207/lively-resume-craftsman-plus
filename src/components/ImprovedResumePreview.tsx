@@ -83,9 +83,16 @@ interface ResumePreviewProps {
   data: ResumeData;
   template: number;
   scale?: number;
+  customColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    text: string;
+    background: string;
+  };
 }
 
-const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, scale = 1 }) => {
+const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, scale = 1, customColors }) => {
   const containerStyle = {
     transform: `scale(${scale})`,
     transformOrigin: 'top left',
@@ -164,7 +171,7 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
       <div className="bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-200" 
            style={{ width: '210mm', minHeight: '297mm' }}>
         <div className="w-full h-full">
-          <SelectedTemplate data={enhancedData} />
+          <SelectedTemplate data={enhancedData} customColors={customColors} />
         </div>
       </div>
     </div>

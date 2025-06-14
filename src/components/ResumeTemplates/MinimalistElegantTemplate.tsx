@@ -49,9 +49,24 @@ interface ResumeData {
 
 interface MinimalistElegantTemplateProps {
   data: ResumeData;
+  customColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    text: string;
+    background: string;
+  };
 }
 
-const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ data }) => {
+const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ data, customColors }) => {
+  const colors = customColors || {
+    primary: '#1F2937',
+    secondary: '#374151',
+    accent: '#6B7280',
+    text: '#1F2937',
+    background: '#FFFFFF'
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     if (dateString === 'Present') return 'Present';
@@ -66,13 +81,13 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
   };
 
   return (
-    <div className="bg-white text-gray-900 max-w-4xl mx-auto shadow-lg" style={{ width: '210mm', minHeight: '297mm' }}>
-      {/* Minimal Header */}
-      <div className="border-b-2 border-gray-900 p-8 pb-6">
-        <h1 className="text-4xl font-light text-gray-900 mb-3 tracking-wide">
+    <div className="bg-white text-gray-900 max-w-4xl mx-auto shadow-lg" style={{ width: '210mm', minHeight: '297mm', backgroundColor: colors.background, color: colors.text }}>
+      {/* Minimal Header - Centered */}
+      <div className="border-b-2 p-8 pb-6 text-center" style={{ borderColor: colors.primary }}>
+        <h1 className="text-4xl font-light mb-3 tracking-wide" style={{ color: colors.primary }}>
           {data.personal.fullName || 'Your Name'}
         </h1>
-        <div className="flex flex-wrap gap-8 text-sm text-gray-600">
+        <div className="flex flex-wrap justify-center gap-8 text-sm" style={{ color: colors.secondary }}>
           {data.personal.email && <span>{data.personal.email}</span>}
           {data.personal.phone && <span>{data.personal.phone}</span>}
           {data.personal.location && <span>{data.personal.location}</span>}
@@ -84,8 +99,8 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
       <div className="p-8 space-y-8">
         {/* Summary */}
         {data.personal.summary && (
-          <div>
-            <p className="text-gray-700 leading-relaxed font-light text-lg">
+          <div className="text-center">
+            <p className="leading-relaxed font-light text-lg" style={{ color: colors.text }}>
               {data.personal.summary}
             </p>
           </div>
@@ -94,24 +109,24 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
         {/* Experience */}
         {data.experience && data.experience.length > 0 && (
           <div>
-            <h2 className="text-2xl font-light text-gray-900 mb-6 tracking-wide">
+            <h2 className="text-2xl font-light mb-6 tracking-wide text-center" style={{ color: colors.primary }}>
               Experience
             </h2>
             <div className="space-y-6">
               {data.experience.map((exp, index) => (
-                <div key={index} className="border-l-2 border-gray-200 pl-6">
+                <div key={index} className="border-l-2 pl-6" style={{ borderColor: colors.accent }}>
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="text-xl font-medium text-gray-900">{exp.position}</h3>
-                      <p className="text-gray-600 font-light">{exp.company}</p>
+                      <h3 className="text-xl font-medium" style={{ color: colors.primary }}>{exp.position}</h3>
+                      <p className="font-light" style={{ color: colors.secondary }}>{exp.company}</p>
                     </div>
-                    <div className="text-right text-sm text-gray-500 font-light">
+                    <div className="text-right text-sm font-light" style={{ color: colors.accent }}>
                       <p>{formatDate(exp.startDate)} – {formatDate(exp.endDate)}</p>
                       {exp.location && <p>{exp.location}</p>}
                     </div>
                   </div>
                   {exp.description && (
-                    <p className="text-gray-700 text-sm leading-relaxed font-light whitespace-pre-line mt-3">
+                    <p className="text-sm leading-relaxed font-light whitespace-pre-line mt-3" style={{ color: colors.text }}>
                       {exp.description}
                     </p>
                   )}
@@ -124,19 +139,19 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
         {/* Education */}
         {data.education && data.education.length > 0 && (
           <div>
-            <h2 className="text-2xl font-light text-gray-900 mb-6 tracking-wide">
+            <h2 className="text-2xl font-light mb-6 tracking-wide text-center" style={{ color: colors.primary }}>
               Education
             </h2>
             <div className="space-y-4">
               {data.education.map((edu, index) => (
-                <div key={index} className="border-l-2 border-gray-200 pl-6">
+                <div key={index} className="border-l-2 pl-6" style={{ borderColor: colors.accent }}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{edu.degree}</h3>
-                      <p className="text-gray-600 font-light">{edu.school}</p>
-                      {edu.gpa && <p className="text-sm text-gray-500">GPA: {edu.gpa}</p>}
+                      <h3 className="text-lg font-medium" style={{ color: colors.primary }}>{edu.degree}</h3>
+                      <p className="font-light" style={{ color: colors.secondary }}>{edu.school}</p>
+                      {edu.gpa && <p className="text-sm" style={{ color: colors.accent }}>GPA: {edu.gpa}</p>}
                     </div>
-                    <div className="text-right text-sm text-gray-500 font-light">
+                    <div className="text-right text-sm font-light" style={{ color: colors.accent }}>
                       <p>{formatDate(edu.startDate)} – {formatDate(edu.endDate)}</p>
                       {edu.location && <p>{edu.location}</p>}
                     </div>
@@ -150,12 +165,12 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
         {/* Skills */}
         {data.skills && data.skills.length > 0 && (
           <div>
-            <h2 className="text-2xl font-light text-gray-900 mb-6 tracking-wide">
+            <h2 className="text-2xl font-light mb-6 tracking-wide text-center" style={{ color: colors.primary }}>
               Skills
             </h2>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap justify-center gap-3">
               {data.skills.map((skill, index) => (
-                <span key={index} className="text-sm text-gray-700 border-b border-gray-300 pb-1">
+                <span key={index} className="text-sm border-b pb-1" style={{ color: colors.text, borderColor: colors.accent }}>
                   {skill}
                 </span>
               ))}
@@ -166,16 +181,16 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
         {/* Projects */}
         {data.projects && data.projects.length > 0 && (
           <div>
-            <h2 className="text-2xl font-light text-gray-900 mb-6 tracking-wide">
+            <h2 className="text-2xl font-light mb-6 tracking-wide text-center" style={{ color: colors.primary }}>
               Projects
             </h2>
             <div className="space-y-4">
               {data.projects.map((project, index) => (
-                <div key={index} className="border-l-2 border-gray-200 pl-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">{project.name}</h3>
-                  <p className="text-gray-700 text-sm font-light mb-2">{project.description}</p>
+                <div key={index} className="border-l-2 pl-6" style={{ borderColor: colors.accent }}>
+                  <h3 className="text-lg font-medium mb-2" style={{ color: colors.primary }}>{project.name}</h3>
+                  <p className="text-sm font-light mb-2" style={{ color: colors.text }}>{project.description}</p>
                   {project.technologies && (
-                    <p className="text-xs text-gray-500 font-light">
+                    <p className="text-xs font-light" style={{ color: colors.accent }}>
                       {project.technologies}
                     </p>
                   )}
@@ -185,18 +200,18 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
           </div>
         )}
 
-        {/* Languages & Certifications */}
+        {/* Languages & Interests */}
         <div className="grid grid-cols-2 gap-8">
           {data.languages && data.languages.length > 0 && (
             <div>
-              <h2 className="text-xl font-light text-gray-900 mb-4 tracking-wide">
+              <h2 className="text-xl font-light mb-4 tracking-wide text-center" style={{ color: colors.primary }}>
                 Languages
               </h2>
               <div className="space-y-2">
                 {data.languages.map((lang, index) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span className="text-gray-700">{lang.language}</span>
-                    <span className="text-gray-500 font-light">{lang.proficiency}</span>
+                    <span style={{ color: colors.text }}>{lang.language}</span>
+                    <span className="font-light" style={{ color: colors.accent }}>{lang.proficiency}</span>
                   </div>
                 ))}
               </div>
@@ -205,12 +220,12 @@ const MinimalistElegantTemplate: React.FC<MinimalistElegantTemplateProps> = ({ d
 
           {data.interests && data.interests.length > 0 && (
             <div>
-              <h2 className="text-xl font-light text-gray-900 mb-4 tracking-wide">
+              <h2 className="text-xl font-light mb-4 tracking-wide text-center" style={{ color: colors.primary }}>
                 Interests
               </h2>
               <div className="flex flex-wrap gap-2">
                 {data.interests.map((interest, index) => (
-                  <span key={index} className="text-sm text-gray-600 font-light">
+                  <span key={index} className="text-sm font-light" style={{ color: colors.secondary }}>
                     {interest}{index < data.interests!.length - 1 ? ',' : ''}
                   </span>
                 ))}

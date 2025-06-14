@@ -49,9 +49,24 @@ interface ResumeData {
 
 interface ExecutiveEliteTemplateProps {
   data: ResumeData;
+  customColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    text: string;
+    background: string;
+  };
 }
 
-const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data }) => {
+const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data, customColors }) => {
+  const colors = customColors || {
+    primary: '#1F2937',
+    secondary: '#374151',
+    accent: '#D97706',
+    text: '#1F2937',
+    background: '#FFFFFF'
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     if (dateString === 'Present') return 'Present';
@@ -66,40 +81,40 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
   };
 
   return (
-    <div className="bg-white text-gray-900 max-w-4xl mx-auto shadow-2xl" style={{ width: '210mm', minHeight: '297mm' }}>
-      {/* Luxury Executive Header */}
-      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-black text-white p-8 relative">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-gold-400/20 to-transparent"></div>
+    <div className="bg-white text-gray-900 max-w-4xl mx-auto shadow-2xl" style={{ width: '210mm', minHeight: '297mm', backgroundColor: colors.background }}>
+      {/* Luxury Executive Header - Centered */}
+      <div className="text-white p-8 relative text-center" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-20" style={{ background: `linear-gradient(135deg, ${colors.accent}, transparent)` }}></div>
         <div className="relative z-10">
-          <h1 className="text-5xl font-serif mb-4 tracking-tight text-gold-300">
+          <h1 className="text-5xl font-serif mb-4 tracking-tight" style={{ color: colors.accent }}>
             {data.personal.fullName || 'Executive Name'}
           </h1>
-          <div className="h-1 w-24 bg-gradient-to-r from-gold-400 to-gold-600 mb-4"></div>
+          <div className="h-1 w-24 mx-auto mb-4" style={{ background: `linear-gradient(to right, ${colors.accent}, ${colors.accent}AA)` }}></div>
           <div className="grid grid-cols-2 gap-8 text-gray-300">
             <div className="space-y-2">
               {data.personal.email && (
-                <p className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-gold-400 rounded-full"></span>
+                <p className="flex items-center justify-center gap-3">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }}></span>
                   {data.personal.email}
                 </p>
               )}
               {data.personal.phone && (
-                <p className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-gold-400 rounded-full"></span>
+                <p className="flex items-center justify-center gap-3">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }}></span>
                   {data.personal.phone}
                 </p>
               )}
             </div>
             <div className="space-y-2">
               {data.personal.location && (
-                <p className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-gold-400 rounded-full"></span>
+                <p className="flex items-center justify-center gap-3">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }}></span>
                   {data.personal.location}
                 </p>
               )}
               {data.personal.linkedin && (
-                <p className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-gold-400 rounded-full"></span>
+                <p className="flex items-center justify-center gap-3">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }}></span>
                   LinkedIn Profile
                 </p>
               )}
@@ -111,11 +126,11 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
       <div className="p-8 space-y-8">
         {/* Executive Summary */}
         {data.personal.summary && (
-          <div className="border-l-4 border-gold-500 pl-6">
-            <h2 className="text-2xl font-serif text-gray-900 mb-4 tracking-wide">
+          <div className="border-l-4 pl-6 text-center" style={{ borderColor: colors.accent }}>
+            <h2 className="text-2xl font-serif mb-4 tracking-wide" style={{ color: colors.primary }}>
               Executive Summary
             </h2>
-            <p className="text-gray-700 leading-relaxed text-lg font-light">
+            <p className="leading-relaxed text-lg font-light" style={{ color: colors.text }}>
               {data.personal.summary}
             </p>
           </div>
@@ -124,28 +139,28 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
         {/* Professional Experience */}
         {data.experience && data.experience.length > 0 && (
           <div>
-            <h2 className="text-2xl font-serif text-gray-900 mb-6 tracking-wide border-b-2 border-gold-500 pb-2">
+            <h2 className="text-2xl font-serif mb-6 tracking-wide border-b-2 pb-2 text-center" style={{ color: colors.primary, borderColor: colors.accent }}>
               Professional Experience
             </h2>
             <div className="space-y-6">
               {data.experience.map((exp, index) => (
                 <div key={index} className="relative">
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-gold-400 to-gold-600"></div>
+                  <div className="absolute left-0 top-0 w-1 h-full" style={{ background: `linear-gradient(to bottom, ${colors.accent}, ${colors.accent}66)` }}></div>
                   <div className="pl-8">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-1">{exp.position}</h3>
-                        <p className="text-lg text-gold-600 font-medium">{exp.company}</p>
+                        <h3 className="text-xl font-semibold mb-1" style={{ color: colors.primary }}>{exp.position}</h3>
+                        <p className="text-lg font-medium" style={{ color: colors.accent }}>{exp.company}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded">
+                        <p className="text-sm px-3 py-1 rounded" style={{ color: colors.secondary, backgroundColor: `${colors.secondary}11` }}>
                           {formatDate(exp.startDate)} – {formatDate(exp.endDate)}
                         </p>
-                        {exp.location && <p className="text-sm text-gray-500 mt-1">{exp.location}</p>}
+                        {exp.location && <p className="text-sm mt-1" style={{ color: colors.accent }}>{exp.location}</p>}
                       </div>
                     </div>
                     {exp.description && (
-                      <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      <div className="leading-relaxed whitespace-pre-line" style={{ color: colors.text }}>
                         {exp.description}
                       </div>
                     )}
@@ -159,23 +174,23 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
         {/* Education & Qualifications */}
         {data.education && data.education.length > 0 && (
           <div>
-            <h2 className="text-2xl font-serif text-gray-900 mb-6 tracking-wide border-b-2 border-gold-500 pb-2">
+            <h2 className="text-2xl font-serif mb-6 tracking-wide border-b-2 pb-2 text-center" style={{ color: colors.primary, borderColor: colors.accent }}>
               Education & Qualifications
             </h2>
             <div className="grid grid-cols-1 gap-4">
               {data.education.map((edu, index) => (
-                <div key={index} className="bg-gray-50 p-6 rounded-lg border-l-4 border-gold-500">
+                <div key={index} className="p-6 rounded-lg border-l-4" style={{ backgroundColor: `${colors.secondary}08`, borderColor: colors.accent }}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{edu.degree}</h3>
-                      <p className="text-gold-600 font-medium">{edu.school}</p>
-                      {edu.gpa && <p className="text-sm text-gray-600 mt-1">GPA: {edu.gpa}</p>}
+                      <h3 className="text-lg font-semibold" style={{ color: colors.primary }}>{edu.degree}</h3>
+                      <p className="font-medium" style={{ color: colors.accent }}>{edu.school}</p>
+                      {edu.gpa && <p className="text-sm mt-1" style={{ color: colors.secondary }}>GPA: {edu.gpa}</p>}
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm" style={{ color: colors.secondary }}>
                         {formatDate(edu.startDate)} – {formatDate(edu.endDate)}
                       </p>
-                      {edu.location && <p className="text-sm text-gray-500">{edu.location}</p>}
+                      {edu.location && <p className="text-sm" style={{ color: colors.accent }}>{edu.location}</p>}
                     </div>
                   </div>
                 </div>
@@ -187,13 +202,13 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
         {/* Core Competencies */}
         {data.skills && data.skills.length > 0 && (
           <div>
-            <h2 className="text-2xl font-serif text-gray-900 mb-6 tracking-wide border-b-2 border-gold-500 pb-2">
+            <h2 className="text-2xl font-serif mb-6 tracking-wide border-b-2 pb-2 text-center" style={{ color: colors.primary, borderColor: colors.accent }}>
               Core Competencies
             </h2>
             <div className="grid grid-cols-3 gap-4">
               {data.skills.map((skill, index) => (
-                <div key={index} className="text-center p-3 bg-gray-50 rounded border-b-2 border-gold-400">
-                  <span className="text-gray-800 font-medium">{skill}</span>
+                <div key={index} className="text-center p-3 rounded border-b-2" style={{ backgroundColor: `${colors.secondary}08`, borderColor: colors.accent }}>
+                  <span className="font-medium" style={{ color: colors.text }}>{skill}</span>
                 </div>
               ))}
             </div>
@@ -205,14 +220,14 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
           {/* Languages */}
           {data.languages && data.languages.length > 0 && (
             <div>
-              <h3 className="text-xl font-serif text-gray-900 mb-4 border-b border-gold-300 pb-2">
+              <h3 className="text-xl font-serif mb-4 border-b pb-2 text-center" style={{ color: colors.primary, borderColor: `${colors.accent}66` }}>
                 Languages
               </h3>
               <div className="space-y-2">
                 {data.languages.map((lang, index) => (
                   <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-700 font-medium">{lang.language}</span>
-                    <span className="text-sm text-gold-600 bg-gold-100 px-2 py-1 rounded">
+                    <span className="font-medium" style={{ color: colors.text }}>{lang.language}</span>
+                    <span className="text-sm px-2 py-1 rounded" style={{ color: colors.accent, backgroundColor: `${colors.accent}22` }}>
                       {lang.proficiency}
                     </span>
                   </div>
@@ -224,12 +239,12 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
           {/* Professional Interests */}
           {data.interests && data.interests.length > 0 && (
             <div>
-              <h3 className="text-xl font-serif text-gray-900 mb-4 border-b border-gold-300 pb-2">
+              <h3 className="text-xl font-serif mb-4 border-b pb-2 text-center" style={{ color: colors.primary, borderColor: `${colors.accent}66` }}>
                 Professional Interests
               </h3>
               <div className="space-y-1">
                 {data.interests.map((interest, index) => (
-                  <p key={index} className="text-gray-700">
+                  <p key={index} style={{ color: colors.text }}>
                     • {interest}
                   </p>
                 ))}
@@ -241,15 +256,15 @@ const ExecutiveEliteTemplate: React.FC<ExecutiveEliteTemplateProps> = ({ data })
         {/* Certifications */}
         {data.certifications && data.certifications.length > 0 && (
           <div>
-            <h2 className="text-2xl font-serif text-gray-900 mb-6 tracking-wide border-b-2 border-gold-500 pb-2">
+            <h2 className="text-2xl font-serif mb-6 tracking-wide border-b-2 pb-2 text-center" style={{ color: colors.primary, borderColor: colors.accent }}>
               Professional Certifications
             </h2>
             <div className="grid grid-cols-2 gap-4">
               {data.certifications.map((cert, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded border-l-4 border-gold-400">
-                  <h4 className="font-semibold text-gray-900">{cert.name}</h4>
-                  <p className="text-gold-600 text-sm">{cert.issuer}</p>
-                  <p className="text-gray-600 text-sm">{formatDate(cert.date)}</p>
+                <div key={index} className="p-4 rounded border-l-4" style={{ backgroundColor: `${colors.secondary}08`, borderColor: colors.accent }}>
+                  <h4 className="font-semibold" style={{ color: colors.primary }}>{cert.name}</h4>
+                  <p className="text-sm" style={{ color: colors.accent }}>{cert.issuer}</p>
+                  <p className="text-sm" style={{ color: colors.secondary }}>{formatDate(cert.date)}</p>
                 </div>
               ))}
             </div>

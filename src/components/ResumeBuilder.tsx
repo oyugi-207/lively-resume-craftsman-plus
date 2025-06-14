@@ -38,6 +38,8 @@ import EnhancedJobDescriptionParser from './EnhancedJobDescriptionParser';
 import ComingSoonFeatures from './ComingSoonFeatures';
 import LiveFeatures from './LiveFeatures';
 import AIIntegration from './AIIntegration';
+import ReferencesForm from './ReferencesForm';
+import ColorCustomizer from './ColorCustomizer';
 
 interface ResumeData {
   personal: {
@@ -88,6 +90,8 @@ interface ResumeData {
     startDate: string;
     endDate: string;
   }>;
+  references: any[];
+  custom_colors: any;
 }
 
 const ResumeBuilder: React.FC = () => {
@@ -106,7 +110,9 @@ const ResumeBuilder: React.FC = () => {
     certifications: [],
     languages: [],
     interests: [],
-    projects: []
+    projects: [],
+    references: [],
+    custom_colors: null
   });
   
   const [selectedTemplate, setSelectedTemplate] = useState(0);
@@ -118,6 +124,8 @@ const ResumeBuilder: React.FC = () => {
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resumeId, setResumeId] = useState<string | null>(null);
+  const [references, setReferences] = useState<any[]>([]);
+  const [customColors, setCustomColors] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -159,7 +167,9 @@ const ResumeBuilder: React.FC = () => {
           certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
-          projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : []
+          projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : [],
+          references: resume.references || [],
+          custom_colors: resume.custom_colors || null
         });
       }
     } catch (error: any) {
@@ -188,6 +198,8 @@ const ResumeBuilder: React.FC = () => {
         languages: resumeData.languages,
         interests: resumeData.interests,
         projects: resumeData.projects,
+        references: references,
+        custom_colors: customColors,
         updated_at: new Date().toISOString()
       };
 
@@ -249,6 +261,14 @@ const ResumeBuilder: React.FC = () => {
 
   const updateInterests = (data: string[]) => {
     setResumeData(prev => ({ ...prev, interests: data }));
+  };
+
+  const updateReferences = (data: any[]) => {
+    setReferences(data);
+  };
+
+  const handleColorChange = (colors: any) => {
+    setCustomColors(colors);
   };
 
   const handleCVDataExtracted = (data: any) => {
@@ -396,6 +416,11 @@ const ResumeBuilder: React.FC = () => {
           </Card>
         </div>
 
+        {/* Color Customizer */}
+        <div className="mb-6">
+          <ColorCustomizer onColorChange={handleColorChange} currentColors={customColors} />
+        </div>
+
         {showLiveFeatures ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -431,7 +456,7 @@ const ResumeBuilder: React.FC = () => {
             {/* Form Section */}
             <div className="space-y-6">
               <Tabs defaultValue="personal" className="w-full">
-                <TabsList className="grid grid-cols-4 lg:grid-cols-8 mb-6">
+                <TabsList className="grid grid-cols-5 lg:grid-cols-9 mb-6">
                   <TabsTrigger value="personal" className="flex items-center gap-1">
                     <User className="w-4 h-4" />
                     <span className="hidden sm:inline">Personal</span>
@@ -463,6 +488,10 @@ const ResumeBuilder: React.FC = () => {
                   <TabsTrigger value="interests" className="flex items-center gap-1">
                     <Heart className="w-4 h-4" />
                     <span className="hidden sm:inline">Interests</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="references" className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">References</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -521,6 +550,13 @@ const ResumeBuilder: React.FC = () => {
                     onChange={updateInterests} 
                   />
                 </TabsContent>
+
+                <TabsContent value="references">
+                  <ReferencesForm 
+                    data={references} 
+                    onChange={updateReferences} 
+                  />
+                </TabsContent>
               </Tabs>
             </div>
 
@@ -539,6 +575,7 @@ const ResumeBuilder: React.FC = () => {
                       data={resumeData} 
                       template={selectedTemplate}
                       scale={0.6}
+                      customColors={customColors}
                     />
                   </div>
                 </CardContent>

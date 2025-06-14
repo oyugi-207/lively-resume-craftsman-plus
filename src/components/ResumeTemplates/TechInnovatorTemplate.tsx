@@ -66,193 +66,201 @@ const TechInnovatorTemplate: React.FC<TechInnovatorTemplateProps> = ({ data }) =
   };
 
   return (
-    <div className="bg-gray-900 text-white max-w-4xl mx-auto shadow-2xl" style={{ width: '210mm', minHeight: '297mm' }}>
-      {/* Tech Header with Code Aesthetic */}
-      <div className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 p-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="text-green-400/20 font-mono text-xs leading-none overflow-hidden">
-            {'{ "developer": true, "innovative": true, "skills": ["coding", "problem-solving", "creativity"] }'}
+    <div className="bg-white text-gray-900 max-w-4xl mx-auto shadow-lg" style={{ width: '210mm', minHeight: '297mm' }}>
+      {/* Tech Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
+          <div className="grid grid-cols-8 gap-1 h-full">
+            {Array.from({ length: 64 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-sm"></div>
+            ))}
           </div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="ml-4 font-mono text-sm text-gray-200">~/portfolio/resume</span>
-          </div>
-          <h1 className="text-4xl font-bold mb-2 font-mono">
-            <span className="text-green-400">const</span> developer = "{data.personal.fullName || 'YourName'}"
+          <h1 className="text-4xl font-bold mb-3 tracking-tight">
+            {data.personal.fullName || 'Tech Innovator'}
           </h1>
-          <div className="font-mono text-sm text-gray-200 space-y-1">
-            {data.personal.email && <p><span className="text-blue-400">email:</span> "{data.personal.email}"</p>}
-            {data.personal.phone && <p><span className="text-blue-400">phone:</span> "{data.personal.phone}"</p>}
-            {data.personal.location && <p><span className="text-blue-400">location:</span> "{data.personal.location}"</p>}
+          <div className="h-1 w-20 bg-cyan-400 mb-4"></div>
+          <div className="grid grid-cols-2 gap-6 text-gray-200">
+            <div className="space-y-2">
+              {data.personal.email && (
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-400 rounded-full"></span>
+                  {data.personal.email}
+                </p>
+              )}
+              {data.personal.phone && (
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-400 rounded-full"></span>
+                  {data.personal.phone}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              {data.personal.location && (
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-400 rounded-full"></span>
+                  {data.personal.location}
+                </p>
+              )}
+              {data.personal.github && (
+                <p className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-400 rounded-full"></span>
+                  GitHub Profile
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-0">
-        {/* Left Tech Sidebar */}
-        <div className="bg-gray-800 p-6 space-y-6">
-          {/* Skills as Code */}
-          {data.skills && data.skills.length > 0 && (
-            <div>
-              <h3 className="text-lg font-bold text-green-400 mb-4 font-mono">
-                {'<Skills />'}
-              </h3>
-              <div className="space-y-2">
-                {data.skills.slice(0, 12).map((skill, index) => (
-                  <div key={index} className="bg-gray-700 p-2 rounded border-l-2 border-green-400 font-mono text-sm">
-                    <span className="text-gray-300">"{skill}"</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      <div className="p-8 space-y-8">
+        {/* Summary */}
+        {data.personal.summary && (
+          <div className="border-l-4 border-indigo-500 pl-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-indigo-600">
+              Technical Summary
+            </h2>
+            <p className="text-gray-700 leading-relaxed">
+              {data.personal.summary}
+            </p>
+          </div>
+        )}
 
-          {/* GitHub-style Languages */}
+        {/* Technical Skills */}
+        {data.skills && data.skills.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-indigo-600">
+              Technical Expertise
+            </h2>
+            <div className="grid grid-cols-4 gap-3">
+              {data.skills.map((skill, index) => (
+                <div key={index} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 rounded border-l-4 border-indigo-500">
+                  <span className="text-gray-800 font-medium text-sm">{skill}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Experience */}
+        {data.experience && data.experience.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-indigo-600">
+              Professional Experience
+            </h2>
+            <div className="space-y-6">
+              {data.experience.map((exp, index) => (
+                <div key={index} className="relative pl-8">
+                  <div className="absolute left-0 top-0 w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                  <div className="absolute left-0 top-4 w-0.5 h-full bg-indigo-200"></div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">{exp.position}</h3>
+                      <p className="text-indigo-600 font-medium">{exp.company}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600 bg-indigo-50 px-3 py-1 rounded">
+                        {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
+                      </p>
+                      {exp.location && <p className="text-sm text-gray-500 mt-1">{exp.location}</p>}
+                    </div>
+                  </div>
+                  {exp.description && (
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      {exp.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        {data.projects && data.projects.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-indigo-600">
+              Featured Projects
+            </h2>
+            <div className="grid grid-cols-2 gap-6">
+              {data.projects.map((project, index) => (
+                <div key={index} className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.name}</h3>
+                  <p className="text-gray-700 text-sm mb-3">{project.description}</p>
+                  {project.technologies && (
+                    <div className="flex flex-wrap gap-2">
+                      {project.technologies.split(',').map((tech, techIndex) => (
+                        <span key={techIndex} className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                          {tech.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Education */}
+        {data.education && data.education.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-indigo-600">
+              Education
+            </h2>
+            <div className="space-y-4">
+              {data.education.map((edu, index) => (
+                <div key={index} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border-l-4 border-indigo-500">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{edu.degree}</h3>
+                      <p className="text-indigo-600 font-medium">{edu.school}</p>
+                      {edu.gpa && <p className="text-sm text-gray-600 mt-1">GPA: {edu.gpa}</p>}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">
+                        {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
+                      </p>
+                      {edu.location && <p className="text-sm text-gray-500">{edu.location}</p>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Additional Info */}
+        <div className="grid grid-cols-2 gap-8">
           {data.languages && data.languages.length > 0 && (
             <div>
-              <h3 className="text-lg font-bold text-blue-400 mb-4 font-mono">
-                languages: []
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-indigo-600">
+                Languages
               </h3>
               <div className="space-y-2">
                 {data.languages.map((lang, index) => (
-                  <div key={index} className="flex justify-between items-center bg-gray-700 p-2 rounded text-sm">
-                    <span className="font-mono text-gray-300">{lang.language}</span>
-                    <span className="text-xs bg-blue-600 px-2 py-1 rounded font-mono">
-                      {lang.proficiency}
-                    </span>
+                  <div key={index} className="flex justify-between items-center p-2 bg-indigo-50 rounded">
+                    <span className="text-gray-700 font-medium">{lang.language}</span>
+                    <span className="text-sm text-indigo-600 font-medium">{lang.proficiency}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Terminal-style Interests */}
           {data.interests && data.interests.length > 0 && (
             <div>
-              <h3 className="text-lg font-bold text-purple-400 mb-4 font-mono">
-                $ interests --list
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-indigo-600">
+                Interests
               </h3>
-              <div className="space-y-1">
+              <div className="flex flex-wrap gap-2">
                 {data.interests.map((interest, index) => (
-                  <div key={index} className="text-sm font-mono text-gray-300">
-                    <span className="text-green-400">></span> {interest}
-                  </div>
+                  <span key={index} className="text-sm bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                    {interest}
+                  </span>
                 ))}
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="col-span-2 bg-gray-900 p-6 space-y-6">
-          {/* Summary as Code Comment */}
-          {data.personal.summary && (
-            <div>
-              <h2 className="text-xl font-bold text-green-400 mb-4 font-mono">
-                {'/* Summary */'}
-              </h2>
-              <div className="bg-gray-800 p-4 rounded border-l-4 border-green-400">
-                <p className="text-gray-300 leading-relaxed font-mono text-sm">
-                  {data.personal.summary}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Experience as Code Functions */}
-          {data.experience && data.experience.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold text-blue-400 mb-4 font-mono">
-                {'function experience() {'}
-              </h2>
-              <div className="space-y-4 pl-4">
-                {data.experience.map((exp, index) => (
-                  <div key={index} className="bg-gray-800 p-4 rounded border-l-2 border-blue-400">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white font-mono">{exp.position}</h3>
-                        <p className="text-blue-400 font-mono">{exp.company}</p>
-                      </div>
-                      <div className="text-right text-sm text-gray-400 font-mono">
-                        <p className="bg-gray-700 px-2 py-1 rounded">
-                          {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
-                        </p>
-                        {exp.location && <p className="mt-1">{exp.location}</p>}
-                      </div>
-                    </div>
-                    {exp.description && (
-                      <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-line font-mono">
-                        <span className="text-green-400">// </span>
-                        {exp.description.split('\n').join('\n// ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <p className="text-blue-400 font-mono mt-2">{'}'}</p>
-            </div>
-          )}
-
-          {/* Projects as Repositories */}
-          {data.projects && data.projects.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold text-purple-400 mb-4 font-mono">
-                {'git log --projects'}
-              </h2>
-              <div className="space-y-3">
-                {data.projects.map((project, index) => (
-                  <div key={index} className="bg-gray-800 p-4 rounded border-l-2 border-purple-400">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                      <h3 className="text-lg font-semibold text-white font-mono">{project.name}</h3>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2 font-mono">{project.description}</p>
-                    {project.technologies && (
-                      <div className="flex flex-wrap gap-1">
-                        {project.technologies.split(',').map((tech, techIndex) => (
-                          <span key={techIndex} className="text-xs bg-purple-600 text-white px-2 py-1 rounded font-mono">
-                            {tech.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Education */}
-          {data.education && data.education.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold text-yellow-400 mb-4 font-mono">
-                {'class Education {'}
-              </h2>
-              <div className="space-y-3 pl-4">
-                {data.education.map((edu, index) => (
-                  <div key={index} className="bg-gray-800 p-4 rounded border-l-2 border-yellow-400">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white font-mono">{edu.degree}</h3>
-                        <p className="text-yellow-400 font-mono">{edu.school}</p>
-                        {edu.gpa && <p className="text-sm text-gray-400 font-mono">GPA: {edu.gpa}</p>}
-                      </div>
-                      <div className="text-right text-sm text-gray-400 font-mono">
-                        <p className="bg-gray-700 px-2 py-1 rounded">
-                          {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
-                        </p>
-                        {edu.location && <p className="mt-1">{edu.location}</p>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-yellow-400 font-mono mt-2">{'}'}</p>
             </div>
           )}
         </div>
