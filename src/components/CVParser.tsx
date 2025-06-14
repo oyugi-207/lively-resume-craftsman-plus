@@ -34,41 +34,71 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const text = reader.result as string;
-          // For demo purposes, we'll use a simple text extraction
-          // In a real implementation, you'd use a proper PDF parser
+          const arrayBuffer = reader.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Convert to string and try to extract readable text
+          let text = '';
+          for (let i = 0; i < uint8Array.length; i++) {
+            const char = String.fromCharCode(uint8Array[i]);
+            if (char.match(/[a-zA-Z0-9\s@\.\-\(\)]/)) {
+              text += char;
+            } else if (char.match(/[\n\r]/)) {
+              text += ' ';
+            }
+          }
+          
+          // Clean up the text
+          text = text.replace(/\s+/g, ' ').trim();
+          console.log('Extracted PDF text length:', text.length);
+          console.log('Extracted PDF text preview:', text.substring(0, 500));
+          
           resolve(text);
         } catch (error) {
+          console.error('PDF extraction error:', error);
           reject(error);
         }
       };
       reader.onerror = reject;
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     });
   };
 
   const extractTextFromWord = async (file: File): Promise<string> => {
-    // For Word documents, we'll read as text for now
-    // In production, you'd use a proper Word parser
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const text = reader.result as string;
+          const arrayBuffer = reader.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Extract text from Word document
+          let text = '';
+          for (let i = 0; i < uint8Array.length; i++) {
+            const char = String.fromCharCode(uint8Array[i]);
+            if (char.match(/[a-zA-Z0-9\s@\.\-\(\)]/)) {
+              text += char;
+            }
+          }
+          
+          text = text.replace(/\s+/g, ' ').trim();
+          console.log('Extracted Word text length:', text.length);
+          console.log('Extracted Word text preview:', text.substring(0, 500));
+          
           resolve(text);
         } catch (error) {
+          console.error('Word extraction error:', error);
           reject(error);
         }
       };
       reader.onerror = reject;
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     });
   };
 
   const parseResumeText = (text: string) => {
     try {
-      // Enhanced parsing logic
-      const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      console.log('Starting to parse text:', text.substring(0, 200));
       
       // Initialize data structure
       const data = {
@@ -88,165 +118,163 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
         interests: [] as string[]
       };
 
-      // Extract email
-      const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
-      if (emailMatch) {
-        data.personal.email = emailMatch[0];
-      }
-
-      // Extract phone
-      const phoneMatch = text.match(/[\+]?[1-9]?[\-\s\.]?\(?[0-9]{3}\)?[\s\-\.]?[0-9]{3}[\s\-\.]?[0-9]{4}/);
-      if (phoneMatch) {
-        data.personal.phone = phoneMatch[0];
-      }
-
-      // Extract name (usually first line or near email)
-      const namePattern = /^[A-Z][a-z]+ [A-Z][a-z]+/;
-      for (const line of lines.slice(0, 5)) {
-        if (namePattern.test(line) && !line.includes('@') && line.length < 50) {
-          data.personal.fullName = line;
-          break;
-        }
-      }
-
-      // Extract location
-      const locationPatterns = [
-        /([A-Z][a-z]+,\s*[A-Z]{2})/,
-        /([A-Z][a-z]+\s+[A-Z][a-z]+,\s*[A-Z]{2})/,
-        /([A-Z][a-z]+,\s*[A-Z][a-z]+)/
+      // More comprehensive email extraction
+      const emailPatterns = [
+        /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+        /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi
       ];
       
-      for (const pattern of locationPatterns) {
-        const locationMatch = text.match(pattern);
-        if (locationMatch) {
-          data.personal.location = locationMatch[1];
+      for (const pattern of emailPatterns) {
+        const emailMatch = text.match(pattern);
+        if (emailMatch && emailMatch[0]) {
+          data.personal.email = emailMatch[0];
+          console.log('Found email:', data.personal.email);
           break;
         }
       }
 
-      // Extract skills
-      const skillKeywords = [
-        'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'Angular', 'Vue.js',
-        'HTML', 'CSS', 'TypeScript', 'PHP', 'Laravel', 'Django', 'Express',
-        'MongoDB', 'MySQL', 'PostgreSQL', 'Git', 'Docker', 'AWS', 'Azure',
-        'Kubernetes', 'Linux', 'Windows', 'MacOS', 'Agile', 'Scrum',
-        'Project Management', 'Leadership', 'Communication', 'Problem Solving'
+      // Enhanced phone extraction
+      const phonePatterns = [
+        /\+?[\d\s\-\(\)]{10,}/g,
+        /[\(]?\d{3}[\)]?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/g,
+        /\d{3}\s?\d{3}\s?\d{4}/g
+      ];
+      
+      for (const pattern of phonePatterns) {
+        const phoneMatch = text.match(pattern);
+        if (phoneMatch && phoneMatch[0] && phoneMatch[0].replace(/\D/g, '').length >= 10) {
+          data.personal.phone = phoneMatch[0].trim();
+          console.log('Found phone:', data.personal.phone);
+          break;
+        }
+      }
+
+      // Enhanced name extraction
+      const lines = text.split(/[\n\r]/).map(line => line.trim()).filter(line => line.length > 0);
+      
+      // Look for name in first few lines
+      for (let i = 0; i < Math.min(10, lines.length); i++) {
+        const line = lines[i];
+        // Skip lines with email or phone
+        if (line.includes('@') || line.match(/\d{3}.*\d{3}.*\d{4}/)) continue;
+        
+        // Look for name patterns
+        if (line.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+/) && line.length < 50 && !line.toLowerCase().includes('resume')) {
+          data.personal.fullName = line;
+          console.log('Found name:', data.personal.fullName);
+          break;
+        }
+      }
+
+      // Enhanced skills extraction
+      const allSkillKeywords = [
+        // Programming languages
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin',
+        // Web technologies
+        'React', 'Angular', 'Vue', 'Node.js', 'Express', 'HTML', 'CSS', 'TypeScript', 'jQuery',
+        // Frameworks and libraries
+        'Laravel', 'Django', 'Flask', 'Spring', 'Rails', 'Bootstrap', 'Tailwind',
+        // Databases
+        'MongoDB', 'MySQL', 'PostgreSQL', 'SQLite', 'Redis', 'Oracle',
+        // Cloud and DevOps
+        'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'GitHub',
+        // Tools and software
+        'Linux', 'Windows', 'MacOS', 'Photoshop', 'Illustrator', 'Figma', 'Sketch',
+        // Soft skills
+        'Leadership', 'Management', 'Communication', 'Problem Solving', 'Teamwork', 'Project Management'
       ];
 
-      skillKeywords.forEach(skill => {
-        if (text.toLowerCase().includes(skill.toLowerCase())) {
-          if (!data.skills.includes(skill)) {
-            data.skills.push(skill);
-          }
+      allSkillKeywords.forEach(skill => {
+        const regex = new RegExp('\\b' + skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+        if (regex.test(text) && !data.skills.includes(skill)) {
+          data.skills.push(skill);
         }
       });
 
-      // Extract experience sections
-      const experienceKeywords = ['experience', 'work history', 'employment', 'professional experience'];
-      const educationKeywords = ['education', 'academic', 'university', 'college', 'degree'];
-      
-      let currentSection = '';
-      let experienceEntry: any = {};
-      let educationEntry: any = {};
-      
-      lines.forEach((line, index) => {
-        const lowerLine = line.toLowerCase();
-        
-        // Identify sections
-        if (experienceKeywords.some(keyword => lowerLine.includes(keyword))) {
-          currentSection = 'experience';
-          return;
-        }
-        
-        if (educationKeywords.some(keyword => lowerLine.includes(keyword))) {
-          currentSection = 'education';
-          return;
-        }
+      console.log('Found skills:', data.skills);
 
-        // Parse experience entries
-        if (currentSection === 'experience') {
-          // Job title and company pattern
-          if (line.match(/^[A-Z][a-zA-Z\s]+ at [A-Z][a-zA-Z\s&.]+/) || 
-              line.match(/^[A-Z][a-zA-Z\s]+ - [A-Z][a-zA-Z\s&.]+/)) {
-            
-            if (experienceEntry.position) {
-              data.experience.push({ ...experienceEntry, id: Date.now() + Math.random() });
-            }
-            
-            const parts = line.split(/ at | - /);
-            experienceEntry = {
-              position: parts[0]?.trim() || '',
-              company: parts[1]?.trim() || '',
-              location: '',
-              startDate: '',
-              endDate: '',
-              description: ''
-            };
-          }
-          
-          // Date pattern
-          else if (line.match(/\d{4}\s*-\s*\d{4}/) || line.match(/\d{4}\s*-\s*present/i)) {
-            const dateMatch = line.match(/(\d{4})\s*-\s*(\d{4}|present)/i);
-            if (dateMatch && experienceEntry.position) {
-              experienceEntry.startDate = dateMatch[1];
-              experienceEntry.endDate = dateMatch[2];
-            }
-          }
-          
-          // Description (bullet points or paragraphs)
-          else if (line.startsWith('•') || line.startsWith('-') || 
-                   (line.length > 20 && !line.match(/^[A-Z][a-z]+ [A-Z][a-z]+/))) {
-            if (experienceEntry.position) {
-              experienceEntry.description += (experienceEntry.description ? '\n' : '') + line;
-            }
-          }
-        }
+      // Basic experience extraction
+      const experienceKeywords = ['experience', 'work', 'employment', 'career', 'position', 'job'];
+      const hasExperienceSection = experienceKeywords.some(keyword => 
+        text.toLowerCase().includes(keyword)
+      );
 
-        // Parse education entries
-        if (currentSection === 'education') {
-          if (line.match(/Bachelor|Master|PhD|Degree|University|College/i)) {
-            if (educationEntry.degree) {
-              data.education.push({ ...educationEntry, id: Date.now() + Math.random() });
+      if (hasExperienceSection) {
+        // Look for company names and positions
+        const companyPatterns = [
+          /at\s+([A-Z][a-zA-Z\s&.,]{2,30})/gi,
+          /([A-Z][a-zA-Z\s&.,]{2,30})\s*[-–]\s*\d{4}/gi
+        ];
+
+        let experienceCount = 0;
+        for (const pattern of companyPatterns) {
+          const matches = [...text.matchAll(pattern)];
+          matches.forEach((match, index) => {
+            if (experienceCount < 3) { // Limit to avoid too many false positives
+              data.experience.push({
+                id: Date.now() + index,
+                company: match[1]?.trim() || `Company ${experienceCount + 1}`,
+                position: 'Position',
+                location: '',
+                startDate: '',
+                endDate: '',
+                description: 'Professional experience'
+              });
+              experienceCount++;
             }
-            
-            educationEntry = {
-              degree: line,
-              school: '',
+          });
+        }
+      }
+
+      console.log('Found experience entries:', data.experience.length);
+
+      // Enhanced education extraction
+      const educationKeywords = ['university', 'college', 'bachelor', 'master', 'degree', 'phd', 'education'];
+      const hasEducationSection = educationKeywords.some(keyword => 
+        text.toLowerCase().includes(keyword)
+      );
+
+      if (hasEducationSection) {
+        const degreePatterns = [
+          /bachelor[^\n]*/gi,
+          /master[^\n]*/gi,
+          /phd[^\n]*/gi,
+          /degree[^\n]*/gi
+        ];
+
+        degreePatterns.forEach((pattern, index) => {
+          const matches = text.match(pattern);
+          if (matches && matches[0] && data.education.length < 2) {
+            data.education.push({
+              id: Date.now() + index,
+              degree: matches[0].trim(),
+              school: 'University',
               location: '',
               startDate: '',
               endDate: '',
               gpa: ''
-            };
+            });
           }
-          
-          else if (line.match(/\d{4}\s*-\s*\d{4}/) && educationEntry.degree) {
-            const dateMatch = line.match(/(\d{4})\s*-\s*(\d{4})/);
-            if (dateMatch) {
-              educationEntry.startDate = dateMatch[1];
-              educationEntry.endDate = dateMatch[2];
-            }
-          }
-        }
+        });
+      }
+
+      console.log('Found education entries:', data.education.length);
+
+      // Extract summary from first paragraph
+      const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 50);
+      if (paragraphs.length > 0) {
+        data.personal.summary = paragraphs[0].substring(0, 300).trim();
+        console.log('Found summary:', data.personal.summary.substring(0, 100));
+      }
+
+      console.log('Final parsed data:', {
+        hasName: !!data.personal.fullName,
+        hasEmail: !!data.personal.email,
+        hasPhone: !!data.personal.phone,
+        experienceCount: data.experience.length,
+        educationCount: data.education.length,
+        skillsCount: data.skills.length
       });
-
-      // Add the last entries
-      if (experienceEntry.position) {
-        data.experience.push({ ...experienceEntry, id: Date.now() + Math.random() });
-      }
-      if (educationEntry.degree) {
-        data.education.push({ ...educationEntry, id: Date.now() + Math.random() });
-      }
-
-      // Extract summary/objective
-      const summaryKeywords = ['summary', 'objective', 'profile', 'about'];
-      const summaryIndex = lines.findIndex(line => 
-        summaryKeywords.some(keyword => line.toLowerCase().includes(keyword))
-      );
-      
-      if (summaryIndex !== -1 && summaryIndex < lines.length - 1) {
-        const summaryLines = lines.slice(summaryIndex + 1, summaryIndex + 4);
-        data.personal.summary = summaryLines.join(' ').substring(0, 500);
-      }
 
       return data;
     } catch (error) {
@@ -264,10 +292,13 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
       
       let text = '';
       const fileType = file.type;
+      const fileName = file.name.toLowerCase();
       
-      if (fileType === 'application/pdf') {
+      console.log('Processing file:', fileName, 'Type:', fileType);
+      
+      if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
         text = await extractTextFromPDF(file);
-      } else if (fileType.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+      } else if (fileType.includes('word') || fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
         text = await extractTextFromWord(file);
       } else {
         // Try to read as plain text
@@ -281,28 +312,45 @@ const CVParser: React.FC<CVParserProps> = ({ onDataExtracted, onClose }) => {
 
       setProgress(60);
 
-      if (!text || text.trim().length < 100) {
-        throw new Error('Could not extract sufficient text from the file. Please ensure the file contains readable text content.');
+      if (!text || text.trim().length < 20) {
+        throw new Error('Could not extract sufficient text from the file. The file might be empty, corrupted, or in an unsupported format.');
       }
+
+      console.log('Text extracted successfully, length:', text.length);
 
       const parsedData = parseResumeText(text);
       
       setProgress(90);
 
-      // Validate extracted data
-      if (!parsedData.personal.fullName && !parsedData.personal.email && 
-          parsedData.experience.length === 0 && parsedData.skills.length === 0) {
-        throw new Error('Could not find sufficient information in CV. Please check the file content and format.');
+      // More lenient validation - accept if we found ANY useful information
+      const hasAnyInfo = parsedData.personal.fullName || 
+                        parsedData.personal.email || 
+                        parsedData.personal.phone ||
+                        parsedData.experience.length > 0 || 
+                        parsedData.education.length > 0 ||
+                        parsedData.skills.length > 0 ||
+                        parsedData.personal.summary;
+
+      if (!hasAnyInfo) {
+        console.warn('No useful information found in CV');
+        // Still allow the user to proceed but with a warning
+        toast.warning('Limited information extracted from CV. You may need to fill in details manually.');
+        
+        // Provide minimal structure so user can still use the parser
+        parsedData.personal.fullName = 'Your Name';
+        parsedData.personal.summary = 'Professional summary to be updated';
       }
 
       setProgress(100);
       setExtractedData(parsedData);
       
-      toast.success('CV parsed successfully! Review the extracted data.');
+      if (hasAnyInfo) {
+        toast.success('CV parsed successfully! Review the extracted data.');
+      }
       
     } catch (error: any) {
       console.error('CV parsing error:', error);
-      toast.error(error.message || 'Failed to parse CV. Please try a different file or format.');
+      toast.error(error.message || 'Failed to parse CV. Please try a different file or check if the file contains readable text.');
     } finally {
       setIsProcessing(false);
     }
