@@ -581,15 +581,15 @@ ${description}`;
       <div className="space-y-4">
         {(Object.entries(skills) as [keyof SkillCategories, any][]).map(([category, subcategories]) => (
           <div key={category}>
-            <h5 className="font-medium text-sm mb-2 capitalize text-blue-600 dark:text-blue-400">{category} Skills:</h5>
+            <h5 className="font-medium text-sm mb-2 capitalize text-blue-600">{category} Skills:</h5>
             {(Object.entries(subcategories) as [string, string[]][]).map(([subcategory, skillList]) => {
               if (!skillList || !Array.isArray(skillList) || skillList.length === 0) return null;
               return (
                 <div key={subcategory} className="mb-2">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 capitalize">{subcategory}:</span>
+                  <span className="text-xs font-medium text-gray-600 capitalize">{subcategory}:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {skillList.slice(0, 5).map((skill: string, index: number) => (
-                      <Badge key={index} variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                      <Badge key={index} variant="secondary" className="text-xs bg-blue-100 text-blue-800">
                         {skill}
                       </Badge>
                     ))}
@@ -674,7 +674,7 @@ ${description}`;
           <div className="space-y-4">
             {parsedData ? (
               <>
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-4">
+                <div className="flex items-center gap-2 text-green-600 mb-4">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">
                     Job analyzed successfully with {parsedData.source}!
@@ -688,36 +688,36 @@ ${description}`;
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <Card className="p-3">
                     <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="font-medium text-sm dark:text-white">Job Level</span>
+                      <Target className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-sm">Job Level</span>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{parsedData.jobLevel || 'Not specified'}</p>
+                    <p className="text-sm text-gray-700 mt-1">{parsedData.jobLevel || 'Not specified'}</p>
                   </Card>
 
                   <Card className="p-3">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      <span className="font-medium text-sm dark:text-white">Industry</span>
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-sm">Industry</span>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{parsedData.industry || 'General'}</p>
+                    <p className="text-sm text-gray-700 mt-1">{parsedData.industry || 'General'}</p>
                   </Card>
 
                   {parsedData.competitorAnalysis && (
                     <Card className="p-3">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                        <span className="font-medium text-sm dark:text-white">Market Salary</span>
+                        <DollarSign className="w-4 h-4 text-purple-600" />
+                        <span className="font-medium text-sm">Market Salary</span>
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{parsedData.competitorAnalysis.averageSalary || 'Not available'}</p>
+                      <p className="text-sm text-gray-700 mt-1">{parsedData.competitorAnalysis.averageSalary || 'Not available'}</p>
                     </Card>
                   )}
 
                   <Card className="p-3">
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      <span className="font-medium text-sm dark:text-white">Work Type</span>
+                      <MapPin className="w-4 h-4 text-orange-600" />
+                      <span className="font-medium text-sm">Work Type</span>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{parsedData.workType || 'On-site'}</p>
+                    <p className="text-sm text-gray-700 mt-1">{parsedData.workType || 'On-site'}</p>
                   </Card>
                 </div>
 
@@ -726,57 +726,57 @@ ${description}`;
                   <CardContent className="p-4 space-y-4">
                     {parsedData.jobTitle && (
                       <div>
-                        <h4 className="font-medium text-sm mb-1 dark:text-white">Job Title</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{parsedData.jobTitle}</p>
+                        <h4 className="font-medium text-sm mb-1">Job Title</h4>
+                        <p className="text-sm text-gray-700">{parsedData.jobTitle}</p>
                       </div>
                     )}
 
                     {parsedData.company && (
                       <div>
-                        <h4 className="font-medium text-sm mb-1 dark:text-white">Company</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{parsedData.company}</p>
+                        <h4 className="font-medium text-sm mb-1">Company</h4>
+                        <p className="text-sm text-gray-700">{parsedData.company}</p>
                       </div>
                     )}
 
                     {parsedData.location && (
                       <div>
-                        <h4 className="font-medium text-sm mb-1 dark:text-white">Location & Work Type</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{parsedData.location} • {parsedData.workType}</p>
+                        <h4 className="font-medium text-sm mb-1">Location & Work Type</h4>
+                        <p className="text-sm text-gray-700">{parsedData.location} • {parsedData.workType}</p>
                       </div>
                     )}
 
                     {parsedData.experience && parsedData.experience > 0 && (
                       <div>
-                        <h4 className="font-medium text-sm mb-1 dark:text-white">Experience Required</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{parsedData.experience}+ years</p>
+                        <h4 className="font-medium text-sm mb-1">Experience Required</h4>
+                        <p className="text-sm text-gray-700">{parsedData.experience}+ years</p>
                       </div>
                     )}
 
                     {parsedData.salary && (
                       <div>
-                        <h4 className="font-medium text-sm mb-1 dark:text-white">Salary Range</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{parsedData.salary}</p>
+                        <h4 className="font-medium text-sm mb-1">Salary Range</h4>
+                        <p className="text-sm text-gray-700">{parsedData.salary}</p>
                       </div>
                     )}
 
                     {parsedData.skills && (
                       <div>
-                        <h4 className="font-medium text-sm mb-2 dark:text-white">Skills Analysis</h4>
+                        <h4 className="font-medium text-sm mb-2">Skills Analysis</h4>
                         {renderSkillsByCategory(parsedData.skills)}
                       </div>
                     )}
 
                     {parsedData.competitorAnalysis && (
                       <div>
-                        <h4 className="font-medium text-sm mb-2 dark:text-white">Market Intelligence</h4>
-                        <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded">
+                        <h4 className="font-medium text-sm mb-2">Market Intelligence</h4>
+                        <div className="bg-purple-50 p-3 rounded">
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
-                              <span className="font-medium dark:text-white">Similar Companies:</span>
-                              <p className="dark:text-gray-300">{Array.isArray(parsedData.competitorAnalysis.similarCompanies) ? parsedData.competitorAnalysis.similarCompanies.join(', ') : 'N/A'}</p>
+                              <span className="font-medium">Similar Companies:</span>
+                              <p>{Array.isArray(parsedData.competitorAnalysis.similarCompanies) ? parsedData.competitorAnalysis.similarCompanies.join(', ') : 'N/A'}</p>
                             </div>
                             <div>
-                              <span className="font-medium dark:text-white">Market Demand:</span>
+                              <span className="font-medium">Market Demand:</span>
                               <Badge variant="outline" className="ml-1">
                                 {parsedData.competitorAnalysis.marketDemand || 'Medium'}
                               </Badge>
@@ -788,19 +788,19 @@ ${description}`;
 
                     {parsedData.careerGrowth && (
                       <div>
-                        <h4 className="font-medium text-sm mb-2 dark:text-white">Career Growth Plan</h4>
-                        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded text-xs space-y-2">
+                        <h4 className="font-medium text-sm mb-2">Career Growth Plan</h4>
+                        <div className="bg-green-50 p-3 rounded text-xs space-y-2">
                           <div>
-                            <span className="font-medium dark:text-white">Next Roles:</span>
-                            <p className="dark:text-gray-300">{Array.isArray(parsedData.careerGrowth.nextRoles) ? parsedData.careerGrowth.nextRoles.join(', ') : 'N/A'}</p>
+                            <span className="font-medium">Next Roles:</span>
+                            <p>{Array.isArray(parsedData.careerGrowth.nextRoles) ? parsedData.careerGrowth.nextRoles.join(', ') : 'N/A'}</p>
                           </div>
                           <div>
-                            <span className="font-medium dark:text-white">Skills to Learn:</span>
-                            <p className="dark:text-gray-300">{Array.isArray(parsedData.careerGrowth.skillsToLearn) ? parsedData.careerGrowth.skillsToLearn.join(', ') : 'N/A'}</p>
+                            <span className="font-medium">Skills to Learn:</span>
+                            <p>{Array.isArray(parsedData.careerGrowth.skillsToLearn) ? parsedData.careerGrowth.skillsToLearn.join(', ') : 'N/A'}</p>
                           </div>
                           <div>
-                            <span className="font-medium dark:text-white">Time to Promotion:</span>
-                            <p className="dark:text-gray-300">{parsedData.careerGrowth.timeToPromotion || 'N/A'}</p>
+                            <span className="font-medium">Time to Promotion:</span>
+                            <p>{parsedData.careerGrowth.timeToPromotion || 'N/A'}</p>
                           </div>
                         </div>
                       </div>
@@ -808,10 +808,10 @@ ${description}`;
 
                     {parsedData.atsOptimization && (
                       <div>
-                        <h4 className="font-medium text-sm mb-2 dark:text-white">ATS Optimization</h4>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded text-xs space-y-2">
+                        <h4 className="font-medium text-sm mb-2">ATS Optimization</h4>
+                        <div className="bg-blue-50 p-3 rounded text-xs space-y-2">
                           <div>
-                            <span className="font-medium dark:text-white">Key Keywords:</span>
+                            <span className="font-medium">Key Keywords:</span>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {Array.isArray(parsedData.atsOptimization.keywords) ? parsedData.atsOptimization.keywords.slice(0, 6).map((keyword: string, index: number) => (
                                 <Badge key={index} variant="outline" className="text-xs">
@@ -821,8 +821,8 @@ ${description}`;
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium dark:text-white">Recommendations:</span>
-                            <ul className="list-disc list-inside mt-1 dark:text-gray-300">
+                            <span className="font-medium">Recommendations:</span>
+                            <ul className="list-disc list-inside mt-1">
                               {Array.isArray(parsedData.atsOptimization.recommendations) ? parsedData.atsOptimization.recommendations.slice(0, 3).map((rec: string, index: number) => (
                                 <li key={index}>{rec}</li>
                               )) : []}
@@ -834,7 +834,7 @@ ${description}`;
 
                     {parsedData.benefits && Array.isArray(parsedData.benefits) && parsedData.benefits.length > 0 && (
                       <div>
-                        <h4 className="font-medium text-sm mb-1 dark:text-white">Benefits Detected</h4>
+                        <h4 className="font-medium text-sm mb-1">Benefits Detected</h4>
                         <div className="flex flex-wrap gap-1">
                           {parsedData.benefits.slice(0, 8).map((benefit: string, index: number) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -847,12 +847,12 @@ ${description}`;
 
                     {parsedData.enhancedFeatures && (
                       <div>
-                        <h4 className="font-medium text-sm mb-2 dark:text-white">Analysis Features Used</h4>
+                        <h4 className="font-medium text-sm mb-2">Analysis Features Used</h4>
                         <div className="flex flex-wrap gap-1">
                           {Object.entries(parsedData.enhancedFeatures)
                             .filter(([, enabled]) => enabled)
                             .map(([feature]) => (
-                            <Badge key={feature} variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300">
+                            <Badge key={feature} variant="outline" className="text-xs bg-green-50 text-green-700">
                               <Star className="w-3 h-3 mr-1" />
                               {feature.replace(/([A-Z])/g, ' $1').trim()}
                             </Badge>
