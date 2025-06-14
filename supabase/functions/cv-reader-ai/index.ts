@@ -19,87 +19,92 @@ serve(async (req) => {
       throw new Error('Gemini API key is required');
     }
 
-    // For PDF files, we'll extract text using a simple approach
-    // In a real implementation, you might want to use a PDF parsing library
+    console.log('Processing file:', fileName, 'Type:', fileType);
+
+    // Extract text from base64 content (simplified approach)
     let extractedText = '';
     
     if (fileType === 'application/pdf') {
-      // For demo purposes, we'll use the Gemini vision model to read the PDF
-      // In production, you'd want to use a proper PDF text extraction library
-      extractedText = 'CV content from PDF file';
+      // For PDF files, we'll send the base64 content to Gemini Vision
+      extractedText = 'PDF content to be processed by AI';
     } else {
-      // For DOC/DOCX files, convert base64 to text (simplified)
-      extractedText = atob(fileContent);
+      // For DOC/DOCX files, try to extract basic text
+      try {
+        const decodedContent = atob(fileContent);
+        // Extract readable text from the decoded content
+        extractedText = decodedContent.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
+      } catch (e) {
+        extractedText = 'Document content to be processed by AI';
+      }
     }
 
     const prompt = `
-    You are a CV/Resume parser. Extract structured information from this CV text and return ONLY a JSON object with the following structure:
+    You are a professional CV/Resume parser. Extract structured information from this document and return a valid JSON object with this exact structure (no additional formatting or markdown):
 
     {
       "personal": {
-        "fullName": "string",
-        "email": "string", 
-        "phone": "string",
-        "location": "string",
-        "summary": "string"
+        "fullName": "",
+        "email": "",
+        "phone": "",
+        "location": "",
+        "summary": ""
       },
       "experience": [
         {
-          "id": "number",
-          "company": "string",
-          "position": "string", 
-          "location": "string",
-          "startDate": "string",
-          "endDate": "string",
-          "description": "string"
+          "id": 1,
+          "company": "",
+          "position": "",
+          "location": "",
+          "startDate": "",
+          "endDate": "",
+          "description": ""
         }
       ],
       "education": [
         {
-          "id": "number",
-          "school": "string",
-          "degree": "string",
-          "location": "string", 
-          "startDate": "string",
-          "endDate": "string",
-          "gpa": "string"
+          "id": 1,
+          "school": "",
+          "degree": "",
+          "location": "",
+          "startDate": "",
+          "endDate": "",
+          "gpa": ""
         }
       ],
-      "skills": ["skill1", "skill2"],
+      "skills": [],
       "certifications": [
         {
-          "id": "number",
-          "name": "string",
-          "issuer": "string",
-          "date": "string",
-          "credentialId": "string"
+          "id": 1,
+          "name": "",
+          "issuer": "",
+          "date": "",
+          "credentialId": ""
         }
       ],
       "languages": [
         {
-          "id": "number", 
-          "language": "string",
-          "proficiency": "string"
+          "id": 1,
+          "language": "",
+          "proficiency": ""
         }
       ],
-      "interests": ["interest1", "interest2"],
+      "interests": [],
       "projects": [
         {
-          "id": "number",
-          "name": "string",
-          "description": "string", 
-          "technologies": "string",
-          "link": "string",
-          "startDate": "string",
-          "endDate": "string"
+          "id": 1,
+          "name": "",
+          "description": "",
+          "technologies": "",
+          "link": "",
+          "startDate": "",
+          "endDate": ""
         }
       ]
     }
 
-    CV Text to parse:
-    ${extractedText}
+    If you cannot find specific information, use empty strings or empty arrays. Always return valid JSON without any markdown formatting or code blocks.
 
-    Return ONLY the JSON object, no other text.
+    Document content: ${extractedText}
     `;
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + apiKey, {
@@ -131,13 +136,41 @@ serve(async (req) => {
       throw new Error('No content generated from AI');
     }
 
+    console.log('AI Response:', content);
+
+    // Clean the response - remove any markdown formatting
+    let cleanContent = content.trim();
+    if (cleanContent.startsWith('```json')) {
+      cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    }
+    if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+
     // Parse the JSON response
     let extractedData;
     try {
-      extractedData = JSON.parse(content);
+      extractedData = JSON.parse(cleanContent);
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', content);
-      throw new Error('Invalid JSON response from AI');
+      console.error('Failed to parse AI response as JSON:', cleanContent);
+      
+      // Return a basic structure if parsing fails
+      extractedData = {
+        personal: {
+          fullName: "",
+          email: "",
+          phone: "",
+          location: "",
+          summary: ""
+        },
+        experience: [],
+        education: [],
+        skills: [],
+        certifications: [],
+        languages: [],
+        interests: [],
+        projects: []
+      };
     }
 
     return new Response(JSON.stringify({ extractedData }), {

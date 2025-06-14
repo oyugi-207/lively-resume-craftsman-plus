@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,8 @@ import {
   GraduationCap,
   Award,
   Brain,
-  X
+  X,
+  FileEdit
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -133,7 +133,7 @@ const CVUploadEditor: React.FC<CVUploadEditorProps> = ({ onClose }) => {
           }
         } catch (err: any) {
           console.error('AI extraction error:', err);
-          toast.error(err.message || 'AI extraction failed!');
+          toast.error(err.message || 'AI extraction failed! Try manual extraction instead.');
         } finally {
           setIsExtracting(false);
         }
@@ -143,6 +143,46 @@ const CVUploadEditor: React.FC<CVUploadEditorProps> = ({ onClose }) => {
       setIsExtracting(false);
       toast.error('Failed to read file for AI extraction');
     }
+  };
+
+  // Manual extraction - creates empty structure for user to fill
+  const extractManually = () => {
+    const emptyData: ResumeData = {
+      personal: {
+        fullName: '',
+        email: '',
+        phone: '',
+        location: '',
+        summary: ''
+      },
+      experience: [{
+        id: 1,
+        company: '',
+        position: '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        description: ''
+      }],
+      education: [{
+        id: 1,
+        school: '',
+        degree: '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        gpa: ''
+      }],
+      skills: [],
+      certifications: [],
+      languages: [],
+      interests: [],
+      projects: []
+    };
+
+    setExtractedData(emptyData);
+    setActiveTab('edit');
+    toast.success('Manual form ready for editing!');
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -329,10 +369,10 @@ const CVUploadEditor: React.FC<CVUploadEditorProps> = ({ onClose }) => {
                     </div>
                   </div>
 
-                  {uploadedFile && (
-                    <div className="flex justify-center">
+                  <div className="flex justify-center gap-4">
+                    {uploadedFile && (
                       <Button
-                        onClick={handleExtractClick}
+                        onClick={() => extractWithAI(uploadedFile)}
                         disabled={isExtracting}
                         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                         size="lg"
@@ -345,10 +385,36 @@ const CVUploadEditor: React.FC<CVUploadEditorProps> = ({ onClose }) => {
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Extract Data with AI
+                            Extract with AI
                           </>
                         )}
                       </Button>
+                    )}
+                    
+                    <Button
+                      onClick={extractManually}
+                      variant="outline"
+                      size="lg"
+                      className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20"
+                    >
+                      <FileEdit className="w-4 h-4 mr-2" />
+                      Manual Entry
+                    </Button>
+                  </div>
+
+                  {uploadedFile && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                        <div className="text-sm">
+                          <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-1">Extraction Options:</h4>
+                          <ul className="text-blue-800 dark:text-blue-400 space-y-1">
+                            <li>• <strong>AI Extract:</strong> Automatically analyzes your CV and fills form fields</li>
+                            <li>• <strong>Manual Entry:</strong> Start with empty form to enter details manually</li>
+                            <li>• Both options lead to the same full editing experience</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </TabsContent>
