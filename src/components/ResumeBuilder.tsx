@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,9 @@ interface ResumeData {
     phone: string;
     location: string;
     summary: string;
+    website?: string;
+    linkedin?: string;
+    github?: string;
   };
   experience: Array<{
     id: number;
@@ -66,8 +70,15 @@ interface ResumeData {
     startDate: string;
     endDate: string;
     gpa: string;
+    description?: string;
+    courses?: string;
+    honors?: string;
   }>;
-  skills: string[];
+  skills: string[] | Array<{
+    name: string;
+    level: string;
+    category: string;
+  }>;
   certifications: Array<{
     id: number;
     name: string;
@@ -90,7 +101,15 @@ interface ResumeData {
     startDate: string;
     endDate: string;
   }>;
-  references: any[];
+  references: Array<{
+    id: number;
+    name: string;
+    title: string;
+    company: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  }>;
   custom_colors: any;
 }
 
@@ -151,6 +170,13 @@ const ResumeBuilder: React.FC = () => {
         setResumeId(resume.id);
         setSelectedTemplate(resume.template_id || 0);
         
+        // Handle references and custom_colors safely
+        const resumeReferences = resume.references || [];
+        const resumeCustomColors = resume.custom_colors || null;
+        
+        setReferences(Array.isArray(resumeReferences) ? resumeReferences : []);
+        setCustomColors(resumeCustomColors);
+        
         setResumeData({
           personal: resume.personal_info && typeof resume.personal_info === 'object' && !Array.isArray(resume.personal_info) 
             ? resume.personal_info as ResumeData['personal']
@@ -163,13 +189,13 @@ const ResumeBuilder: React.FC = () => {
               },
           experience: Array.isArray(resume.experience) ? resume.experience as ResumeData['experience'] : [],
           education: Array.isArray(resume.education) ? resume.education as ResumeData['education'] : [],
-          skills: Array.isArray(resume.skills) ? resume.skills as string[] : [],
+          skills: Array.isArray(resume.skills) ? resume.skills : [],
           certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
           projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : [],
-          references: resume.references || [],
-          custom_colors: resume.custom_colors || null
+          references: Array.isArray(resumeReferences) ? resumeReferences : [],
+          custom_colors: resumeCustomColors
         });
       }
     } catch (error: any) {
@@ -243,7 +269,7 @@ const ResumeBuilder: React.FC = () => {
     setResumeData(prev => ({ ...prev, education: data }));
   };
 
-  const updateSkills = (data: string[]) => {
+  const updateSkills = (data: string[] | any[]) => {
     setResumeData(prev => ({ ...prev, skills: data }));
   };
 
@@ -265,25 +291,30 @@ const ResumeBuilder: React.FC = () => {
 
   const updateReferences = (data: any[]) => {
     setReferences(data);
+    setResumeData(prev => ({ ...prev, references: data }));
   };
 
   const handleColorChange = (colors: any) => {
     setCustomColors(colors);
+    setResumeData(prev => ({ ...prev, custom_colors: colors }));
   };
 
   const handleCVDataExtracted = (data: any) => {
     setResumeData(prevData => ({
+      ...prevData,
       personal: {
         ...prevData.personal,
         ...data.personal
       },
       experience: data.experience.length > 0 ? data.experience : prevData.experience,
       education: data.education.length > 0 ? data.education : prevData.education,
-      skills: data.skills.length > 0 ? [...new Set([...prevData.skills, ...data.skills])] : prevData.skills,
+      skills: data.skills.length > 0 ? [...(Array.isArray(prevData.skills) ? prevData.skills : []), ...data.skills] : prevData.skills,
       projects: data.projects.length > 0 ? data.projects : prevData.projects,
       certifications: data.certifications.length > 0 ? data.certifications : prevData.certifications,
       languages: data.languages.length > 0 ? data.languages : prevData.languages,
-      interests: data.interests.length > 0 ? [...new Set([...prevData.interests, ...data.interests])] : prevData.interests
+      interests: data.interests.length > 0 ? [...new Set([...prevData.interests, ...data.interests])] : prevData.interests,
+      references: prevData.references,
+      custom_colors: prevData.custom_colors
     }));
     toast.success('CV data successfully imported and merged with existing data!');
   };
@@ -303,7 +334,7 @@ const ResumeBuilder: React.FC = () => {
       const newSkills = data.skills.technical.slice(0, 10);
       setResumeData(prev => ({
         ...prev,
-        skills: [...new Set([...prev.skills, ...newSkills])]
+        skills: Array.isArray(prev.skills) ? [...prev.skills, ...newSkills] : newSkills
       }));
     }
 
@@ -613,13 +644,28 @@ const ResumeBuilder: React.FC = () => {
 
 const getTemplateName = (index: number): string => {
   const names = [
-    'Modern Professional',
-    'Executive Leadership',    
-    'Classic Corporate',
-    'Creative Designer',
-    'Tech Specialist',
-    'Minimalist',
-    'Two Column'
+    'Modern Professional',     // 0
+    'Executive Leadership',    // 1  
+    'Creative Designer',       // 2
+    'Tech Specialist',         // 3
+    'Minimalist Clean',        // 4
+    'Corporate Classic',       // 5
+    'Professional Blue',       // 6
+    'Legal Professional',      // 7
+    'Engineering Focus',       // 8
+    'Data Specialist',         // 9
+    'Supply Chain Manager',    // 10
+    'Clean Modern',            // 11
+    'Marketing Creative',      // 12
+    'Academic Scholar',        // 13
+    'Sales Champion',          // 14
+    'Consulting Elite',        // 15
+    'Modern Creative',         // 16
+    'Creative Portfolio',      // 17
+    'Minimalist Elegant',      // 18
+    'Tech Innovator',          // 19
+    'Executive Elite',         // 20
+    'Creative Designer Pro'    // 21
   ];
   return names[index] || 'Modern Professional';
 };

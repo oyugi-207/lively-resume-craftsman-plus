@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   ModernProfessionalTemplate, 
@@ -52,8 +53,15 @@ interface ResumeData {
     startDate: string;
     endDate: string;
     gpa: string;
+    description?: string;
+    courses?: string;
+    honors?: string;
   }>;
-  skills: string[];
+  skills: string[] | Array<{
+    name: string;
+    level: string;
+    category: string;
+  }>;
   certifications: Array<{
     id: number;
     name: string;
@@ -75,6 +83,15 @@ interface ResumeData {
     link: string;
     startDate: string;
     endDate: string;
+  }>;
+  references?: Array<{
+    id: number;
+    name: string;
+    title: string;
+    company: string;
+    email: string;
+    phone: string;
+    relationship: string;
   }>;
   jobDescription?: string;
 }
@@ -163,7 +180,17 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     // Add sample interests if none exist
     interests: data.interests.length > 0 ? data.interests : [
       'Professional Development', 'Technology', 'Innovation'
-    ]
+    ],
+    // Add sample references if none exist
+    references: data.references && data.references.length > 0 ? data.references : [{
+      id: 1,
+      name: 'Professional Reference',
+      title: 'Senior Manager',
+      company: 'Previous Company',
+      email: 'reference@company.com',
+      phone: '+1 (555) 123-4567',
+      relationship: 'Former Supervisor'
+    }]
   };
 
   return (
