@@ -49,27 +49,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const createUserPreferences = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .insert([{
-          user_id: userId,
-          email_notifications: true,
-          browser_notifications: true,
-          marketing_notifications: false,
-          privacy_analytics: true,
-          privacy_data_sharing: false
-        }]);
-      
-      if (error && !error.message.includes('duplicate key')) {
-        console.error('Error creating user preferences:', error);
-      }
-    } catch (error) {
-      console.error('Failed to create user preferences:', error);
-    }
-  };
-
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
@@ -79,9 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Handle new user signup
       if (event === 'SIGNED_UP' && session?.user) {
-        console.log('New user signed up, creating preferences and notification');
+        console.log('New user signed up, creating notification');
         setTimeout(async () => {
-          await createUserPreferences(session.user.id);
           await createWelcomeNotification(session.user.id, session.user.email!);
         }, 1000);
         toast.success('Welcome! Check your notifications for a welcome message.');
