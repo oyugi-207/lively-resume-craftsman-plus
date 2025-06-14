@@ -79,9 +79,16 @@ const ResumeTracker: React.FC<ResumeTrackingProps> = ({ resumeData, onClose }) =
     }
   };
 
+  // --- FIX: Use crypto.randomUUID for Postgres UUID id compatibility ---
   const generateTrackingId = () => {
-    return `track_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use the browser's crypto API to generate a UUID
+    return typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+          (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
   };
+  // --------------------------------------------
 
   const createEmailTemplate = () => {
     const applicantName = resumeData.personal?.fullName || 'Applicant';
@@ -116,6 +123,7 @@ ${resumeData.personal?.phone || ''}
 
     setLoading(true);
     try {
+      // --- Use new UUID tracking ID ---
       const trackingId = generateTrackingId();
       const trackingUrl = `${window.location.origin}/track/${trackingId}`;
       
@@ -140,7 +148,7 @@ ${resumeData.personal?.phone || ''}
       const { error: trackingError } = await supabase
         .from('resume_tracking')
         .insert([{
-          id: trackingId,
+          id: trackingId, // Now this will be a valid UUID
           user_id: user.id,
           recipient_email: recipientEmail,
           recipient_name: recipientName || null,
