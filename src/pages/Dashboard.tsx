@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,12 +31,14 @@ import {
   Target,
   Sparkles,
   Settings as SettingsIcon,
-  Bell
+  Bell,
+  BarChart3
 } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import NotificationsCenter from '@/components/NotificationsCenter';
 import SettingsComponent from '@/components/Settings';
 import JobMarket from '@/components/JobMarket';
+import ResumeTrackingDashboard from '@/components/ResumeTrackingDashboard';
 
 interface Resume {
   id: string;
@@ -262,6 +263,8 @@ const Dashboard = () => {
 
   const renderCurrentView = () => {
     switch (currentView) {
+      case 'tracking':
+        return <ResumeTrackingDashboard />;
       case 'profile':
         return <UserProfile />;
       case 'notifications':
