@@ -1,61 +1,114 @@
 
 import React, { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { Bell, CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
   type: 'success' | 'error' | 'info' | 'warning';
   title: string;
   message: string;
-  timestamp: Date;
-  read: boolean;
+  created_at: string;
+  is_read: boolean;
 }
 
 const NotificationSystem: React.FC = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Add some example notifications
-    const exampleNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'success',
-        title: 'Welcome!',
-        message: 'Your account has been created successfully.',
-        timestamp: new Date(),
-        read: false
-      },
-      {
-        id: '2',
-        type: 'info',
-        title: 'CV Parser Updated',
-        message: 'We\'ve improved our CV parsing algorithm for better accuracy.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-        read: false
-      }
-    ];
+    if (user) {
+      loadNotifications();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('notification-system')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            loadNotifications();
+          }
+        )
+        .subscribe();
 
-    setNotifications(exampleNotifications);
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
+  const loadNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const typedNotifications: Notification[] = (data || []).map(notification => ({
+        ...notification,
+        type: notification.type as 'success' | 'error' | 'info' | 'warning'
+      }));
+
+      setNotifications(typedNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
   };
 
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const markAsRead = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === id ? { ...notif, is_read: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const removeNotification = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.filter(notif => notif.id !== id));
+    } catch (error) {
+      console.error('Error removing notification:', error);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -70,9 +123,10 @@ const NotificationSystem: React.FC = () => {
     }
   };
 
-  const formatTime = (timestamp: Date) => {
+  const formatTime = (timestamp: string) => {
     const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
+    const date = new Date(timestamp);
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -82,6 +136,8 @@ const NotificationSystem: React.FC = () => {
     if (minutes > 0) return `${minutes}m ago`;
     return 'Just now';
   };
+
+  if (!user) return null;
 
   return (
     <div className="relative">
@@ -123,7 +179,7 @@ const NotificationSystem: React.FC = () => {
                 <div
                   key={notification.id}
                   className={`p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                    !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    !notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -135,13 +191,13 @@ const NotificationSystem: React.FC = () => {
                             {notification.title}
                           </h4>
                           <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                            {formatTime(notification.timestamp)}
+                            {formatTime(notification.created_at)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {notification.message}
                         </p>
-                        {!notification.read && (
+                        {!notification.is_read && (
                           <Button
                             variant="ghost"
                             size="sm"

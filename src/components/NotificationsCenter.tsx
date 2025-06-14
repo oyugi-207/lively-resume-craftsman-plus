@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Bell, CheckCircle, AlertCircle, Info, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { Bell, CheckCircle, AlertCircle, Info, X, MarkdownIcon } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -20,13 +20,32 @@ interface Notification {
 
 const NotificationsCenter = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       loadNotifications();
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            loadNotifications();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -40,7 +59,6 @@ const NotificationsCenter = () => {
 
       if (error) throw error;
 
-      // Map the data to ensure proper typing
       const typedNotifications: Notification[] = (data || []).map(notification => ({
         ...notification,
         type: notification.type as 'info' | 'success' | 'warning' | 'error'
@@ -49,11 +67,7 @@ const NotificationsCenter = () => {
       setNotifications(typedNotifications);
     } catch (error) {
       console.error('Error loading notifications:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load notifications",
-        variant: "destructive"
-      });
+      toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
     }
@@ -77,6 +91,27 @@ const NotificationsCenter = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user?.id)
+        .eq('is_read', false);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, is_read: true }))
+      );
+      
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      toast.error('Failed to mark all notifications as read');
+    }
+  };
+
   const deleteNotification = async (notificationId: string) => {
     try {
       const { error } = await supabase
@@ -88,17 +123,27 @@ const NotificationsCenter = () => {
       if (error) throw error;
 
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      toast({
-        title: "Success",
-        description: "Notification deleted"
-      });
+      toast.success('Notification deleted');
     } catch (error) {
       console.error('Error deleting notification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete notification",
-        variant: "destructive"
-      });
+      toast.error('Failed to delete notification');
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNotifications([]);
+      toast.success('All notifications cleared');
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      toast.error('Failed to clear notifications');
     }
   };
 
@@ -128,6 +173,8 @@ const NotificationsCenter = () => {
     );
   }
 
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -135,9 +182,21 @@ const NotificationsCenter = () => {
           <Bell className="w-6 h-6" />
           Notifications
         </h2>
-        <Badge variant="secondary">
-          {notifications.filter(n => !n.is_read).length} unread
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">
+            {unreadCount} unread
+          </Badge>
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={markAllAsRead}>
+              Mark All Read
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button variant="outline" size="sm" onClick={clearAllNotifications}>
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
 
       {notifications.length === 0 ? (

@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
 }
@@ -29,48 +30,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const sendWelcomeEmail = async (email: string, fullName: string) => {
+  const createWelcomeNotification = async (userId: string, userEmail: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('send-welcome-email', {
-        body: { email, fullName }
-      });
+      const { error } = await supabase
+        .from('notifications')
+        .insert([{
+          user_id: userId,
+          title: 'Welcome to ResumeAI Pro!',
+          message: `Welcome ${userEmail}! Your account has been created successfully. Start building your professional resume today!`,
+          type: 'success'
+        }]);
       
       if (error) {
-        console.error('Error sending welcome email:', error);
-      } else {
-        console.log('Welcome email sent successfully');
+        console.error('Error creating welcome notification:', error);
       }
     } catch (error) {
-      console.error('Failed to send welcome email:', error);
+      console.error('Failed to create welcome notification:', error);
+    }
+  };
+
+  const createUserPreferences = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .insert([{
+          user_id: userId,
+          email_notifications: true,
+          browser_notifications: true,
+          marketing_notifications: false,
+          privacy_analytics: true,
+          privacy_data_sharing: false
+        }]);
+      
+      if (error && !error.message.includes('duplicate key')) {
+        console.error('Error creating user preferences:', error);
+      }
+    } catch (error) {
+      console.error('Failed to create user preferences:', error);
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Send welcome email for new users - check for SIGNED_UP event using startsWith
-      if (event && event.toString().startsWith('SIGNED_UP') && session?.user) {
-        const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
-        try {
-          await sendWelcomeEmail(session.user.email!, fullName);
-          toast.success('Welcome! Check your email for a welcome message.');
-        } catch (error) {
-          console.error('Welcome email error:', error);
-        }
+      // Handle new user signup
+      if (event === 'SIGNED_UP' && session?.user) {
+        console.log('New user signed up, creating preferences and notification');
+        setTimeout(async () => {
+          await createUserPreferences(session.user.id);
+          await createWelcomeNotification(session.user.id, session.user.email!);
+        }, 1000);
+        toast.success('Welcome! Check your notifications for a welcome message.');
       }
 
       // Show notification for successful sign in
-      if (event && event.toString().startsWith('SIGNED_IN') && session?.user) {
+      if (event === 'SIGNED_IN' && session?.user) {
         toast.success('Successfully signed in!');
       }
     });
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -104,6 +126,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     toast.success('Successfully signed out!');
@@ -122,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword
   };
