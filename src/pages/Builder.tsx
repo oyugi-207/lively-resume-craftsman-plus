@@ -33,13 +33,14 @@ import {
   Save,
   Loader2,
   Wand2,
-  Brain
+  Brain,
+  Star
 } from "lucide-react";
 import JobDescriptionParser from '@/components/JobDescriptionParser';
 import { useAPIKey } from '@/hooks/useAPIKey';
 
 const Builder = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { hasApiKey } = useAPIKey();
 
@@ -196,7 +197,8 @@ const Builder = () => {
               }
             });
           } else if (Array.isArray(category)) {
-            flattenedSkills.push(...category);
+            // Handle flat array structure
+            flattenedSkills = parsedData.skills;
           }
         });
       } else if (Array.isArray(parsedData.skills)) {
@@ -249,7 +251,7 @@ const Builder = () => {
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
-            <Button variant="destructive" onClick={logout}>Logout</Button>
+            <Button variant="destructive" onClick={signOut}>Logout</Button>
           </div>
         </div>
 
