@@ -201,7 +201,7 @@ const Builder: React.FC = () => {
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
           projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : [],
-          references: Array.isArray(resume.references) ? resume.references : []
+          references: Array.isArray(resume.references) ? resume.references as ResumeData['references'] : []
         });
       }
     } catch (error: any) {

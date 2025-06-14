@@ -256,6 +256,7 @@ export type Database = {
           languages: Json | null
           personal_info: Json | null
           projects: Json | null
+          references: Json | null
           skills: Json | null
           template_id: number
           title: string
@@ -273,6 +274,7 @@ export type Database = {
           languages?: Json | null
           personal_info?: Json | null
           projects?: Json | null
+          references?: Json | null
           skills?: Json | null
           template_id?: number
           title: string
@@ -290,6 +292,7 @@ export type Database = {
           languages?: Json | null
           personal_info?: Json | null
           projects?: Json | null
+          references?: Json | null
           skills?: Json | null
           template_id?: number
           title?: string
