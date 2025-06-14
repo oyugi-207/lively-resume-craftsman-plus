@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -405,7 +404,7 @@ const ResumeBuilder: React.FC = () => {
                 Back to Builder
               </Button>
             </div>
-            <LiveFeatures resumeData={resumeData} onUpdateResume={setResumeData} />
+            <LiveFeatures resumeData={resumeData} onResumeUpdate={setResumeData} />
           </div>
         ) : showAIIntegration ? (
           <div className="space-y-6">
