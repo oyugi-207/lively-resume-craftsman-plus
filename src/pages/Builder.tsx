@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ModeToggle } from '@/components/ModeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -39,7 +40,7 @@ import JobDescriptionParser from '@/components/JobDescriptionParser';
 import { useAPIKey } from '@/hooks/useAPIKey';
 
 const Builder = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut: logout } = useAuth();
   const navigate = useNavigate();
   const { hasApiKey } = useAPIKey();
 
@@ -149,12 +150,14 @@ const Builder = () => {
     }
   };
 
-  const handleInputChange = (section: string, field: string, value: string, index?: number) => {
+  const handleInputChange = (section: string, field: string, value: any, index?: number) => {
     setFormData(prev => {
       if (index !== undefined && Array.isArray(prev[section])) {
         const updatedSection = [...prev[section]];
         updatedSection[index] = { ...updatedSection[index], [field]: value };
         return { ...prev, [section]: updatedSection };
+      } else if (section === 'skills') {
+        return { ...prev, skills: value };
       } else if (typeof prev[section] === 'object') {
         return { ...prev, [section]: { ...prev[section], [field]: value } };
       } else {
