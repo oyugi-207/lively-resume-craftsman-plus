@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 // Import components
 import BuilderHeader from '@/components/builder/BuilderHeader';
 import FormSection from '@/components/builder/FormSection';
-import StatusCards from '@/components/builder/StatusCards';
 import PreviewSection from '@/components/builder/PreviewSection';
 import Modals from '@/components/builder/Modals';
 import JobDescriptionEmbedder from '@/components/JobDescriptionEmbedder';
@@ -468,10 +467,10 @@ const Builder: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md w-full shadow-xl">
-          <h2 className="mb-4 text-2xl font-bold">Authentication Required</h2>
-          <p className="text-gray-600 mb-6">Please sign in to use the resume builder.</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 flex items-center justify-center p-4">
+        <Card className="p-6 sm:p-8 text-center max-w-md w-full shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+          <h2 className="mb-4 text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Authentication Required</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm sm:text-base">Please sign in to use the resume builder.</p>
           <Button onClick={() => window.location.href = '/auth'} className="w-full">Sign In</Button>
         </Card>
       </div>
@@ -479,22 +478,24 @@ const Builder: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6 max-w-7xl">
         
         {/* Enhanced Header */}
-        <BuilderHeader
-          saving={saving}
-          importingProfile={importingProfile}
-          onUploadCV={() => setShowCVParser(true)}
-          onImportProfile={handleImportFromProfile}
-          onJobScan={() => setShowJobScanner(true)}
-          onJobParse={() => setShowJobParser(true)}
-          onTemplateSelect={() => setShowTemplateSelector(true)}
-          onAIOptimize={handleAIOptimize}
-          onDownloadPDF={handleDownloadPDF}
-          onSave={saveResumeData}
-        />
+        <div className="mb-4 sm:mb-6">
+          <BuilderHeader
+            saving={saving}
+            importingProfile={importingProfile}
+            onUploadCV={() => setShowCVParser(true)}
+            onImportProfile={handleImportFromProfile}
+            onJobScan={() => setShowJobScanner(true)}
+            onJobParse={() => setShowJobParser(true)}
+            onTemplateSelect={() => setShowTemplateSelector(true)}
+            onAIOptimize={handleAIOptimize}
+            onDownloadPDF={handleDownloadPDF}
+            onSave={saveResumeData}
+          />
+        </div>
 
         {/* Job Description Embedder */}
         <div className="mb-4 sm:mb-6">
@@ -515,14 +516,6 @@ const Builder: React.FC = () => {
           />
         </div>
 
-        {/* Status Cards */}
-        <StatusCards
-          selectedTemplate={selectedTemplate}
-          atsOptimization={atsOptimization}
-          resumeData={resumeData}
-          onOptimize={handleATSOptimization}
-        />
-
         {/* Live Features Section */}
         <div className="mb-4 sm:mb-6">
           <LiveFeatures 
@@ -537,11 +530,11 @@ const Builder: React.FC = () => {
           <ComingSoonFeatures />
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+        {/* Main Content - Improved Responsive Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
           
-          {/* Form Section */}
-          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+          {/* Form Section - Takes more space on larger screens */}
+          <div className="xl:col-span-3 space-y-4 sm:space-y-6">
             <FormSection
               resumeData={resumeData}
               activeTab={activeTab}
@@ -558,13 +551,15 @@ const Builder: React.FC = () => {
             />
           </div>
 
-          {/* Preview Section */}
-          <div className="xl:col-span-1 order-first xl:order-last">
-            <PreviewSection
-              resumeData={resumeData}
-              selectedTemplate={selectedTemplate}
-              previewScale={previewScale}
-            />
+          {/* Preview Section - Optimized spacing */}
+          <div className="xl:col-span-2 order-first xl:order-last">
+            <div className="sticky top-3 sm:top-6">
+              <PreviewSection
+                resumeData={resumeData}
+                selectedTemplate={selectedTemplate}
+                previewScale={previewScale}
+              />
+            </div>
           </div>
         </div>
       </div>

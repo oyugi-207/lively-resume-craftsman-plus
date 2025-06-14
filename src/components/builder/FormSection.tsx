@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -115,13 +114,11 @@ const FormSection: React.FC<FormSectionProps> = ({
 }) => {
   const handleTabChange = (newTab: string) => {
     console.log('Tab changing from', activeTab, 'to', newTab);
-    // Prevent any form submission events from interfering
     setTimeout(() => {
       onTabChange(newTab);
     }, 0);
   };
 
-  // Prevent form events from bubbling up to tab container
   const handleFormContainerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -140,13 +137,13 @@ const FormSection: React.FC<FormSectionProps> = ({
 
   return (
     <Card className="shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/3 to-purple-600/3"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 dark:from-blue-400/10 dark:to-purple-400/10"></div>
       <CardContent className="relative p-3 sm:p-4 lg:p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           
           <div className="mb-4 sm:mb-6">
-            <div className="overflow-x-auto">
-              <TabsList className="inline-flex h-auto bg-gray-100/50 dark:bg-gray-700/50 rounded-lg p-1 min-w-full">
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+              <TabsList className="inline-flex h-auto bg-gray-100/70 dark:bg-gray-700/70 rounded-xl p-1 min-w-full shadow-inner">
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-1 w-full">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -154,15 +151,15 @@ const FormSection: React.FC<FormSectionProps> = ({
                       <TabsTrigger 
                         key={tab.id}
                         value={tab.id}
-                        className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-600/80 dark:data-[state=active]:bg-gray-600 cursor-pointer min-w-0"
+                        className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-lg rounded-lg transition-all duration-300 hover:bg-white/90 dark:hover:bg-gray-600/90 cursor-pointer min-w-0 group"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           handleTabChange(tab.id);
                         }}
                       >
-                        <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span className="text-xs leading-none font-medium truncate">
+                        <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-gray-600 dark:text-gray-300 group-data-[state=active]:text-blue-600 dark:group-data-[state=active]:text-blue-400 transition-colors" />
+                        <span className="text-xs leading-none font-medium truncate text-gray-700 dark:text-gray-300 group-data-[state=active]:text-blue-700 dark:group-data-[state=active]:text-blue-300">
                           {window.innerWidth < 640 ? tab.shortLabel : tab.label}
                         </span>
                       </TabsTrigger>
@@ -173,7 +170,7 @@ const FormSection: React.FC<FormSectionProps> = ({
             </div>
           </div>
 
-          <div className="min-h-[400px]">
+          <div className="min-h-[400px] bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6">
             <TabsContent value="personal" className="mt-0">
               <div onClick={handleFormContainerClick}>
                 <PersonalInfoForm 

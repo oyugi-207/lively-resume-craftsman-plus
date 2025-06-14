@@ -35,16 +35,16 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
   previewScale
 }) => {
   return (
-    <Card className="overflow-hidden shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl sticky top-6">
-      <CardHeader className="pb-3 bg-gradient-to-r from-blue-600/5 to-purple-600/5">
+    <Card className="overflow-hidden shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl">
+      <CardHeader className="pb-3 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-400/20 dark:to-purple-400/20">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
-            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg text-gray-900 dark:text-white">
+            <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
             Live Preview
           </CardTitle>
           
           <div className="flex items-center gap-1 sm:gap-2">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
               Template {selectedTemplate + 1}
             </Badge>
           </div>
@@ -52,12 +52,14 @@ const PreviewSection: React.FC<PreviewSectionProps> = ({
       </CardHeader>
       
       <CardContent className="p-0">
-        <div className="bg-gray-100 dark:bg-gray-800 p-2 sm:p-4">
-          <ImprovedResumePreview 
-            data={resumeData} 
-            template={selectedTemplate}
-            scale={previewScale}
-          />
+        <div className="bg-gray-50 dark:bg-gray-900 p-2 sm:p-4 rounded-b-lg">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-inner">
+            <ImprovedResumePreview 
+              data={resumeData} 
+              template={selectedTemplate}
+              scale={previewScale}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
