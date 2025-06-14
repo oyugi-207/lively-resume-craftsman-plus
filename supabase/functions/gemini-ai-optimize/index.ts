@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { resumeData, apiKey, jobDescription } = await req.json();
+    const { prompt, apiKey } = await req.json();
 
     if (!apiKey) {
       return new Response(
@@ -25,40 +25,20 @@ serve(async (req) => {
       );
     }
 
-    const prompt = `
-You are a professional resume optimization expert. Analyze the following resume data and provide optimization suggestions.
-
-Resume Data:
-${JSON.stringify(resumeData, null, 2)}
-
-${jobDescription ? `Job Description to match: ${jobDescription}` : ''}
-
-Please provide:
-1. An overall ATS compatibility score (0-100)
-2. Specific suggestions for improvement with confidence scores
-3. Missing keywords that should be added
-4. Keyword matches found
-
-Respond with valid JSON in this format:
-{
-  "atsScore": number,
-  "suggestions": [
-    {
-      "section": "summary|experience|skills|education",
-      "type": "content|keyword|format",
-      "original": "original text",
-      "suggested": "improved text",
-      "reasoning": "why this change helps",
-      "confidence": 0.0-1.0
+    if (!prompt) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
-  ],
-  "keywordMatches": ["matched", "keywords"],
-  "missingKeywords": ["missing", "keywords"]
-}
-`;
 
-    // Use the correct model name: gemini-2.0-flash instead of gemini-pro
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    console.log('Making request to Gemini API with prompt length:', prompt.length);
+
+    // Use the correct model name: gemini-2.0-flash-exp for the latest model
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,13 +56,15 @@ Respond with valid JSON in this format:
       })
     });
 
+    console.log('Gemini API response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.text();
       console.error('Gemini API error:', errorData);
       
       if (response.status === 400) {
         return new Response(
-          JSON.stringify({ error: 'Invalid API key or request. Please check your Gemini API key.' }),
+          JSON.stringify({ error: 'Invalid API key or request. Please check your Gemini API key in Settings.' }),
           { 
             status: 400, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -90,66 +72,37 @@ Respond with valid JSON in this format:
         );
       }
       
-      throw new Error(`Gemini API error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
+    console.log('Gemini API response data:', JSON.stringify(data, null, 2));
     
     if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error('Invalid response from Gemini API');
+      console.error('Invalid response structure from Gemini API:', data);
+      throw new Error('Invalid response from Gemini API - no content found');
     }
 
     const generatedText = data.candidates[0].content.parts[0].text;
+    console.log('Generated text:', generatedText);
     
-    try {
-      // Extract JSON from the response
-      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+    // Return the content in the expected format
+    return new Response(
+      JSON.stringify({ 
+        content: generatedText.trim(),
+        success: true 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-      
-      const optimizationData = JSON.parse(jsonMatch[0]);
-      
-      return new Response(
-        JSON.stringify(optimizationData),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    } catch (parseError) {
-      console.error('Error parsing Gemini response:', parseError);
-      
-      // Fallback response if parsing fails
-      const fallbackResponse = {
-        atsScore: 85,
-        suggestions: [
-          {
-            section: "summary",
-            type: "content",
-            original: resumeData.personal?.summary || "",
-            suggested: "Add more specific achievements and quantifiable results to your professional summary.",
-            reasoning: "Specific metrics make your resume more compelling to ATS systems and recruiters.",
-            confidence: 0.8
-          }
-        ],
-        keywordMatches: resumeData.skills?.slice(0, 5) || [],
-        missingKeywords: ["leadership", "project management", "data analysis"]
-      };
-      
-      return new Response(
-        JSON.stringify(fallbackResponse),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+    );
 
   } catch (error) {
     console.error('Error in gemini-ai-optimize function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to optimize resume',
-        details: 'Please check your API key and try again'
+        error: error.message || 'Failed to generate content',
+        details: 'Please check your Gemini API key in Settings and try again'
       }),
       { 
         status: 500, 
