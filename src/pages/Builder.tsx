@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ModeToggle } from "@/components/ModeToggle"
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -32,14 +33,13 @@ import {
   Save,
   Loader2,
   Wand2,
-  Brain,
-  Star
+  Brain
 } from "lucide-react";
 import JobDescriptionParser from '@/components/JobDescriptionParser';
 import { useAPIKey } from '@/hooks/useAPIKey';
 
 const Builder = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { hasApiKey } = useAPIKey();
 
@@ -244,11 +244,12 @@ const Builder = () => {
             <p className="text-gray-600 dark:text-gray-400">Create your professional resume with ease</p>
           </div>
           <div className="flex items-center space-x-4">
+            <ModeToggle />
             <Button variant="outline" onClick={() => navigate('/settings')}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
-            <Button variant="destructive" onClick={signOut}>Logout</Button>
+            <Button variant="destructive" onClick={logout}>Logout</Button>
           </div>
         </div>
 
