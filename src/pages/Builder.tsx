@@ -39,7 +39,7 @@ import JobDescriptionParser from '@/components/JobDescriptionParser';
 import { useAPIKey } from '@/hooks/useAPIKey';
 
 const Builder = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { hasApiKey } = useAPIKey();
 
@@ -244,12 +244,11 @@ const Builder = () => {
             <p className="text-gray-600 dark:text-gray-400">Create your professional resume with ease</p>
           </div>
           <div className="flex items-center space-x-4">
-            <ModeToggle />
             <Button variant="outline" onClick={() => navigate('/settings')}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
-            <Button variant="destructive" onClick={logout}>Logout</Button>
+            <Button variant="destructive" onClick={signOut}>Logout</Button>
           </div>
         </div>
 
