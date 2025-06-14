@@ -56,18 +56,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Handle new user signup
-      if (event === 'SIGNED_UP' && session?.user) {
-        console.log('New user signed up, creating notification');
-        setTimeout(async () => {
-          await createWelcomeNotification(session.user.id, session.user.email!);
-        }, 1000);
-        toast.success('Welcome! Check your notifications for a welcome message.');
-      }
-
-      // Show notification for successful sign in
+      // Handle new user signup - use SIGNED_IN event and check if user was just created
       if (event === 'SIGNED_IN' && session?.user) {
-        toast.success('Successfully signed in!');
+        // Check if this is a new user by looking at the created_at timestamp
+        const userCreatedAt = new Date(session.user.created_at);
+        const now = new Date();
+        const timeDiff = now.getTime() - userCreatedAt.getTime();
+        const isNewUser = timeDiff < 60000; // Less than 1 minute old = new user
+
+        if (isNewUser) {
+          console.log('New user signed up, creating notification');
+          setTimeout(async () => {
+            await createWelcomeNotification(session.user.id, session.user.email!);
+          }, 1000);
+          toast.success('Welcome! Check your notifications for a welcome message.');
+        } else {
+          toast.success('Successfully signed in!');
+        }
       }
     });
 
