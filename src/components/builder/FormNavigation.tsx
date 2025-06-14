@@ -30,14 +30,14 @@ const FormNavigation: React.FC<FormNavigationProps> = ({ activeTab }) => {
   ];
 
   return (
-    <TabsList className="grid grid-cols-3 lg:grid-cols-9 mb-6 h-auto bg-gradient-to-r from-gray-50 to-blue-50 p-2 rounded-xl shadow-sm">
+    <TabsList className="grid grid-cols-3 lg:grid-cols-9 mb-6 h-auto bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 p-2 rounded-xl shadow-sm">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
           <TabsTrigger 
             key={tab.id}
             value={tab.id} 
-            className="flex flex-col items-center gap-2 p-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 rounded-lg transition-all hover:bg-white/50"
+            className="flex flex-col items-center gap-2 p-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-lg data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 rounded-lg transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
           >
             <Icon className="w-4 h-4" />
             <span className="text-xs font-medium leading-none">{tab.label}</span>

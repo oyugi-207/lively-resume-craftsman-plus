@@ -86,7 +86,7 @@ const InterestsFormEnhanced: React.FC<InterestsFormEnhancedProps> = ({ data, onC
         <Button
           onClick={generateProfessionalInterests}
           disabled={generatingAI}
-          className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 text-purple-700 border"
+          className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 text-purple-700 border dark:from-purple-900/20 dark:to-pink-900/20 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 dark:border-purple-700 dark:text-purple-300"
           variant="outline"
         >
           {generatingAI ? (
@@ -107,7 +107,7 @@ const InterestsFormEnhanced: React.FC<InterestsFormEnhancedProps> = ({ data, onC
               onChange={(e) => setNewInterest(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type an interest and press Enter"
-              className="flex-1 border-pink-200 focus:border-pink-500 focus:ring-pink-500/20"
+              className="flex-1 border-pink-200 focus:border-pink-500 focus:ring-pink-500/20 dark:border-pink-700 dark:focus:border-pink-400 dark:bg-gray-800 dark:text-white"
             />
             <Button
               onClick={addInterest}
@@ -130,12 +130,12 @@ const InterestsFormEnhanced: React.FC<InterestsFormEnhancedProps> = ({ data, onC
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-pink-100 to-rose-100 text-pink-800 hover:from-pink-200 hover:to-rose-200 transition-colors"
+                    className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-pink-100 to-rose-100 text-pink-800 hover:from-pink-200 hover:to-rose-200 transition-colors dark:from-pink-900/30 dark:to-rose-900/30 dark:text-pink-200 dark:hover:from-pink-900/40 dark:hover:to-rose-900/40"
                   >
                     {interest}
                     <button
                       onClick={() => removeInterest(interest)}
-                      className="hover:text-red-600 transition-colors"
+                      className="hover:text-red-600 transition-colors dark:hover:text-red-400"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -144,12 +144,12 @@ const InterestsFormEnhanced: React.FC<InterestsFormEnhancedProps> = ({ data, onC
               </div>
             </div>
           ) : (
-            <div className="text-center py-12 border-2 border-dashed border-pink-200 rounded-lg">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-8 h-8 text-pink-600" />
+            <div className="text-center py-12 border-2 border-dashed border-pink-200 dark:border-pink-700 rounded-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/30 dark:to-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Heart className="w-8 h-8 text-pink-600 dark:text-pink-400" />
               </div>
-              <h3 className="text-lg font-medium mb-2 text-gray-900">No interests added yet</h3>
-              <p className="text-sm text-gray-600 mb-4">Add your hobbies and interests to make your resume more personal</p>
+              <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">No interests added yet</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Add your hobbies and interests to make your resume more personal</p>
             </div>
           )}
         </CardContent>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -31,6 +30,7 @@ import AIIntegration from './AIIntegration';
 import LiveFeatures from './LiveFeatures';
 import ComingSoonFeatures from './ComingSoonFeatures';
 import ColorCustomizer from './ColorCustomizer';
+import CVReaderEnhanced from './enhanced-forms/CVReaderEnhanced';
 
 interface ResumeData {
   personal: {
@@ -140,6 +140,7 @@ const ResumeBuilder: React.FC = () => {
   const [showAIIntegration, setShowAIIntegration] = useState(false);
   const [showLiveFeatures, setShowLiveFeatures] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showCVReader, setShowCVReader] = useState(false);
   
   // Additional state
   const [references, setReferences] = useState<any[]>([]);
@@ -430,7 +431,7 @@ const ResumeBuilder: React.FC = () => {
           atsScore={atsScore}
           saving={saving}
           importingProfile={importingProfile}
-          onShowCVParser={() => setShowCVExtractor(true)}
+          onShowCVParser={() => setShowCVReader(true)}
           onImportProfile={handleImportProfile}
           onShowJobScanner={() => toast.info('Job Scanner feature coming soon!')}
           onShowJobParser={() => setShowJobParser(true)}
@@ -587,6 +588,13 @@ const ResumeBuilder: React.FC = () => {
         onSelectTemplate={setSelectedTemplate}
         onClose={() => setShowTemplateSelector(false)}
       />
+
+      {showCVReader && (
+        <CVReaderEnhanced
+          onDataExtracted={handleCVDataExtracted}
+          onClose={() => setShowCVReader(false)}
+        />
+      )}
     </div>
   );
 };
