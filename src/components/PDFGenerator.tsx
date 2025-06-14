@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -7,7 +6,7 @@ export class PDFGenerator {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 12; // Reduced margin for more compact layout
+      const margin = 12;
       let yPosition = margin;
 
       // Clean text helper
@@ -18,11 +17,11 @@ export class PDFGenerator {
       // Professional header with compact spacing
       if (resumeData.personal?.fullName) {
         // Name
-        pdf.setFontSize(22); // Slightly smaller
+        pdf.setFontSize(22);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(31, 81, 140);
         pdf.text(cleanText(resumeData.personal.fullName), margin, yPosition);
-        yPosition += 8; // Reduced spacing
+        yPosition += 8;
 
         // Contact info in one line
         pdf.setFontSize(10);
@@ -36,14 +35,14 @@ export class PDFGenerator {
         
         if (contactInfo.length > 0) {
           pdf.text(contactInfo.join(' | '), margin, yPosition);
-          yPosition += 6; // Reduced spacing
+          yPosition += 6;
         }
 
         // Line separator
         pdf.setDrawColor(31, 81, 140);
         pdf.setLineWidth(0.5);
         pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 10; // Reduced spacing
+        yPosition += 10;
       }
 
       // Page break helper
@@ -59,17 +58,17 @@ export class PDFGenerator {
       // Section header helper
       const addSectionHeader = (title: string) => {
         checkPageBreak(15);
-        pdf.setFontSize(12); // Slightly smaller
+        pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(31, 81, 140);
         pdf.text(title.toUpperCase(), margin, yPosition);
-        yPosition += 6; // Reduced spacing
+        yPosition += 6;
         
         // Underline
         pdf.setDrawColor(31, 81, 140);
         pdf.setLineWidth(0.3);
         pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 8; // Reduced spacing
+        yPosition += 8;
       };
 
       // Text helper with better wrapping and compact spacing
@@ -86,9 +85,9 @@ export class PDFGenerator {
         for (const line of lines) {
           checkPageBreak(fontSize * 0.5);
           pdf.text(line, margin + indent, yPosition);
-          yPosition += fontSize * 0.5; // Reduced line spacing
+          yPosition += fontSize * 0.5;
         }
-        yPosition += 2; // Minimal bottom spacing
+        yPosition += 2;
       };
 
       // Improved bullet point helper with proper bullet symbols
@@ -103,9 +102,8 @@ export class PDFGenerator {
           checkPageBreak(10);
           
           let bulletText = bullet;
-          // Clean and add bullet if not present
           if (!bulletText.match(/^[•·‣▪▫-]\s/)) {
-            bulletText = `• ${bulletText.replace(/^[•·‣▪▫-]*\s*/, '')}`; // Remove any existing bullets first
+            bulletText = `• ${bulletText.replace(/^[•·‣▪▫-]*\s*/, '')}`;
           }
           
           pdf.setFontSize(9);
@@ -118,9 +116,9 @@ export class PDFGenerator {
           for (let i = 0; i < wrappedLines.length; i++) {
             if (i > 0) checkPageBreak(8);
             pdf.text(wrappedLines[i], margin + indent, yPosition);
-            yPosition += 4.5; // Compact line spacing
+            yPosition += 4.5;
           }
-          yPosition += 3; // Compact spacing between bullets
+          yPosition += 3;
         }
       };
 
@@ -128,7 +126,7 @@ export class PDFGenerator {
       if (resumeData.personal?.summary) {
         addSectionHeader('Professional Summary');
         addText(resumeData.personal.summary, 9, 'normal');
-        yPosition += 4; // Reduced section spacing
+        yPosition += 4;
       }
 
       // Experience with proper bullet formatting
@@ -143,7 +141,7 @@ export class PDFGenerator {
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(0, 0, 0);
           pdf.text(cleanText(exp.position || 'Position'), margin, yPosition);
-          yPosition += 5; // Reduced spacing
+          yPosition += 5;
           
           // Company and dates
           pdf.setFontSize(9);
@@ -160,35 +158,37 @@ export class PDFGenerator {
           }
           
           pdf.text(companyInfo + dateInfo, margin, yPosition);
-          yPosition += 4; // Reduced spacing
+          yPosition += 4;
           
           if (exp.location) {
             pdf.text(cleanText(exp.location), margin, yPosition);
-            yPosition += 4; // Reduced spacing
+            yPosition += 4;
           }
           
           // Description with vertical bullet points
           if (exp.description) {
-            yPosition += 2; // Small gap before bullets
+            yPosition += 2;
             addBulletPoints(exp.description, 5);
           }
-          yPosition += 6; // Reduced section spacing
+          yPosition += 6;
         }
       }
 
-      // Education
+      // Enhanced Education Section with all details
       if (resumeData.education?.length > 0) {
         addSectionHeader('Education');
         
         for (const edu of resumeData.education) {
-          checkPageBreak(15);
+          checkPageBreak(20);
           
+          // Degree
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(0, 0, 0);
           pdf.text(cleanText(edu.degree || 'Degree'), margin, yPosition);
-          yPosition += 5; // Reduced spacing
+          yPosition += 5;
           
+          // School and date
           pdf.setFontSize(9);
           pdf.setFont('helvetica', 'normal');
           pdf.setTextColor(51, 65, 85);
@@ -196,18 +196,47 @@ export class PDFGenerator {
           const schoolInfo = cleanText(edu.school || 'School');
           const eduDate = edu.endDate ? ` | ${new Date(edu.endDate + '-01').getFullYear()}` : '';
           pdf.text(schoolInfo + eduDate, margin, yPosition);
-          yPosition += 4; // Reduced spacing
+          yPosition += 4;
           
+          // Location
           if (edu.location) {
             pdf.text(cleanText(edu.location), margin, yPosition);
             yPosition += 4;
           }
           
+          // GPA
           if (edu.gpa) {
             pdf.text(`GPA: ${cleanText(edu.gpa)}`, margin, yPosition);
             yPosition += 4;
           }
-          yPosition += 6; // Reduced section spacing
+          
+          // Description (NEW)
+          if (edu.description) {
+            yPosition += 2;
+            addText(edu.description, 8, 'normal', 5);
+          }
+          
+          // Relevant Courses (NEW)
+          if (edu.courses) {
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'italic');
+            pdf.setTextColor(51, 65, 85);
+            pdf.text('Relevant Coursework:', margin, yPosition);
+            yPosition += 4;
+            addText(edu.courses, 8, 'normal', 5);
+          }
+          
+          // Honors/Awards (NEW)
+          if (edu.honors) {
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'italic');
+            pdf.setTextColor(51, 65, 85);
+            pdf.text('Honors & Awards:', margin, yPosition);
+            yPosition += 4;
+            addText(edu.honors, 8, 'normal', 5);
+          }
+          
+          yPosition += 6;
         }
       }
 
@@ -230,24 +259,37 @@ export class PDFGenerator {
         for (const line of lines) {
           checkPageBreak(8);
           pdf.text(line, margin, yPosition);
-          yPosition += 5; // Compact line spacing
+          yPosition += 5;
         }
-        yPosition += 6; // Reduced section spacing
+        yPosition += 6;
       }
 
-      // Projects with bullet formatting
+      // Enhanced Projects with full description
       if (resumeData.projects?.length > 0) {
         addSectionHeader('Projects');
         
         for (const project of resumeData.projects) {
-          checkPageBreak(20);
+          checkPageBreak(25);
           
+          // Project name
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(0, 0, 0);
           pdf.text(cleanText(project.name || 'Project'), margin, yPosition);
-          yPosition += 5; // Reduced spacing
+          yPosition += 5;
           
+          // Date range
+          if (project.startDate || project.endDate) {
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(51, 65, 85);
+            const startDate = project.startDate || '';
+            const endDate = project.endDate || 'Present';
+            pdf.text(`${startDate} - ${endDate}`, margin, yPosition);
+            yPosition += 4;
+          }
+          
+          // Technologies
           if (project.technologies) {
             pdf.setFontSize(8);
             pdf.setFont('helvetica', 'italic');
@@ -256,16 +298,20 @@ export class PDFGenerator {
             yPosition += 4;
           }
           
+          // Full project description with bullet points
           if (project.description) {
             yPosition += 1;
             addBulletPoints(project.description, 5);
           }
           
+          // Project link
           if (project.link) {
             pdf.setFontSize(8);
             pdf.setTextColor(31, 81, 140);
             pdf.text(cleanText(project.link), margin, yPosition);
             yPosition += 6;
+          } else {
+            yPosition += 4;
           }
         }
       }
@@ -302,7 +348,7 @@ export class PDFGenerator {
             
             for (const line of lines) {
               pdf.text(line, margin, leftColumnY);
-              leftColumnY += 4; // Compact spacing
+              leftColumnY += 4;
             }
           }
         }
@@ -324,7 +370,7 @@ export class PDFGenerator {
             pdf.setFont('helvetica', 'normal');
             pdf.setTextColor(0, 0, 0);
             pdf.text(`• ${cleanText(lang.language)} (${cleanText(lang.proficiency)})`, rightColumnX, rightColumnY);
-            rightColumnY += 4; // Compact spacing
+            rightColumnY += 4;
           }
         }
 
