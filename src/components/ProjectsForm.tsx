@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Plus, Trash2, FolderOpen, ExternalLink, Wand2, Loader2 } from 'lucide-r
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAPIKey } from '@/hooks/useAPIKey';
+import ProjectDescriptionDialog from './ProjectDescriptionDialog';
 
 interface Project {
   id: number;
@@ -101,6 +101,12 @@ const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
     } finally {
       setGeneratingAI(null);
     }
+  };
+
+  const handleDialogGenerate = (projectId: number) => {
+    return (description: string) => {
+      updateProject(projectId, 'description', description);
+    };
   };
 
   const projectTemplates = [
@@ -253,27 +259,43 @@ const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label>Project Description *</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => generateAIDescription(project.id)}
-                  disabled={generatingAI === project.id || !project.name}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 shadow-sm dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-700"
-                >
-                  {generatingAI === project.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 text-purple-600" />
-                  )}
-                  <span className="text-purple-700 dark:text-purple-300">
-                    {generatingAI === project.id ? 'Generating...' : 'Generate with AI'}
-                  </span>
-                </Button>
+                <div className="flex gap-2">
+                  <ProjectDescriptionDialog onGenerate={handleDialogGenerate(project.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={generatingAI === project.id}
+                      className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 shadow-sm dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-700"
+                    >
+                      <Wand2 className="w-4 h-4 text-blue-600" />
+                      <span className="text-blue-700 dark:text-blue-300">
+                        AI Helper
+                      </span>
+                    </Button>
+                  </ProjectDescriptionDialog>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => generateAIDescription(project.id)}
+                    disabled={generatingAI === project.id || !project.name}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 shadow-sm dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-700"
+                  >
+                    {generatingAI === project.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-4 h-4 text-purple-600" />
+                    )}
+                    <span className="text-purple-700 dark:text-purple-300">
+                      {generatingAI === project.id ? 'Generating...' : 'Quick AI'}
+                    </span>
+                  </Button>
+                </div>
               </div>
               <Textarea
                 value={project.description}
                 onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                placeholder="Describe your project, what it does, your role, and key achievements... Or use AI to generate this content based on your project details above."
+                placeholder="Describe your project, what it does, your role, and key achievements... Or use AI to generate this content."
                 rows={4}
                 className="mt-1"
               />
