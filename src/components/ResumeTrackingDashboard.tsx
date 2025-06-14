@@ -208,27 +208,7 @@ ${fromEmail}
         attachments: attachments
       };
 
-      // Call edge function to send email with tracking
-      const { data, error } = await supabase.functions.invoke('send-tracked-resume', {
-        body: {
-          recipientEmail,
-          recipientName: '',
-          subject: `Application for ${jobTitle || 'Position'}${companyName ? ` at ${companyName}` : ''}`,
-          emailContent: createEmailTemplate(attachments),
-          resumeData: resumeData,
-          trackingId,
-          trackingUrl,
-          senderName: finalSenderName,
-          senderEmail: finalSenderEmail || ''
-        },
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-
-      // Save tracking record
+      // Save tracking record FIRST to ensure it exists before sending email
       const { error: trackingError } = await supabase
         .from('resume_tracking')
         .insert([
@@ -247,7 +227,37 @@ ${fromEmail}
           },
         ]);
 
-      if (trackingError) throw trackingError;
+      if (trackingError) {
+        console.error('Error saving tracking record:', trackingError);
+        throw new Error('Failed to create tracking record');
+      }
+
+      console.log('Tracking record saved successfully with ID:', trackingId);
+
+      // Call edge function to send email with tracking
+      const { data, error } = await supabase.functions.invoke('send-tracked-resume', {
+        body: {
+          recipientEmail,
+          recipientName: '',
+          subject: `Application for ${jobTitle || 'Position'}${companyName ? ` at ${companyName}` : ''}`,
+          emailContent: createEmailTemplate(attachments),
+          resumeData: resumeData,
+          trackingId,
+          trackingUrl,
+          senderName: finalSenderName,
+          senderEmail: finalSenderEmail || ''
+        },
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        // If email fails, update the tracking record status
+        await supabase
+          .from('resume_tracking')
+          .update({ status: 'failed' })
+          .eq('id', trackingId);
+        throw error;
+      }
 
       toast.success('Application sent successfully with tracking!');
       

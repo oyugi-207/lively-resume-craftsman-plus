@@ -128,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
       attachments: [
         {
           filename: `${senderName.replace(/\s+/g, '_')}_Resume.pdf`,
-          content: pdfBuffer,
+          content: Array.from(pdfBuffer),
         },
       ],
     });
