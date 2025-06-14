@@ -118,78 +118,46 @@ const FormSection: React.FC<FormSectionProps> = ({
     onTabChange(newTab);
   };
 
+  const tabs = [
+    { id: 'personal', label: 'Personal', shortLabel: 'Personal', icon: User },
+    { id: 'experience', label: 'Experience', shortLabel: 'Work', icon: Briefcase },
+    { id: 'education', label: 'Education', shortLabel: 'Education', icon: GraduationCap },
+    { id: 'skills', label: 'Skills', shortLabel: 'Skills', icon: Award },
+    { id: 'projects', label: 'Projects', shortLabel: 'Projects', icon: FolderOpen },
+    { id: 'certifications', label: 'Certifications', shortLabel: 'Certs', icon: Award },
+    { id: 'languages', label: 'Languages', shortLabel: 'Lang', icon: Languages },
+    { id: 'interests', label: 'Interests', shortLabel: 'Interests', icon: Heart },
+    { id: 'references', label: 'References', shortLabel: 'References', icon: Users }
+  ];
+
   return (
     <Card className="shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-blue-600/3 to-purple-600/3"></div>
       <CardContent className="relative p-3 sm:p-4 lg:p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           
-          {/* Mobile-First Tab Navigation */}
-          <TabsList className="grid grid-cols-5 sm:grid-cols-9 mb-4 sm:mb-6 h-auto bg-gray-100/50 dark:bg-gray-700/50 text-xs rounded-lg p-1 w-full">
-            <TabsTrigger 
-              value="personal" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <User className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Personal</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="experience" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Work</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="education" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <GraduationCap className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Education</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="skills" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <Award className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Skills</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="projects" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <FolderOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Projects</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="certifications" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <Award className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Certs</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="languages" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <Languages className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Lang</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="interests" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">Interests</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="references" 
-              className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80"
-            >
-              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs leading-none">References</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Improved Tab Navigation */}
+          <div className="mb-4 sm:mb-6 overflow-x-auto">
+            <TabsList className="inline-flex h-auto bg-gray-100/50 dark:bg-gray-700/50 rounded-lg p-1 min-w-full">
+              <div className="grid grid-cols-3 sm:grid-cols-9 gap-1 w-full">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <TabsTrigger 
+                      key={tab.id}
+                      value={tab.id}
+                      className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-600/80 dark:data-[state=active]:bg-gray-600 cursor-pointer"
+                    >
+                      <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="text-xs leading-none font-medium">
+                        {window.innerWidth < 640 ? tab.shortLabel : tab.label}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </div>
+            </TabsList>
+          </div>
 
           <div className="min-h-[400px]">
             <TabsContent value="personal" className="mt-0">
