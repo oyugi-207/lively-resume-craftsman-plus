@@ -13,37 +13,37 @@ export class PDFGenerator {
       // Enhanced template-specific configurations with better colors
       const templateConfigs = {
         0: { // Modern Professional
-          primaryColor: [41, 98, 255] as [number, number, number], // Modern blue
-          secondaryColor: [71, 85, 105] as [number, number, number], // Slate gray
-          accentColor: [16, 185, 129] as [number, number, number], // Emerald
+          primaryColor: [41, 98, 255],
+          secondaryColor: [71, 85, 105],
+          accentColor: [16, 185, 129],
           headerStyle: 'modern',
           fontStyle: 'professional'
         },
         1: { // Executive Leadership
-          primaryColor: [30, 41, 59] as [number, number, number], // Dark slate
-          secondaryColor: [100, 116, 139] as [number, number, number], // Medium slate
-          accentColor: [59, 130, 246] as [number, number, number], // Blue
+          primaryColor: [30, 41, 59],
+          secondaryColor: [100, 116, 139],
+          accentColor: [59, 130, 246],
           headerStyle: 'executive',
           fontStyle: 'bold'
         },
         2: { // Classic Corporate
-          primaryColor: [55, 65, 81] as [number, number, number], // Gray
-          secondaryColor: [107, 114, 128] as [number, number, number], // Light gray
-          accentColor: [147, 51, 234] as [number, number, number], // Purple
+          primaryColor: [55, 65, 81],
+          secondaryColor: [107, 114, 128],
+          accentColor: [147, 51, 234],
           headerStyle: 'classic',
           fontStyle: 'traditional'
         },
         3: { // Creative Designer
-          primaryColor: [147, 51, 234] as [number, number, number], // Purple
-          secondaryColor: [236, 72, 153] as [number, number, number], // Pink
-          accentColor: [249, 115, 22] as [number, number, number], // Orange
+          primaryColor: [147, 51, 234],
+          secondaryColor: [236, 72, 153],
+          accentColor: [249, 115, 22],
           headerStyle: 'creative',
           fontStyle: 'modern'
         },
         4: { // Tech Specialist
-          primaryColor: [6, 182, 212] as [number, number, number], // Cyan
-          secondaryColor: [14, 165, 233] as [number, number, number], // Sky blue
-          accentColor: [34, 197, 94] as [number, number, number], // Green
+          primaryColor: [6, 182, 212],
+          secondaryColor: [14, 165, 233],
+          accentColor: [34, 197, 94],
           headerStyle: 'tech',
           fontStyle: 'clean'
         }
@@ -65,7 +65,7 @@ export class PDFGenerator {
             // Executive style header
             pdf.setFontSize(26);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(...config.primaryColor);
+            pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
             const nameWidth = pdf.getTextWidth(cleanText(resumeData.personal.fullName));
             pdf.text(cleanText(resumeData.personal.fullName), (pageWidth - nameWidth) / 2, yPosition);
             yPosition += 12;
@@ -73,7 +73,7 @@ export class PDFGenerator {
             
           case 'creative':
             // Creative style header with enhanced background
-            pdf.setFillColor(...config.primaryColor);
+            pdf.setFillColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
             pdf.rect(0, 0, pageWidth, 28, 'F');
             pdf.setFontSize(24);
             pdf.setFont('helvetica', 'bold');
@@ -87,11 +87,11 @@ export class PDFGenerator {
             // Tech style header with enhanced accent
             pdf.setFontSize(24);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(...config.primaryColor);
+            pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
             pdf.text(cleanText(resumeData.personal.fullName), margin, yPosition);
             yPosition += 10;
             // Enhanced tech accent line with gradient effect
-            pdf.setDrawColor(...config.accentColor);
+            pdf.setDrawColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
             pdf.setLineWidth(3);
             pdf.line(margin, yPosition, pageWidth - margin, yPosition);
             yPosition += 10;
@@ -100,7 +100,7 @@ export class PDFGenerator {
           default: // Modern Professional and others
             pdf.setFontSize(24);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(...config.primaryColor);
+            pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
             const modernNameWidth = pdf.getTextWidth(cleanText(resumeData.personal.fullName));
             pdf.text(cleanText(resumeData.personal.fullName), (pageWidth - modernNameWidth) / 2, yPosition);
             yPosition += 10;
@@ -109,7 +109,7 @@ export class PDFGenerator {
         // Enhanced contact info with better styling
         pdf.setFontSize(11);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(...config.secondaryColor);
+        pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
         
         const contactInfo = [];
         if (resumeData.personal.email) contactInfo.push(cleanText(resumeData.personal.email));
@@ -125,7 +125,7 @@ export class PDFGenerator {
 
         // Enhanced separator line
         if (config.headerStyle !== 'creative') {
-          pdf.setDrawColor(...config.accentColor);
+          pdf.setDrawColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
           pdf.setLineWidth(1);
           pdf.line(margin, yPosition, pageWidth - margin, yPosition);
           yPosition += 12;
@@ -149,14 +149,14 @@ export class PDFGenerator {
         checkPageBreak(18);
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(...config.primaryColor);
+        pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
         
         // Left-aligned section headers for better readability
         pdf.text(title.toUpperCase(), margin, yPosition);
         yPosition += 8;
         
         // Enhanced underline with accent color
-        pdf.setDrawColor(...config.accentColor);
+        pdf.setDrawColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
         pdf.setLineWidth(2);
         const headerWidth = pdf.getTextWidth(title.toUpperCase());
         pdf.line(margin, yPosition, margin + headerWidth, yPosition);
@@ -238,14 +238,14 @@ export class PDFGenerator {
           // Enhanced job title styling
           pdf.setFontSize(12);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.primaryColor);
+          pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
           pdf.text(cleanText(exp.position || 'Position'), margin, yPosition);
           yPosition += 6;
           
           // Enhanced company and dates styling
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.secondaryColor);
+          pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
           
           const companyInfo = cleanText(exp.company || 'Company');
           let dateInfo = '';
@@ -262,7 +262,7 @@ export class PDFGenerator {
           if (exp.location) {
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'italic');
-            pdf.setTextColor(...config.secondaryColor);
+            pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
             pdf.text(cleanText(exp.location), margin, yPosition);
             yPosition += 5;
           }
@@ -286,14 +286,14 @@ export class PDFGenerator {
           // Enhanced degree styling
           pdf.setFontSize(11);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.primaryColor);
+          pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
           pdf.text(cleanText(edu.degree || 'Degree'), margin, yPosition);
           yPosition += 6;
           
           // Enhanced school and date styling
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.secondaryColor);
+          pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
           
           const schoolInfo = cleanText(edu.school || 'School');
           const eduDate = edu.endDate ? ` • ${new Date(edu.endDate + '-01').getFullYear()}` : '';
@@ -304,7 +304,7 @@ export class PDFGenerator {
           if (edu.location) {
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'italic');
-            pdf.setTextColor(...config.secondaryColor);
+            pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
             pdf.text(cleanText(edu.location), margin, yPosition);
             yPosition += 4;
           }
@@ -312,7 +312,7 @@ export class PDFGenerator {
           if (edu.gpa) {
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(...config.accentColor);
+            pdf.setTextColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
             pdf.text(`GPA: ${cleanText(edu.gpa)}`, margin, yPosition);
             yPosition += 4;
           }
@@ -354,7 +354,7 @@ export class PDFGenerator {
             const xPosition = margin + (currentCol * columnWidth);
             
             // Add skill with bullet and accent color
-            pdf.setTextColor(...config.accentColor);
+            pdf.setTextColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
             pdf.text('●', xPosition, yPosition);
             
             pdf.setTextColor(50, 50, 50);
@@ -386,7 +386,7 @@ export class PDFGenerator {
           // Enhanced project name styling
           pdf.setFontSize(11);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.primaryColor);
+          pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
           pdf.text(cleanText(project.name || 'Project'), margin, yPosition);
           yPosition += 6;
           
@@ -394,7 +394,7 @@ export class PDFGenerator {
           if (project.startDate || project.endDate || project.technologies) {
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(...config.secondaryColor);
+            pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
             
             const projectDetails = [];
             if (project.startDate || project.endDate) {
@@ -422,7 +422,7 @@ export class PDFGenerator {
           // Project link with accent color
           if (project.link) {
             pdf.setFontSize(9);
-            pdf.setTextColor(...config.accentColor);
+            pdf.setTextColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
             pdf.text(`🔗 ${cleanText(project.link)}`, margin, yPosition);
             yPosition += 8;
           } else {
@@ -447,12 +447,12 @@ export class PDFGenerator {
         if (resumeData.certifications?.length > 0) {
           pdf.setFontSize(12);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.primaryColor);
+          pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
           pdf.text('CERTIFICATIONS', margin, leftColumnY);
           leftColumnY += 8;
           
           // Add underline
-          pdf.setDrawColor(...config.accentColor);
+          pdf.setDrawColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
           pdf.setLineWidth(1);
           pdf.line(margin, leftColumnY, margin + pdf.getTextWidth('CERTIFICATIONS'), leftColumnY);
           leftColumnY += 6;
@@ -462,13 +462,13 @@ export class PDFGenerator {
             
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(...config.primaryColor);
+            pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
             pdf.text(`● ${cleanText(cert.name)}`, margin, leftColumnY);
             leftColumnY += 4;
             
             pdf.setFontSize(8);
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(...config.secondaryColor);
+            pdf.setTextColor(config.secondaryColor[0], config.secondaryColor[1], config.secondaryColor[2]);
             pdf.text(`   ${cleanText(cert.issuer)} (${cleanText(cert.date)})`, margin, leftColumnY);
             leftColumnY += 6;
           }
@@ -480,12 +480,12 @@ export class PDFGenerator {
           
           pdf.setFontSize(12);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.primaryColor);
+          pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
           pdf.text('LANGUAGES', rightColumnX, rightColumnY);
           rightColumnY += 8;
           
           // Add underline
-          pdf.setDrawColor(...config.accentColor);
+          pdf.setDrawColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
           pdf.setLineWidth(1);
           pdf.line(rightColumnX, rightColumnY, rightColumnX + pdf.getTextWidth('LANGUAGES'), rightColumnY);
           rightColumnY += 6;
@@ -509,12 +509,12 @@ export class PDFGenerator {
           
           pdf.setFontSize(12);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(...config.primaryColor);
+          pdf.setTextColor(config.primaryColor[0], config.primaryColor[1], config.primaryColor[2]);
           pdf.text('INTERESTS', margin, yPosition);
           yPosition += 8;
           
           // Add underline
-          pdf.setDrawColor(...config.accentColor);
+          pdf.setDrawColor(config.accentColor[0], config.accentColor[1], config.accentColor[2]);
           pdf.setLineWidth(1);
           pdf.line(margin, yPosition, margin + pdf.getTextWidth('INTERESTS'), yPosition);
           yPosition += 6;
