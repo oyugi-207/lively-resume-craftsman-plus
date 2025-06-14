@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Send, BarChart3, Copy, ExternalLink, FileText, Link2 } from 'lucide-react';
+import { Eye, Download, Send, BarChart3, Copy, ExternalLink, FileText, Link2, X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,12 @@ interface TrackingData {
   attachments?: { name: string; url: string }[];
 }
 
+interface AttachmentFile {
+  file: File;
+  id: string;
+  uploading?: boolean;
+}
+
 const ResumeTrackingDashboard: React.FC = () => {
   const { user } = useAuth();
   const [trackingData, setTrackingData] = useState<TrackingData[]>([]);
@@ -29,9 +36,8 @@ const ResumeTrackingDashboard: React.FC = () => {
   const [jobTitle, setJobTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [customMessage, setCustomMessage] = useState('');
-  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [attachmentFiles, setAttachmentFiles] = useState<AttachmentFile[]>([]);
   const [attachmentLinks, setAttachmentLinks] = useState<string[]>(['']);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadTrackingData();
@@ -68,8 +74,17 @@ const ResumeTrackingDashboard: React.FC = () => {
 
   const handleFileInput = (evt: React.ChangeEvent<HTMLInputElement>) => {
     if (evt.target.files) {
-      setAttachmentFiles(Array.from(evt.target.files));
+      const newFiles = Array.from(evt.target.files).map(file => ({
+        file,
+        id: Math.random().toString(36).substr(2, 9),
+        uploading: false
+      }));
+      setAttachmentFiles(prev => [...prev, ...newFiles]);
     }
+  };
+
+  const removeFile = (fileId: string) => {
+    setAttachmentFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   const handleLinkChange = (idx: number, val: string) => {
@@ -82,33 +97,50 @@ const ResumeTrackingDashboard: React.FC = () => {
 
   const addAttachmentLink = () => setAttachmentLinks([...attachmentLinks, '']);
 
+  const removeAttachmentLink = (idx: number) => {
+    if (attachmentLinks.length > 1) {
+      setAttachmentLinks(prev => prev.filter((_, i) => i !== idx));
+    }
+  };
+
   const uploadAttachments = async (trackingId: string): Promise<{ name: string; url: string }[]> => {
-    setUploading(true);
     const uploaded: { name: string; url: string }[] = [];
 
-    // If files exist
+    // Upload files to Supabase Storage
     if (attachmentFiles.length > 0) {
-      // NOTE: Ensure attachments bucket exists in Supabase Storage
-      for (const file of attachmentFiles) {
-        const path = `${trackingId}/${file.name}`;
-        const { data, error } = await supabase.storage.from('attachments').upload(path, file, { upsert: true });
-        if (error) {
-          toast.error(`File upload failed: ${error.message}`);
-          setUploading(false);
-          return [];
+      for (const { file } of attachmentFiles) {
+        try {
+          const path = `${user?.id}/${trackingId}/${file.name}`;
+          const { data, error } = await supabase.storage
+            .from('attachments')
+            .upload(path, file, { upsert: true });
+          
+          if (error) {
+            console.error('File upload error:', error);
+            toast.error(`File upload failed: ${error.message}`);
+            continue;
+          }
+          
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('attachments')
+            .getPublicUrl(path);
+          
+          uploaded.push({ name: file.name, url: publicUrl });
+        } catch (error) {
+          console.error('Upload error:', error);
+          toast.error(`Failed to upload ${file.name}`);
         }
-        // Construct public URL (assumes bucket is public)
-        const url = supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl;
-        uploaded.push({ name: file.name, url });
       }
     }
 
     // Add links if provided
     attachmentLinks.forEach((link) => {
-      if (link && link.trim().length > 0) uploaded.push({ name: `Link`, url: link.trim() });
+      if (link && link.trim().length > 0) {
+        uploaded.push({ name: `Link`, url: link.trim() });
+      }
     });
 
-    setUploading(false);
     return uploaded;
   };
 
@@ -118,12 +150,11 @@ Subject: Application for ${jobTitle || 'the position'}${companyName ? ` at ${com
 
 Dear Hiring Manager,
 
-${customMessage || `Please find my resume and attachments below.`}
+${customMessage || `I am writing to express my interest in the ${jobTitle || 'position'}${companyName ? ` at ${companyName}` : ''}. Please find my resume and relevant documents attached for your review.`}
 
-Attachments/Links:
-${attachments.map((a) => `- ${a.name}: ${a.url}`).join('\n')}
+${attachments.length > 0 ? `\nAttachments/Links:\n${attachments.map((a) => `- ${a.name}: ${a.url}`).join('\n')}` : ''}
 
-Thank you for considering my application.
+Thank you for considering my application. I look forward to hearing from you.
 
 Best regards,
 ${user?.email}
@@ -132,30 +163,52 @@ ${user?.email}
 
   const sendTrackedResume = async () => {
     if (!recipientEmail || !user) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please provide a recipient email address');
       return;
     }
+
     setLoading(true);
     try {
       const trackingId = generateTrackingId();
       const trackingUrl = `${window.location.origin}/track/${trackingId}`;
-      // upload files/links
+      
+      // Upload files/links
       const attachments = await uploadAttachments(trackingId);
 
-      // Call edge function to send email with tracking (attachments as info in body, file upload/public links/references)
+      // Create resume data with user info and application details
+      const resumeData = {
+        personal: {
+          fullName: user.email?.split('@')[0] || 'Professional',
+          email: user.email || '',
+          phone: ''
+        },
+        jobTitle: jobTitle || 'Position Application',
+        companyName: companyName || '',
+        customMessage: customMessage || '',
+        attachments: attachments
+      };
+
+      // Call edge function to send email with tracking
       const { data, error } = await supabase.functions.invoke('send-tracked-resume', {
         body: {
           recipientEmail,
-          subject: `Application for ${jobTitle}${companyName ? ` at ${companyName}` : ''}`,
+          recipientName: '',
+          subject: `Application for ${jobTitle || 'Position'}${companyName ? ` at ${companyName}` : ''}`,
           emailContent: createEmailTemplate(attachments),
+          resumeData: resumeData,
           trackingId,
           trackingUrl,
-          attachments,
+          senderName: user.email?.split('@')[0] || 'Professional',
+          senderEmail: user.email || ''
         },
       });
-      if (error) throw error;
 
-      // Save record - fix: add required fields (resume_data, sender_email, sender_name)
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      // Save tracking record
       const { error: trackingError } = await supabase
         .from('resume_tracking')
         .insert([
@@ -163,34 +216,33 @@ ${user?.email}
             id: trackingId,
             user_id: user.id,
             recipient_email: recipientEmail,
-            subject: `Application for ${jobTitle}${companyName ? ` at ${companyName}` : ''}`,
+            subject: `Application for ${jobTitle || 'Position'}${companyName ? ` at ${companyName}` : ''}`,
             email_content: createEmailTemplate(attachments),
             tracking_url: trackingUrl,
             sent_at: new Date().toISOString(),
             status: 'sent',
-            sender_email: user.email || 'noreply@resumeapp.com',
-            sender_name: user.email?.split('@')[0] || 'Unknown',
-            resume_data: {
-              jobTitle,
-              companyName,
-              customMessage,
-              attachments,
-            },
+            sender_email: user.email || '',
+            sender_name: user.email?.split('@')[0] || 'Professional',
+            resume_data: resumeData,
           },
         ]);
+
       if (trackingError) throw trackingError;
 
-      toast.success('Resume and files sent successfully with tracking!');
+      toast.success('Application sent successfully with tracking!');
+      
+      // Reset form
       setRecipientEmail('');
       setJobTitle('');
       setCompanyName('');
       setCustomMessage('');
       setAttachmentFiles([]);
       setAttachmentLinks(['']);
+      
       loadTrackingData();
     } catch (error: any) {
       console.error('Error sending tracked resume:', error);
-      toast.error('Failed to send. Please try again.');
+      toast.error(error.message || 'Failed to send application. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -243,60 +295,100 @@ ${user?.email}
                 <div>
                   <label className="block text-sm font-medium mb-1">Custom Message</label>
                   <Textarea
-                    placeholder="Custom message..."
+                    placeholder="Write a personalized message for this application..."
                     value={customMessage}
                     onChange={e => setCustomMessage(e.target.value)}
+                    rows={4}
                   />
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium mb-1">Attach CV/Cover Letter (PDF, DOC, etc)</label>
-                  <Input
-                    type="file"
-                    multiple
-                    onChange={handleFileInput}
-                  />
-                  {attachmentFiles.length > 0 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Files: {attachmentFiles.map(f => f.name).join(', ')}
-                    </div>
-                  )}
+                  <label className="block text-sm font-medium mb-2">Attach Files (CV, Cover Letter, etc.)</label>
+                  <div className="space-y-2">
+                    <Input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                      onChange={handleFileInput}
+                      className="mb-2"
+                    />
+                    {attachmentFiles.length > 0 && (
+                      <div className="space-y-1">
+                        {attachmentFiles.map((attachment) => (
+                          <div key={attachment.id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              <span>{attachment.file.name}</span>
+                              <span className="text-gray-500">({(attachment.file.size / 1024).toFixed(1)} KB)</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeFile(attachment.id)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-1">Attachment Links</label>
+                  <label className="block text-sm font-medium mb-2">Additional Links</label>
                   {attachmentLinks.map((link, idx) => (
-                    <div className="flex items-center gap-1 mb-1" key={idx}>
+                    <div className="flex items-center gap-2 mb-2" key={idx}>
                       <Input
-                        placeholder="Paste link (Google Drive, Dropbox, etc)..."
+                        placeholder="Portfolio, LinkedIn, GitHub, etc..."
                         value={link}
                         onChange={e => handleLinkChange(idx, e.target.value)}
                       />
+                      {attachmentLinks.length > 1 && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => removeAttachmentLink(idx)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
                       {idx === attachmentLinks.length - 1 && (
-                        <Button size="icon" variant="ghost" type="button" onClick={addAttachmentLink}>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={addAttachmentLink}
+                        >
                           <Link2 className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
                   ))}
                 </div>
+
                 <Button
-                  className="bg-purple-600 hover:bg-purple-700 mt-3"
-                  disabled={loading || uploading}
+                  className="bg-purple-600 hover:bg-purple-700 w-full"
+                  disabled={loading}
                   onClick={sendTrackedResume}
                 >
-                  {loading || uploading ? 'Sending...' : 'Send with Tracking'}
+                  {loading ? 'Sending...' : 'Send Application with Tracking'}
                 </Button>
               </div>
+
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Preview Email</h3>
-                <div className="bg-gray-50 p-4 rounded-lg border text-sm min-h-[200px]">
+                <h3 className="font-semibold text-lg">Email Preview</h3>
+                <div className="bg-gray-50 p-4 rounded-lg border text-sm min-h-[300px]">
                   <strong>To:</strong> {recipientEmail || '[recipient]'}<br />
                   <strong>Subject:</strong> Application for {jobTitle || '[Job Title]'}{companyName ? ` at ${companyName}` : ''}<br />
-                  <strong>Message:</strong>
-                  <div className="whitespace-pre-line text-xs border-t pt-2 mt-2">
+                  <br />
+                  <div className="whitespace-pre-line text-xs border-t pt-2">
                     {createEmailTemplate(
                       attachmentLinks
                         .filter(Boolean)
                         .map(link => ({ name: 'Link', url: link }))
+                        .concat(
+                          attachmentFiles.map(f => ({ name: f.file.name, url: '[File will be attached]' }))
+                        )
                     )}
                   </div>
                 </div>
@@ -305,6 +397,7 @@ ${user?.email}
           </div>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
@@ -313,27 +406,44 @@ ${user?.email}
           <div className="space-y-4">
             {trackingData.length === 0 && (
               <div className="text-center text-gray-500 py-12">
-                No tracked resumes yet.
+                <Send className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>No tracked applications yet. Send your first application above!</p>
               </div>
             )}
             {trackingData.map(item => (
               <Card key={item.id} className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {item.status === 'opened' ? <Eye className="w-4 h-4 text-orange-500" /> : item.status === 'downloaded' ? <Download className="w-4 h-4 text-green-500" /> : <Send className="w-4 h-4 text-blue-500" />}
+                    {item.status === 'opened' ? 
+                      <Eye className="w-4 h-4 text-orange-500" /> : 
+                      item.status === 'downloaded' ? 
+                      <Download className="w-4 h-4 text-green-500" /> : 
+                      <Send className="w-4 h-4 text-blue-500" />
+                    }
                     <div>
                       <div className="font-medium">{item.recipient_email}</div>
                       <div className="text-sm text-gray-600">{item.subject}</div>
+                      <div className="text-xs text-gray-500">
+                        Sent {item.sent_at ? new Date(item.sent_at).toLocaleDateString() : 'Unknown'}
+                      </div>
                     </div>
                   </div>
-                  <Badge>{item.status?.toUpperCase() || 'SENT'}</Badge>
+                  <Badge variant={
+                    item.status === 'downloaded' ? 'default' :
+                    item.status === 'opened' ? 'secondary' :
+                    'outline'
+                  }>
+                    {item.status?.toUpperCase() || 'SENT'}
+                  </Badge>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-3">
                   <Button size="sm" variant="outline" onClick={() => copyTrackingUrl(item.tracking_url)}>
-                    <Copy className="w-4 h-4" />Copy Tracking Link
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy Link
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => window.open(item.tracking_url, '_blank')}>
-                    <ExternalLink className="w-4 h-4" />Open Tracking
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    View Tracking
                   </Button>
                 </div>
               </Card>
