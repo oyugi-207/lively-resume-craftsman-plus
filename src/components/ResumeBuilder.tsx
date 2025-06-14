@@ -73,11 +73,11 @@ interface ResumeData {
     courses?: string;
     honors?: string;
   }>;
-  skills: string[] | Array<{
+  skills: Array<{
     name: string;
     level: string;
     category: string;
-  }>;
+  }> | string[];
   certifications: Array<{
     id: number;
     name: string;
@@ -176,6 +176,19 @@ const ResumeBuilder: React.FC = () => {
         setReferences(Array.isArray(resumeReferences) ? resumeReferences : []);
         setCustomColors(resumeCustomColors);
         
+        // Properly handle skills data from Supabase
+        const normalizeSkills = (skillsData: any): Array<{name: string; level: string; category: string}> | string[] => {
+          if (!Array.isArray(skillsData)) return [];
+          
+          // Check if it's an array of objects with name, level, category
+          if (skillsData.length > 0 && typeof skillsData[0] === 'object' && 'name' in skillsData[0]) {
+            return skillsData as Array<{name: string; level: string; category: string}>;
+          }
+          
+          // Otherwise treat as string array
+          return skillsData.map(skill => typeof skill === 'string' ? skill : String(skill));
+        };
+        
         setResumeData({
           personal: resume.personal_info && typeof resume.personal_info === 'object' && !Array.isArray(resume.personal_info) 
             ? resume.personal_info as ResumeData['personal']
@@ -188,7 +201,7 @@ const ResumeBuilder: React.FC = () => {
               },
           experience: Array.isArray(resume.experience) ? resume.experience as ResumeData['experience'] : [],
           education: Array.isArray(resume.education) ? resume.education as ResumeData['education'] : [],
-          skills: Array.isArray(resume.skills) ? resume.skills : [],
+          skills: normalizeSkills(resume.skills),
           certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
@@ -354,6 +367,11 @@ const ResumeBuilder: React.FC = () => {
       }));
     }
   };
+
+  // Convert skills to string array for EnhancedSkillsForm compatibility
+  const skillsForForm = Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object' 
+    ? (resumeData.skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name)
+    : resumeData.skills as string[];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -548,7 +566,7 @@ const ResumeBuilder: React.FC = () => {
 
                 <TabsContent value="skills">
                   <EnhancedSkillsForm 
-                    data={resumeData.skills} 
+                    data={skillsForForm} 
                     onChange={updateSkills} 
                   />
                 </TabsContent>

@@ -17,7 +17,7 @@ interface Skill {
 
 interface EnhancedSkillsFormProps {
   data: string[];
-  onChange: (data: string[]) => void;
+  onChange: (data: Array<{name: string; level: string; category: string}> | string[]) => void;
 }
 
 const EnhancedSkillsForm: React.FC<EnhancedSkillsFormProps> = ({ data, onChange }) => {
@@ -41,7 +41,12 @@ const EnhancedSkillsForm: React.FC<EnhancedSkillsFormProps> = ({ data, onChange 
 
   const updateSkillsData = (updatedSkills: Skill[]) => {
     setSkills(updatedSkills);
-    onChange(updatedSkills.map(skill => skill.name));
+    // Return the enhanced skills data structure to the parent
+    onChange(updatedSkills.map(skill => ({
+      name: skill.name,
+      level: skill.level,
+      category: skill.category
+    })));
   };
 
   const addSkill = () => {
