@@ -51,6 +51,13 @@ const JobDescriptionParser: React.FC<JobDescriptionParserProps> = ({
 
   const parseJobDescriptionWithGemini = async (description: string) => {
     try {
+      // Get API key from localStorage or Settings
+      const apiKey = localStorage.getItem('gemini_api_key') || 'AIzaSyBt35ykr0KCwAdIwYKlLzZRfkABak63AnE';
+      
+      if (!apiKey) {
+        throw new Error('No Gemini API key found. Please add it in Settings.');
+      }
+
       const prompt = `Analyze this job description and return a JSON object with the following structure:
 {
   "jobTitle": "string",
@@ -108,7 +115,7 @@ const JobDescriptionParser: React.FC<JobDescriptionParserProps> = ({
 Job Description:
 ${description}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBt35ykr0KCwAdIwYKlLzZRfkABak63AnE`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,8 +222,8 @@ ${description}`;
     };
 
     // Extract skills by category and subcategory
-    Object.entries(skillCategories).forEach(([category, subcategories]) => {
-      Object.entries(subcategories).forEach(([subcategory, skills]) => {
+    (Object.entries(skillCategories) as [keyof SkillCategories, any][]).forEach(([category, subcategories]) => {
+      (Object.entries(subcategories) as [string, string[]][]).forEach(([subcategory, skills]) => {
         skills.forEach(skill => {
           if (lowerText.includes(skill.toLowerCase())) {
             const categoryKey = category as keyof SkillCategories;
@@ -237,12 +244,10 @@ ${description}`;
     const requirements = extractRequirements(text) || [];
     const responsibilities = extractResponsibilities(text) || [];
     
-    // Generate industry insights
     const industry = detectIndustry(text) || 'General';
     const jobLevel = detectJobLevel(text) || 'Mid Level';
     const workType = detectWorkType(text) || 'On-site';
     
-    // Generate enhanced analysis
     const competitorAnalysis = generateCompetitorAnalysis(industry, jobTitle);
     const careerGrowth = generateCareerGrowthPlan(jobLevel, extractedSkills);
     const atsOptimization = generateATSOptimization(text, extractedSkills);
@@ -540,7 +545,7 @@ ${description}`;
           data = await parseJobDescriptionWithGemini(jobDescription);
           toast.success('Job description analyzed with Gemini AI!');
         } catch (error) {
-          // Fallback to local parsing
+          console.error('AI parsing failed:', error);
           data = enhancedLocalParser(jobDescription);
           toast.success('Job description parsed with enhanced local analysis!');
         }
@@ -574,11 +579,11 @@ ${description}`;
   const renderSkillsByCategory = (skills: SkillCategories) => {
     return (
       <div className="space-y-4">
-        {Object.entries(skills).map(([category, subcategories]) => (
+        {(Object.entries(skills) as [keyof SkillCategories, any][]).map(([category, subcategories]) => (
           <div key={category}>
             <h5 className="font-medium text-sm mb-2 capitalize text-blue-600">{category} Skills:</h5>
-            {Object.entries(subcategories).map(([subcategory, skillList]) => {
-              if (!skillList || skillList.length === 0) return null;
+            {(Object.entries(subcategories) as [string, string[]][]).map(([subcategory, skillList]) => {
+              if (!skillList || !Array.isArray(skillList) || skillList.length === 0) return null;
               return (
                 <div key={subcategory} className="mb-2">
                   <span className="text-xs font-medium text-gray-600 capitalize">{subcategory}:</span>
@@ -768,7 +773,7 @@ ${description}`;
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
                               <span className="font-medium">Similar Companies:</span>
-                              <p>{parsedData.competitorAnalysis.similarCompanies?.join(', ') || 'N/A'}</p>
+                              <p>{Array.isArray(parsedData.competitorAnalysis.similarCompanies) ? parsedData.competitorAnalysis.similarCompanies.join(', ') : 'N/A'}</p>
                             </div>
                             <div>
                               <span className="font-medium">Market Demand:</span>
@@ -787,11 +792,11 @@ ${description}`;
                         <div className="bg-green-50 p-3 rounded text-xs space-y-2">
                           <div>
                             <span className="font-medium">Next Roles:</span>
-                            <p>{parsedData.careerGrowth.nextRoles?.join(', ') || 'N/A'}</p>
+                            <p>{Array.isArray(parsedData.careerGrowth.nextRoles) ? parsedData.careerGrowth.nextRoles.join(', ') : 'N/A'}</p>
                           </div>
                           <div>
                             <span className="font-medium">Skills to Learn:</span>
-                            <p>{parsedData.careerGrowth.skillsToLearn?.join(', ') || 'N/A'}</p>
+                            <p>{Array.isArray(parsedData.careerGrowth.skillsToLearn) ? parsedData.careerGrowth.skillsToLearn.join(', ') : 'N/A'}</p>
                           </div>
                           <div>
                             <span className="font-medium">Time to Promotion:</span>
@@ -808,26 +813,26 @@ ${description}`;
                           <div>
                             <span className="font-medium">Key Keywords:</span>
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {parsedData.atsOptimization.keywords?.slice(0, 6).map((keyword: string, index: number) => (
+                              {Array.isArray(parsedData.atsOptimization.keywords) ? parsedData.atsOptimization.keywords.slice(0, 6).map((keyword: string, index: number) => (
                                 <Badge key={index} variant="outline" className="text-xs">
                                   {keyword}
                                 </Badge>
-                              )) || []}
+                              )) : []}
                             </div>
                           </div>
                           <div>
                             <span className="font-medium">Recommendations:</span>
                             <ul className="list-disc list-inside mt-1">
-                              {parsedData.atsOptimization.recommendations?.slice(0, 3).map((rec: string, index: number) => (
+                              {Array.isArray(parsedData.atsOptimization.recommendations) ? parsedData.atsOptimization.recommendations.slice(0, 3).map((rec: string, index: number) => (
                                 <li key={index}>{rec}</li>
-                              )) || []}
+                              )) : []}
                             </ul>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {parsedData.benefits && parsedData.benefits.length > 0 && (
+                    {parsedData.benefits && Array.isArray(parsedData.benefits) && parsedData.benefits.length > 0 && (
                       <div>
                         <h4 className="font-medium text-sm mb-1">Benefits Detected</h4>
                         <div className="flex flex-wrap gap-1">

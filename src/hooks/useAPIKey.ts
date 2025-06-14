@@ -6,8 +6,12 @@ export const useAPIKey = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage first
-    const storedKey = localStorage.getItem('gemini_api_key') || localStorage.getItem('openai_api_key');
+    // Check localStorage for any API key
+    const geminiKey = localStorage.getItem('gemini_api_key');
+    const openaiKey = localStorage.getItem('openai_api_key');
+    
+    // Prefer Gemini key if available, otherwise use OpenAI
+    const storedKey = geminiKey || openaiKey;
     if (storedKey) {
       setApiKey(storedKey);
     }
@@ -18,12 +22,18 @@ export const useAPIKey = () => {
     const storageKey = provider === 'gemini' ? 'gemini_api_key' : 'openai_api_key';
     localStorage.setItem(storageKey, key);
     setApiKey(key);
+    
+    // Also sync with the other components that might be using this
+    window.dispatchEvent(new CustomEvent('apiKeyUpdated', { detail: { key, provider } }));
   };
 
   const removeApiKey = () => {
     localStorage.removeItem('gemini_api_key');
     localStorage.removeItem('openai_api_key');
     setApiKey(null);
+    
+    // Notify other components
+    window.dispatchEvent(new CustomEvent('apiKeyRemoved'));
   };
 
   const getApiKey = (provider: 'gemini' | 'openai' = 'gemini'): string | null => {
@@ -31,12 +41,14 @@ export const useAPIKey = () => {
     return localStorage.getItem(storageKey);
   };
 
+  const hasApiKey = !!apiKey || !!localStorage.getItem('gemini_api_key') || !!localStorage.getItem('openai_api_key');
+
   return {
     apiKey,
     isLoading,
     saveApiKey,
     removeApiKey,
     getApiKey,
-    hasApiKey: !!apiKey
+    hasApiKey
   };
 };
