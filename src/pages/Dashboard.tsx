@@ -561,6 +561,7 @@ const Dashboard = () => {
               <nav className="hidden lg:flex items-center space-x-1">
                 {[
                   { id: 'overview', label: 'Overview', icon: Briefcase },
+                  { id: 'tracking', label: 'Tracking', icon: BarChart3 },
                   { id: 'jobs', label: 'Jobs', icon: Search },
                   { id: 'profile', label: 'Profile', icon: User },
                   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -613,6 +614,7 @@ const Dashboard = () => {
         <div className="flex space-x-1 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: Briefcase },
+            { id: 'tracking', label: 'Tracking', icon: BarChart3 },
             { id: 'jobs', label: 'Jobs', icon: Search },
             { id: 'profile', label: 'Profile', icon: User },
             { id: 'notifications', label: 'Notifications', icon: Bell },
