@@ -28,6 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const requestData: TrackedEmailRequest = await req.json();
     const {
       recipientEmail,
       recipientName,
@@ -38,12 +39,30 @@ const handler = async (req: Request): Promise<Response> => {
       trackingUrl,
       senderName,
       senderEmail
-    }: TrackedEmailRequest = await req.json();
+    } = requestData;
 
-    console.log("Sending tracked resume email:", { recipientEmail, subject, trackingId });
+    console.log("Sending tracked resume email:", { 
+      recipientEmail, 
+      subject, 
+      trackingId,
+      hasResumeData: !!resumeData,
+      resumeDataKeys: resumeData ? Object.keys(resumeData) : []
+    });
 
-    // Generate PDF resume
-    const pdfBuffer = await PDFGenerator.generatePDFBuffer(resumeData);
+    // Validate required data
+    if (!resumeData) {
+      console.error("Resume data is missing from request");
+      throw new Error("Resume data is required");
+    }
+
+    // Generate PDF resume with error handling
+    let pdfBuffer: Uint8Array;
+    try {
+      pdfBuffer = await PDFGenerator.generatePDFBuffer(resumeData);
+    } catch (pdfError) {
+      console.error("Error generating PDF:", pdfError);
+      throw new Error("Failed to generate PDF");
+    }
 
     // Create tracking pixel HTML
     const trackingPixel = `<img src="${trackingUrl}/pixel.png" width="1" height="1" style="display:none;" />`;
@@ -63,12 +82,12 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; text-align: center;">
           <h3 style="color: #495057; margin-bottom: 15px;">📄 Resume Attached</h3>
           <p style="color: #6c757d; margin-bottom: 20px;">Please find my resume attached to this email for your review.</p>
-          <a href="${trackingUrl}/download" 
+          <a href="${trackingUrl}" 
              style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            📥 Download Resume
+            📥 View Resume Online
           </a>
           <p style="font-size: 12px; color: #868e96; margin-top: 15px;">
-            Click the button above to download the latest version of my resume.
+            Click the button above to view and download the latest version of my resume.
           </p>
         </div>
         
@@ -111,7 +130,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-tracked-resume function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

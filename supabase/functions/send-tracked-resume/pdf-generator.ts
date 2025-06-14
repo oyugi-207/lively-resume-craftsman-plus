@@ -1,6 +1,18 @@
 
 export class PDFGenerator {
   static async generatePDFBuffer(resumeData: any): Promise<Uint8Array> {
+    // Validate resumeData and provide fallbacks
+    if (!resumeData) {
+      console.error('Resume data is undefined');
+      resumeData = { personal: { fullName: 'Resume', email: '', phone: '' } };
+    }
+    
+    // Ensure personal data exists with fallbacks
+    const personal = resumeData.personal || {};
+    const fullName = personal.fullName || personal.full_name || 'Resume';
+    const email = personal.email || '';
+    const phone = personal.phone || '';
+    
     // This is a simplified PDF generation for the edge function
     // In a real implementation, you would use a PDF library like jsPDF or Puppeteer
     
@@ -43,11 +55,11 @@ stream
 BT
 /F1 12 Tf
 72 720 Td
-(${resumeData.personal?.fullName || 'Resume'}) Tj
+(${fullName}) Tj
 0 -20 Td
-(${resumeData.personal?.email || ''}) Tj
+(${email}) Tj
 0 -20 Td
-(${resumeData.personal?.phone || ''}) Tj
+(${phone}) Tj
 ET
 endstream
 endobj
