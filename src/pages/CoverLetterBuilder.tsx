@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAPIKey } from '@/hooks/useAPIKey';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,7 @@ import {
 const CoverLetterBuilder = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { getApiKey } = useAPIKey();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -56,52 +58,6 @@ const CoverLetterBuilder = () => {
     templateId: 0
   });
 
-  // Template content based on selected template
-  const getTemplateContent = (templateId: number, companyName: string, positionTitle: string, resumeData: any) => {
-    const templates = [
-      {
-        id: 0,
-        content: `Dear Hiring Manager,
-
-I am writing to express my strong interest in the ${positionTitle} position at ${companyName}. With my background and skills, I am confident that I would be a valuable addition to your team.
-
-${resumeData?.personal_info?.summary ? 
-`In my professional experience, ${resumeData.personal_info.summary.toLowerCase()}` : 
-'Throughout my career, I have developed strong skills and experience that align well with this role.'
-}
-
-Key qualifications I bring include:
-${resumeData?.skills ? 
-resumeData.skills.slice(0, 3).map((skill: string) => `• Expertise in ${skill}`).join('\n') : 
-'• Strong problem-solving abilities\n• Excellent communication skills\n• Team collaboration experience'
-}
-
-I am excited about the opportunity to contribute to ${companyName}'s continued success. Thank you for considering my application.
-
-Sincerely,
-${resumeData?.personal_info?.fullName || '[Your Name]'}`
-      },
-      {
-        id: 1,
-        content: `Hello [Hiring Manager Name],
-
-Your ${positionTitle} opportunity immediately caught my attention – it's exactly the kind of creative challenge I've been seeking! As a passionate professional with a proven track record, I'm excited to bring my unique perspective to ${companyName}.
-
-What sets me apart is my ability to think creatively and solve complex problems. In my recent work, I have consistently delivered innovative solutions that drive results.
-
-I'm particularly excited about ${companyName}'s approach to innovation. Your recent work in the industry resonates with me because it aligns with my passion for excellence and creativity.
-
-I'd love to show you how my creative vision can contribute to ${companyName}'s continued success. Let's chat!
-
-Best regards,
-${resumeData?.personal_info?.fullName || '[Your Name]'}`
-      }
-    ];
-
-    const template = templates.find(t => t.id === templateId) || templates[0];
-    return template.content;
-  };
-
   useEffect(() => {
     if (!user) {
       navigate('/auth');
@@ -124,7 +80,6 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
 
       // Load cover letter if editing
       if (coverLetterId) {
-        // Use any type to bypass TypeScript issues until types are regenerated
         const { data, error } = await (supabase as any)
           .from('cover_letters')
           .select('*')
@@ -227,6 +182,16 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
       return;
     }
 
+    const apiKey = getApiKey('gemini');
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your Gemini API key in Settings to use AI generation",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setGenerating(true);
     try {
       // Get resume data if selected
@@ -241,28 +206,65 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
         if (!error) resumeData = data;
       }
 
-      // Generate cover letter content using selected template
-      const generatedContent = getTemplateContent(
-        coverLetterData.templateId,
-        coverLetterData.companyName,
-        coverLetterData.positionTitle,
-        resumeData
-      );
+      // Create a detailed prompt for Gemini AI
+      const prompt = `Create a professional cover letter for a ${coverLetterData.positionTitle} position at ${coverLetterData.companyName}. 
 
-      setCoverLetterData(prev => ({
-        ...prev,
-        content: generatedContent
-      }));
+      Job Details:
+      - Position: ${coverLetterData.positionTitle}
+      - Company: ${coverLetterData.companyName}
+      
+      ${resumeData ? `
+      Candidate Background:
+      - Name: ${resumeData.personal_info?.fullName || 'Candidate'}
+      - Summary: ${resumeData.personal_info?.summary || 'Experienced professional'}
+      - Skills: ${resumeData.skills?.join(', ') || 'Relevant professional skills'}
+      - Experience: ${resumeData.experience?.map((exp: any) => `${exp.position} at ${exp.company}`).join(', ') || 'Professional experience'}
+      - Education: ${resumeData.education?.map((edu: any) => `${edu.degree} from ${edu.school}`).join(', ') || 'Relevant education'}
+      ` : ''}
+      
+      Please write a compelling, personalized cover letter that:
+      1. Opens with enthusiasm for the specific role and company
+      2. Highlights relevant experience and achievements
+      3. Demonstrates knowledge of the company/industry
+      4. Shows how the candidate can add value
+      5. Closes with a strong call to action
+      6. Maintains a professional yet engaging tone
+      7. Is approximately 3-4 paragraphs long
+      
+      Format the response as a proper cover letter with appropriate salutation and closing.`;
 
-      toast({
-        title: "Cover Letter Generated",
-        description: "Template content has been applied to your cover letter"
+      console.log('Generating cover letter with prompt:', prompt);
+
+      const response = await supabase.functions.invoke('gemini-ai-optimize', {
+        body: { 
+          prompt,
+          apiKey 
+        }
       });
+
+      if (response.error) {
+        console.error('Gemini API error:', response.error);
+        throw new Error(response.error.details || 'Failed to generate cover letter with AI');
+      }
+
+      if (response.data?.content) {
+        setCoverLetterData(prev => ({
+          ...prev,
+          content: response.data.content
+        }));
+
+        toast({
+          title: "Cover Letter Generated",
+          description: "AI has created a personalized cover letter based on your information"
+        });
+      } else {
+        throw new Error('No content generated from AI');
+      }
     } catch (error) {
       console.error('Error generating cover letter:', error);
       toast({
         title: "Error",
-        description: "Failed to generate cover letter",
+        description: error instanceof Error ? error.message : "Failed to generate cover letter",
         variant: "destructive"
       });
     } finally {
@@ -337,7 +339,7 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
     setShowTemplates(false);
     toast({
       title: "Template Selected",
-      description: "Click 'Generate with AI' to apply the template"
+      description: "Template updated! Click 'Generate with AI' to apply it to your content"
     });
   };
 
@@ -527,11 +529,11 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                   >
                     <Wand2 className="w-4 h-4 mr-2" />
-                    {generating ? 'Generating...' : 'Generate Cover Letter with AI'}
+                    {generating ? 'Generating...' : 'Generate Cover Letter with Gemini AI'}
                   </Button>
                   
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    AI will create a personalized cover letter based on your selected template, job information and linked resume.
+                    Gemini AI will create a personalized cover letter based on your job information and linked resume data.
                   </p>
                 </div>
 
@@ -553,7 +555,7 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
                       value={coverLetterData.content}
                       onChange={(e) => setCoverLetterData(prev => ({ ...prev, content: e.target.value }))}
                       className="mt-1 min-h-[400px] dark:bg-gray-700 dark:border-gray-600"
-                      placeholder="Write your cover letter content here, choose a template and use the AI generator above..."
+                      placeholder="Write your cover letter content here, or use the AI generator above to create personalized content..."
                     />
                   </div>
                 </div>
@@ -585,7 +587,7 @@ ${resumeData?.personal_info?.fullName || '[Your Name]'}`
                     <div className="text-center text-gray-500 py-12">
                       <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg mb-2">Your cover letter preview will appear here</p>
-                      <p className="text-sm">Choose a template, fill in the job information and generate content with AI or write manually</p>
+                      <p className="text-sm">Fill in the job information and use Gemini AI to generate compelling content</p>
                     </div>
                   )}
                 </div>
