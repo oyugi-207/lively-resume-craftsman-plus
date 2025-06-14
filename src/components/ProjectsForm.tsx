@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, FolderOpen, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, FolderOpen, ExternalLink, Wand2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAPIKey } from '@/hooks/useAPIKey';
 
 interface Project {
   id: number;
@@ -24,6 +26,9 @@ interface ProjectsFormProps {
 }
 
 const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
+  const { apiKey } = useAPIKey();
+  const [generatingAI, setGeneratingAI] = useState<number | null>(null);
+
   const addProject = () => {
     const newProject: Project = {
       id: Date.now(),
@@ -45,6 +50,57 @@ const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
   const removeProject = (id: number) => {
     onChange(data.filter(project => project.id !== id));
     toast.success('Project removed');
+  };
+
+  const generateAIDescription = async (projectId: number) => {
+    const project = data.find(p => p.id === projectId);
+    if (!project || !project.name) {
+      toast.error('Please fill in project name first');
+      return;
+    }
+
+    if (!apiKey) {
+      toast.error('Please set your Gemini API key in Settings');
+      return;
+    }
+
+    setGeneratingAI(projectId);
+    try {
+      const prompt = `Generate a professional project description for a resume/CV. 
+      Project Name: ${project.name}
+      Technologies: ${project.technologies || 'Various technologies'}
+      Start Date: ${project.startDate || 'Not specified'}
+      End Date: ${project.endDate || 'Not specified'}
+      
+      Create a compelling 2-3 sentence description that highlights:
+      - The project's main purpose and objectives
+      - Key technical achievements and features implemented
+      - Business impact or value delivered
+      - Technical skills demonstrated
+      
+      Make it sound professional, impressive, and suitable for a resume. Focus on quantifiable results where possible and use action verbs. Write in past tense if the project is completed, or present tense if ongoing.`;
+
+      const { data: result, error } = await supabase.functions.invoke('gemini-ai-optimize', {
+        body: { 
+          prompt,
+          apiKey 
+        }
+      });
+
+      if (error) throw error;
+
+      if (result?.content) {
+        updateProject(projectId, 'description', result.content.trim());
+        toast.success('✨ AI description generated successfully!');
+      } else {
+        throw new Error('No content received from AI');
+      }
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      toast.error(`Failed to generate description: ${error.message || 'Unknown error'}`);
+    } finally {
+      setGeneratingAI(null);
+    }
   };
 
   const projectTemplates = [
@@ -195,14 +251,38 @@ const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
             </div>
             
             <div>
-              <Label>Project Description *</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Project Description *</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => generateAIDescription(project.id)}
+                  disabled={generatingAI === project.id || !project.name}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 shadow-sm dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-700"
+                >
+                  {generatingAI === project.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4 text-purple-600" />
+                  )}
+                  <span className="text-purple-700 dark:text-purple-300">
+                    {generatingAI === project.id ? 'Generating...' : 'Generate with AI'}
+                  </span>
+                </Button>
+              </div>
               <Textarea
                 value={project.description}
                 onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                placeholder="Describe your project, what it does, your role, and key achievements..."
+                placeholder="Describe your project, what it does, your role, and key achievements... Or use AI to generate this content based on your project details above."
                 rows={4}
                 className="mt-1"
               />
+              {project.description && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+                  <span>✓ Description added</span>
+                  {project.description.includes('•') && <span>• Bullet points detected</span>}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -212,6 +292,7 @@ const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
             <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No projects added yet.</p>
             <p className="text-sm">Click "Add Project" or choose from templates above.</p>
+            <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">💡 Tip: Use AI to generate professional descriptions automatically!</p>
           </div>
         )}
       </CardContent>
