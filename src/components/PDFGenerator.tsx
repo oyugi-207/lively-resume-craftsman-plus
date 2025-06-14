@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -368,6 +367,60 @@ export class PDFGenerator {
           checkPageBreak(5);
           pdf.text(line, margin, yPosition);
           yPosition += 5;
+        }
+      }
+
+      // References
+      if (resumeData.references?.length > 0) {
+        addSectionHeader('References');
+        
+        for (const ref of resumeData.references) {
+          checkPageBreak(20);
+          
+          // Reference name and title
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+          pdf.text(cleanText(ref.name || 'Reference'), margin, yPosition);
+          yPosition += 5;
+          
+          // Title and company
+          pdf.setFontSize(9);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+          
+          const titleCompany = [];
+          if (ref.title) titleCompany.push(cleanText(ref.title));
+          if (ref.company) titleCompany.push(cleanText(ref.company));
+          
+          if (titleCompany.length > 0) {
+            pdf.text(titleCompany.join(' at '), margin, yPosition);
+            yPosition += 4;
+          }
+          
+          // Relationship
+          if (ref.relationship) {
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'italic');
+            pdf.text(`Relationship: ${cleanText(ref.relationship)}`, margin, yPosition);
+            yPosition += 4;
+          }
+          
+          // Contact information
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+          
+          const contactInfo = [];
+          if (ref.email) contactInfo.push(`Email: ${cleanText(ref.email)}`);
+          if (ref.phone) contactInfo.push(`Phone: ${cleanText(ref.phone)}`);
+          
+          if (contactInfo.length > 0) {
+            pdf.text(contactInfo.join(' | '), margin, yPosition);
+            yPosition += 6;
+          } else {
+            yPosition += 4;
+          }
         }
       }
 

@@ -28,7 +28,8 @@ import {
   Shield,
   Loader2,
   Upload,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 
 // Import all form components
@@ -52,6 +53,7 @@ import { ProfileIntegrationService } from '@/services/profileIntegration';
 import { useAPIKey } from '@/hooks/useAPIKey';
 import ComingSoonFeatures from '@/components/ComingSoonFeatures';
 import LiveFeatures from '@/components/LiveFeatures';
+import ReferencesForm from '@/components/ReferencesForm';
 
 interface ResumeData {
   personal: {
@@ -102,6 +104,15 @@ interface ResumeData {
     startDate: string;
     endDate: string;
   }>;
+  references: Array<{
+    id: number;
+    name: string;
+    title: string;
+    company: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  }>;
 }
 
 const Builder: React.FC = () => {
@@ -126,7 +137,8 @@ const Builder: React.FC = () => {
     certifications: [],
     languages: [],
     interests: [],
-    projects: []
+    projects: [],
+    references: []
   });
   
   const [selectedTemplate, setSelectedTemplate] = useState(initialTemplate);
@@ -188,7 +200,8 @@ const Builder: React.FC = () => {
           certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
-          projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : []
+          projects: Array.isArray(resume.projects) ? resume.projects as ResumeData['projects'] : [],
+          references: Array.isArray(resume.references) ? resume.references : []
         });
       }
     } catch (error: any) {
@@ -214,7 +227,8 @@ const Builder: React.FC = () => {
         languages: resumeData.languages,
         interests: resumeData.interests,
         projects: resumeData.projects,
-        job_description: jobDescription, // Automatically include job description
+        references: resumeData.references,
+        job_description: jobDescription,
         updated_at: new Date().toISOString()
       };
 
@@ -298,6 +312,10 @@ const Builder: React.FC = () => {
 
   const updateInterests = (data: string[]) => {
     setResumeData(prev => ({ ...prev, interests: data }));
+  };
+
+  const updateReferences = (data: any[]) => {
+    setResumeData(prev => ({ ...prev, references: data }));
   };
 
   const handleAIOptimize = async () => {
@@ -444,7 +462,8 @@ const Builder: React.FC = () => {
         experience: [...prev.experience, ...mergedData.experience],
         education: [...prev.education, ...mergedData.education],
         skills: [...new Set([...prev.skills, ...mergedData.skills])],
-        projects: [...prev.projects, ...mergedData.projects]
+        projects: [...prev.projects, ...mergedData.projects],
+        references: [...prev.references, ...(mergedData.references || [])]
       }));
 
       toast.success('Profile data imported successfully!');
@@ -475,7 +494,8 @@ const Builder: React.FC = () => {
       certifications: [...prev.certifications, ...(extractedData.certifications || [])],
       languages: [...prev.languages, ...(extractedData.languages || [])],
       interests: [...new Set([...prev.interests, ...(extractedData.interests || [])])],
-      projects: [...prev.projects, ...extractedData.projects]
+      projects: [...prev.projects, ...extractedData.projects],
+      references: [...prev.references, ...(extractedData.references || [])]
     }));
     
     // Switch to personal tab to show imported data
@@ -701,7 +721,7 @@ const Builder: React.FC = () => {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   
                   {/* Mobile-First Tab Navigation */}
-                  <TabsList className="grid grid-cols-4 sm:grid-cols-8 mb-4 sm:mb-6 h-auto bg-gray-100/50 dark:bg-gray-700/50 text-xs rounded-lg p-1">
+                  <TabsList className="grid grid-cols-5 sm:grid-cols-9 mb-4 sm:mb-6 h-auto bg-gray-100/50 dark:bg-gray-700/50 text-xs rounded-lg p-1">
                     <TabsTrigger value="personal" className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md">
                       <User className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="text-xs leading-none">Personal</span>
@@ -733,6 +753,10 @@ const Builder: React.FC = () => {
                     <TabsTrigger value="interests" className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md">
                       <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="text-xs leading-none">Interests</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="references" className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs leading-none">References</span>
                     </TabsTrigger>
                   </TabsList>
 
@@ -789,6 +813,13 @@ const Builder: React.FC = () => {
                     <InterestsForm 
                       data={resumeData.interests} 
                       onChange={updateInterests} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="references">
+                    <ReferencesForm 
+                      data={resumeData.references} 
+                      onChange={updateReferences} 
                     />
                   </TabsContent>
                 </Tabs>
