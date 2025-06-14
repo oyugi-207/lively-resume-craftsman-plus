@@ -12,12 +12,13 @@ import { toast } from 'sonner';
 
 interface LiveFeaturesProps {
   resumeData: any;
-  onUpdateResume: (data: any) => void;
+  onResumeUpdate: (data: any) => void;
+  jobDescription?: string;
 }
 
-const LiveFeatures: React.FC<LiveFeaturesProps> = ({ resumeData, onUpdateResume }) => {
+const LiveFeatures: React.FC<LiveFeaturesProps> = ({ resumeData, onResumeUpdate, jobDescription: externalJobDescription }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [jobDescription, setJobDescription] = useState('');
+  const [jobDescription, setJobDescription] = useState(externalJobDescription || '');
   const [atsScore, setATSScore] = useState(0);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
 
@@ -35,7 +36,7 @@ const LiveFeatures: React.FC<LiveFeaturesProps> = ({ resumeData, onUpdateResume 
         }
       };
       
-      onUpdateResume(enhancedData);
+      onResumeUpdate(enhancedData);
       toast.success('Resume content generated successfully!');
     } catch (error) {
       toast.error('Failed to generate content');
@@ -59,7 +60,7 @@ const LiveFeatures: React.FC<LiveFeaturesProps> = ({ resumeData, onUpdateResume 
       }));
     }
     
-    onUpdateResume(formattedData);
+    onResumeUpdate(formattedData);
     toast.success('Content auto-formatted!');
   };
 
@@ -81,7 +82,7 @@ const LiveFeatures: React.FC<LiveFeaturesProps> = ({ resumeData, onUpdateResume 
       skills: [...new Set([...(resumeData.skills || []), ...keywords.slice(0, 10)])]
     };
     
-    onUpdateResume(updatedData);
+    onResumeUpdate(updatedData);
     toast.success(`Extracted ${keywords.length} keywords!`);
   };
 
