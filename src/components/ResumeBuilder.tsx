@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -16,11 +17,11 @@ import PersonalInfoForm from './PersonalInfoForm';
 import ExperienceFormEnhanced from './ExperienceFormEnhanced';
 import EducationForm from './EducationForm';
 import EnhancedSkillsForm from './EnhancedSkillsForm';
-import ProjectsForm from './ProjectsForm';
-import CertificationsForm from './CertificationsForm';
-import LanguagesForm from './LanguagesForm';
-import InterestsForm from './InterestsForm';
-import ReferencesForm from './ReferencesForm';
+import CertificationsFormEnhanced from './enhanced-forms/CertificationsFormEnhanced';
+import LanguagesFormEnhanced from './enhanced-forms/LanguagesFormEnhanced';
+import InterestsFormEnhanced from './enhanced-forms/InterestsFormEnhanced';
+import ProjectsFormEnhanced from './enhanced-forms/ProjectsFormEnhanced';
+import ReferencesFormEnhanced from './enhanced-forms/ReferencesFormEnhanced';
 
 // Import modal components
 import EnhancedTemplateSelector from './EnhancedTemplateSelector';
@@ -480,66 +481,73 @@ const ResumeBuilder: React.FC = () => {
             
             {/* Form Section */}
             <div className="xl:col-span-2 space-y-6">
-              <Card className="shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/3 to-purple-600/3"></div>
-                <CardContent className="relative p-6">
+              <Card className="shadow-2xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl overflow-hidden rounded-3xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/3 via-purple-600/3 to-indigo-600/3 rounded-3xl"></div>
+                <CardContent className="relative p-8">
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     
                     <FormNavigation activeTab={activeTab} />
 
-                    <TabsContent value="personal">
+                    <TabsContent value="personal" className="mt-8">
                       <PersonalInfoForm 
                         data={resumeData.personal} 
                         onChange={updatePersonalInfo} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="experience">
+                    <TabsContent value="experience" className="mt-8">
                       <ExperienceFormEnhanced 
                         data={resumeData.experience} 
                         onChange={updateExperience} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="education">
+                    <TabsContent value="education" className="mt-8">
                       <EducationForm 
                         data={resumeData.education} 
                         onChange={updateEducation} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="skills">
+                    <TabsContent value="skills" className="mt-8">
                       <EnhancedSkillsForm 
                         data={skillsForForm} 
                         onChange={updateSkills} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="projects">
-                      <ProjectsForm 
+                    <TabsContent value="projects" className="mt-8">
+                      <ProjectsFormEnhanced 
                         data={resumeData.projects} 
                         onChange={updateProjects} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="certifications">
-                      <CertificationsForm 
+                    <TabsContent value="certifications" className="mt-8">
+                      <CertificationsFormEnhanced 
                         data={resumeData.certifications} 
                         onChange={updateCertifications} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="languages">
-                      <LanguagesForm 
+                    <TabsContent value="languages" className="mt-8">
+                      <LanguagesFormEnhanced 
                         data={resumeData.languages} 
                         onChange={updateLanguages} 
                       />
                     </TabsContent>
 
-                    <TabsContent value="interests">
-                      <InterestsForm 
+                    <TabsContent value="interests" className="mt-8">
+                      <InterestsFormEnhanced 
                         data={resumeData.interests} 
                         onChange={updateInterests} 
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="references" className="mt-8">
+                      <ReferencesFormEnhanced 
+                        data={references} 
+                        onChange={updateReferences} 
                       />
                     </TabsContent>
                   </Tabs>

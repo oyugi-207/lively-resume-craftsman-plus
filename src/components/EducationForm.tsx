@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Wand2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Wand2, Loader2, GraduationCap, Award, MapPin, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAPIKey } from '@/hooks/useAPIKey';
@@ -58,8 +58,8 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
 
   const generateAIDescription = async (eduId: number) => {
     const education = data.find(edu => edu.id === eduId);
-    if (!education || !education.degree || !education.school) {
-      toast.error('Please fill in degree and school first');
+    if (!education || !education.degree) {
+      toast.error('Please fill in degree first');
       return;
     }
 
@@ -72,12 +72,11 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
     try {
       console.log('Generating AI description for education:', education);
       
-      const prompt = `Generate a professional education description for a resume. 
-      Degree: ${education.degree}
-      School: ${education.school}
-      GPA: ${education.gpa || 'Not specified'}
+      const prompt = `Generate a professional education description for a resume based on this degree: "${education.degree}".
+      ${education.school ? `School: ${education.school}` : ''}
+      ${education.gpa ? `GPA: ${education.gpa}` : ''}
       
-      Create a brief, professional description (2-3 lines) highlighting relevant coursework, achievements, or skills gained. Keep it concise and relevant for a resume.`;
+      Create a brief, professional description (2-3 lines) highlighting relevant coursework, achievements, or skills gained from this degree. Focus on what makes this degree valuable for a professional career. Keep it concise and resume-appropriate.`;
 
       const { data: result, error } = await supabase.functions.invoke('gemini-ai-optimize', {
         body: { 
@@ -108,106 +107,138 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
   };
 
   return (
-    <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-        <CardTitle className="flex items-center justify-between text-gray-800">
-          <span className="flex items-center gap-2">
-            🎓 Education
-          </span>
-          <Button onClick={addEducation} size="sm" className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Education
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        {data.map((edu, index) => (
-          <div key={edu.id} className="border border-gray-200 rounded-xl p-6 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50/30 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-center">
-              <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                <span className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
-                  {index + 1}
-                </span>
-                Education {index + 1}
-              </h4>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+            <GraduationCap className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Education</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Add your educational background</p>
+          </div>
+        </div>
+        <Button onClick={addEducation} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Education
+        </Button>
+      </div>
+
+      {data.map((edu, index) => (
+        <Card key={edu.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-800 dark:to-emerald-950/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          
+          <CardHeader className="relative pb-4">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900 dark:to-teal-900 rounded-lg flex items-center justify-center">
+                  <span className="text-emerald-700 dark:text-emerald-300 font-bold text-sm">{index + 1}</span>
+                </div>
+                <CardTitle className="text-lg text-gray-900 dark:text-white">Education {index + 1}</CardTitle>
+              </div>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => removeEducation(edu.id)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
-            
-            {/* Basic Information */}
+          </CardHeader>
+          
+          <CardContent className="relative space-y-6">
+            {/* Basic Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">School/University *</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  School/University *
+                </Label>
                 <Input
                   value={edu.school}
                   onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
                   placeholder="Harvard University"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Degree *</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  Degree *
+                </Label>
                 <Input
                   value={edu.degree}
                   onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
                   placeholder="Bachelor of Science in Computer Science"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Location</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Location
+                </Label>
                 <Input
                   value={edu.location}
                   onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
                   placeholder="Cambridge, MA"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">GPA</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  GPA
+                </Label>
                 <Input
                   value={edu.gpa}
                   onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
                   placeholder="3.8/4.0"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Start Date</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Start Date
+                </Label>
                 <Input
                   value={edu.startDate}
                   onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
                   placeholder="2020"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">End Date</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  End Date
+                </Label>
                 <Input
                   value={edu.endDate}
                   onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
                   placeholder="2024"
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
             </div>
 
             {/* AI-Enhanced Description */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium text-gray-700">Description</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</Label>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => generateAIDescription(edu.id)}
-                  disabled={generatingAI === edu.id || !edu.degree || !edu.school}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border-purple-200"
+                  disabled={generatingAI === edu.id || !edu.degree}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 shadow-sm"
                 >
                   {generatingAI === edu.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -222,43 +253,49 @@ const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
                 onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
                 placeholder="Brief description of achievements, relevant coursework, or skills gained..."
                 rows={3}
-                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
               />
             </div>
 
             {/* Additional Fields */}
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Relevant Courses</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Relevant Courses</Label>
                 <Textarea
                   value={edu.courses || ''}
                   onChange={(e) => updateEducation(edu.id, 'courses', e.target.value)}
                   placeholder="Data Structures, Algorithms, Machine Learning, Database Systems..."
                   rows={2}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Honors & Awards</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Honors & Awards</Label>
                 <Input
                   value={edu.honors || ''}
                   onChange={(e) => updateEducation(edu.id, 'honors', e.target.value)}
                   placeholder="Dean's List, Magna Cum Laude, Outstanding Student Award..."
-                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
                 />
               </div>
             </div>
-          </div>
-        ))}
-        {data.length === 0 && (
-          <div className="text-center py-12 text-gray-500 bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl border-2 border-dashed border-gray-300">
-            <div className="text-6xl mb-4">🎓</div>
-            <h3 className="text-lg font-medium mb-2">No education added yet</h3>
-            <p className="text-sm mb-4">Click "Add Education" to get started with your educational background</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      ))}
+
+      {data.length === 0 && (
+        <Card className="border-2 border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/50">
+          <CardContent className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <GraduationCap className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-medium mb-2 text-gray-900">No education added yet</h3>
+            <p className="text-sm text-gray-600 mb-4">Click "Add Education" to get started with your educational background</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

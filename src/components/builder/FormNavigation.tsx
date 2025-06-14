@@ -8,7 +8,8 @@ import {
   Award, 
   Languages, 
   Heart,
-  FolderOpen
+  FolderOpen,
+  Users
 } from 'lucide-react';
 
 interface FormNavigationProps {
@@ -24,11 +25,12 @@ const FormNavigation: React.FC<FormNavigationProps> = ({ activeTab }) => {
     { id: 'projects', label: 'Projects', icon: FolderOpen },
     { id: 'certifications', label: 'Certifications', icon: Award },
     { id: 'languages', label: 'Languages', icon: Languages },
-    { id: 'interests', label: 'Interests', icon: Heart }
+    { id: 'interests', label: 'Interests', icon: Heart },
+    { id: 'references', label: 'References', icon: Users }
   ];
 
   return (
-    <TabsList className="grid grid-cols-4 lg:grid-cols-8 mb-6 h-auto bg-gradient-to-r from-gray-50 to-blue-50 p-2 rounded-xl shadow-sm">
+    <TabsList className="grid grid-cols-3 lg:grid-cols-9 mb-6 h-auto bg-gradient-to-r from-gray-50 to-blue-50 p-2 rounded-xl shadow-sm">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
