@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAPIKey } from '@/hooks/useAPIKey';
+import { useAutosave } from '@/hooks/useAutosave';
 
 // Import new components
 import BuilderHeader from './builder/BuilderHeader';
@@ -147,6 +148,14 @@ const ResumeBuilder: React.FC = () => {
   const [customColors, setCustomColors] = useState<any>(null);
   const [atsScore, setAtsScore] = useState(95);
 
+  // Autosave functionality
+  useAutosave({
+    data: resumeData,
+    onSave: saveResumeData,
+    delay: 3000,
+    enabled: !!user && (resumeData.personal.fullName?.length > 0 || resumeData.personal.email?.length > 0)
+  });
+
   useEffect(() => {
     if (user) {
       loadResumeData();
@@ -220,8 +229,7 @@ const ResumeBuilder: React.FC = () => {
 
   const saveResumeData = async () => {
     if (!user) {
-      toast.error('Please sign in to save your resume');
-      return;
+      return; // Don't show error for autosave when user is not logged in
     }
 
     setSaving(true);
@@ -262,10 +270,10 @@ const ResumeBuilder: React.FC = () => {
         setResumeId(data.id);
       }
 
-      toast.success('Resume saved successfully!');
+      console.log('Resume saved successfully');
     } catch (error: any) {
       console.error('Error saving resume:', error);
-      toast.error('Failed to save resume');
+      throw error; // Re-throw for autosave error handling
     } finally {
       setSaving(false);
     }

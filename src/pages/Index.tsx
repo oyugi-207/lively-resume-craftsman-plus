@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Zap, Target, Download, Users, Star, CheckCircle, ArrowRight, Moon, Sun, UserCheck } from "lucide-react";
+import { FileText, Zap, Target, Download, Users, Star, CheckCircle, ArrowRight, Moon, Sun, UserCheck, Monitor, Smartphone, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,6 +53,27 @@ const Index = () => {
     "Real-time preview",
     "Multiple export formats",
     "Job description analysis"
+  ];
+
+  const screenshots = [
+    {
+      title: "Resume Builder",
+      description: "Intuitive form-based builder with real-time preview",
+      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=500&fit=crop&crop=entropy&auto=format",
+      features: ["Smart forms", "Auto-save", "AI assistance"]
+    },
+    {
+      title: "Template Gallery",
+      description: "Professional templates designed by experts",
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=500&fit=crop&crop=entropy&auto=format",
+      features: ["6+ templates", "Customizable", "ATS-friendly"]
+    },
+    {
+      title: "AI-Powered Features",
+      description: "Let AI help you write compelling content",
+      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=500&fit=crop&crop=entropy&auto=format",
+      features: ["Content generation", "Optimization", "Smart suggestions"]
+    }
   ];
 
   return (
@@ -153,6 +173,69 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Screenshots Section */}
+      <section className="py-20 bg-white/30 dark:bg-gray-800/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              See ResumeAI Pro in Action
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Take a look at our powerful features and intuitive interface designed to help you create the perfect resume
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {screenshots.map((screenshot, index) => (
+              <Card key={index} className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden rounded-2xl">
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={screenshot.image} 
+                    alt={screenshot.title}
+                    className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  <div className="absolute top-4 right-4">
+                    <Badge variant="secondary" className="bg-blue-600 text-white">
+                      <Monitor className="w-3 h-3 mr-1" />
+                      Live
+                    </Badge>
+                  </div>
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    {screenshot.title}
+                    <ArrowRight className="w-4 h-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-300 text-base">
+                    {screenshot.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {screenshot.features.map((feature, featureIndex) => (
+                      <div key={featureIndex} className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link to="/auth">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                Try It Yourself
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 bg-white/50 dark:bg-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -187,7 +270,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Enhanced Benefits Section with Visual Elements */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -207,12 +290,34 @@ const Index = () => {
                   </div>
                 ))}
               </div>
+
+              <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Auto-Save Feature</h3>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Never lose your progress! Our smart auto-save feature automatically saves your resume as you type, ensuring your work is always protected.
+                </p>
+              </div>
             </div>
             
             <div className="relative">
               <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8 text-white">
                 <div className="text-center">
-                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-90" />
+                  <div className="relative mb-6">
+                    <img 
+                      src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=300&fit=crop&crop=entropy&auto=format" 
+                      alt="Resume Builder Interface"
+                      className="rounded-lg shadow-2xl mx-auto"
+                    />
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      Auto-saving...
+                    </div>
+                  </div>
                   <h3 className="text-2xl font-bold mb-2">Ready to Get Started?</h3>
                   <p className="mb-6 opacity-90">Join thousands of professionals who've landed their dream jobs</p>
                   <Link to="/auth">
