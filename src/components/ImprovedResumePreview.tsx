@@ -18,6 +18,11 @@ import {
   ConsultingEliteTemplate
 } from './ResumeTemplates';
 import ModernCreativeTemplate from './ResumeTemplates/ModernCreativeTemplate';
+import CreativePortfolioTemplate from './ResumeTemplates/CreativePortfolioTemplate';
+import MinimalistElegantTemplate from './ResumeTemplates/MinimalistElegantTemplate';
+import TechInnovatorTemplate from './ResumeTemplates/TechInnovatorTemplate';
+import ExecutiveEliteTemplate from './ResumeTemplates/ExecutiveEliteTemplate';
+import CreativeDesignerTemplate from './ResumeTemplates/CreativeDesignerTemplate';
 
 interface ResumeData {
   personal: {
@@ -88,7 +93,7 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     height: `${100 / scale}%`,
   };
 
-  // Complete template mapping with all templates including the new one
+  // Complete template mapping with all templates including the new ones
   const templates = [
     ModernProfessionalTemplate,     // 0 - Modern Professional
     ExecutiveTemplate,              // 1 - Executive Leadership  
@@ -106,7 +111,12 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
     AcademicScholarTemplate,        // 13 - Academic Scholar
     SalesChampionTemplate,          // 14 - Sales Champion
     ConsultingEliteTemplate,        // 15 - Consulting Elite
-    ModernCreativeTemplate,         // 16 - Modern Creative (New)
+    ModernCreativeTemplate,         // 16 - Modern Creative
+    CreativePortfolioTemplate,      // 17 - Creative Portfolio
+    MinimalistElegantTemplate,      // 18 - Minimalist Elegant
+    TechInnovatorTemplate,          // 19 - Tech Innovator
+    ExecutiveEliteTemplate,         // 20 - Executive Elite
+    CreativeDesignerTemplate,       // 21 - Creative Designer Pro
   ];
 
   // Ensure we have a valid template

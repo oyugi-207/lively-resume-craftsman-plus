@@ -104,69 +104,69 @@ const EnhancedTemplateSelector: React.FC<EnhancedTemplateSelectorProps> = ({
     },
     {
       id: 6,
-      name: 'Two Column Layout',
-      category: 'modern',
-      description: 'Efficient two-column design for comprehensive resumes',
-      atsScore: 91,
+      name: 'Professional Blue',
+      category: 'professional',
+      description: 'Classic blue-themed professional design',
+      atsScore: 94,
       popular: false,
-      color: 'bg-gradient-to-br from-indigo-600 to-blue-600',
-      industry: ['Healthcare', 'Education', 'Research', 'Academia'],
-      features: ['Two Column Layout', 'Comprehensive', 'Information Dense']
+      color: 'bg-gradient-to-br from-blue-700 to-indigo-800',
+      industry: ['Corporate', 'Finance', 'Healthcare', 'Education'],
+      features: ['Professional', 'Trust-Building', 'Classic']
     },
     {
       id: 7,
-      name: 'Academic Scholar',
-      category: 'academic',
-      description: 'Scholarly design for academic and research positions',
-      atsScore: 93,
+      name: 'Legal Professional',
+      category: 'legal',
+      description: 'Authoritative design for legal professionals',
+      atsScore: 97,
       popular: false,
-      color: 'bg-gradient-to-br from-amber-600 to-yellow-600',
-      industry: ['Academia', 'Research', 'Education', 'Science'],
-      features: ['Academic Focus', 'Publication Ready', 'Research Emphasis']
+      color: 'bg-gradient-to-br from-stone-600 to-gray-700',
+      industry: ['Legal', 'Law', 'Compliance', 'Government'],
+      features: ['Professional Authority', 'Legal Focus', 'Conservative Design']
     },
     {
       id: 8,
-      name: 'Sales Champion',
-      category: 'sales',
-      description: 'Results-driven design highlighting achievements',
-      atsScore: 90,
+      name: 'Engineering Focus',
+      category: 'engineering',
+      description: 'Technical precision for engineering professionals',
+      atsScore: 95,
       popular: false,
-      color: 'bg-gradient-to-br from-red-500 to-orange-500',
-      industry: ['Sales', 'Business Development', 'Account Management'],
-      features: ['Achievement Focus', 'Results Driven', 'Performance Metrics']
+      color: 'bg-gradient-to-br from-slate-700 to-zinc-700',
+      industry: ['Engineering', 'Manufacturing', 'Technical'],
+      features: ['Technical Precision', 'Project Focus', 'Engineering Metrics']
     },
     {
       id: 9,
-      name: 'Startup Innovator',
-      category: 'startup',
-      description: 'Dynamic design for startup and entrepreneurial roles',
-      atsScore: 87,
+      name: 'Data Specialist',
+      category: 'tech',
+      description: 'Analytics-focused design for data professionals',
+      atsScore: 89,
       popular: false,
-      color: 'bg-gradient-to-br from-rose-500 to-pink-600',
-      industry: ['Startups', 'Innovation', 'Entrepreneurship'],
-      features: ['Dynamic Design', 'Innovation Focus', 'Startup Friendly']
+      color: 'bg-gradient-to-br from-cyan-600 to-blue-600',
+      industry: ['Data Science', 'Analytics', 'AI/ML', 'Research'],
+      features: ['Data Focus', 'Analytics Emphasis', 'Technical Skills']
     },
     {
       id: 10,
-      name: 'Healthcare Professional',
-      category: 'healthcare',
-      description: 'Trusted design for medical and healthcare professionals',
-      atsScore: 94,
+      name: 'Supply Chain Manager',
+      category: 'operations',
+      description: 'Operations-focused design for supply chain professionals',
+      atsScore: 91,
       popular: false,
-      color: 'bg-gradient-to-br from-blue-500 to-cyan-500',
-      industry: ['Healthcare', 'Medical', 'Nursing', 'Therapy'],
-      features: ['Professional Trust', 'Medical Focus', 'Care Emphasis']
+      color: 'bg-gradient-to-br from-orange-600 to-red-600',
+      industry: ['Supply Chain', 'Logistics', 'Operations', 'Manufacturing'],
+      features: ['Operations Focus', 'Process Emphasis', 'Results-Driven']
     },
     {
       id: 11,
-      name: 'Finance Expert',
-      category: 'finance',
-      description: 'Professional design for financial services',
-      atsScore: 96,
+      name: 'Clean Modern',
+      category: 'modern',
+      description: 'Contemporary design with clean aesthetics',
+      atsScore: 93,
       popular: false,
-      color: 'bg-gradient-to-br from-emerald-600 to-green-600',
-      industry: ['Finance', 'Banking', 'Investment', 'Accounting'],
-      features: ['Financial Focus', 'Numbers Emphasis', 'Professional Trust']
+      color: 'bg-gradient-to-br from-teal-500 to-green-600',
+      industry: ['Modern Companies', 'Startups', 'Tech', 'Creative'],
+      features: ['Modern Design', 'Clean Aesthetics', 'Contemporary']
     },
     {
       id: 12,
@@ -181,25 +181,25 @@ const EnhancedTemplateSelector: React.FC<EnhancedTemplateSelectorProps> = ({
     },
     {
       id: 13,
-      name: 'Engineering Focus',
-      category: 'engineering',
-      description: 'Technical precision for engineering professionals',
-      atsScore: 95,
+      name: 'Academic Scholar',
+      category: 'academic',
+      description: 'Scholarly design for academic and research positions',
+      atsScore: 93,
       popular: false,
-      color: 'bg-gradient-to-br from-slate-700 to-zinc-700',
-      industry: ['Engineering', 'Manufacturing', 'Technical'],
-      features: ['Technical Precision', 'Project Focus', 'Engineering Metrics']
+      color: 'bg-gradient-to-br from-amber-600 to-yellow-600',
+      industry: ['Academia', 'Research', 'Education', 'Science'],
+      features: ['Academic Focus', 'Publication Ready', 'Research Emphasis']
     },
     {
       id: 14,
-      name: 'Legal Professional',
-      category: 'legal',
-      description: 'Authoritative design for legal professionals',
-      atsScore: 97,
+      name: 'Sales Champion',
+      category: 'sales',
+      description: 'Results-driven design highlighting achievements',
+      atsScore: 90,
       popular: false,
-      color: 'bg-gradient-to-br from-stone-600 to-gray-700',
-      industry: ['Legal', 'Law', 'Compliance', 'Government'],
-      features: ['Professional Authority', 'Legal Focus', 'Conservative Design']
+      color: 'bg-gradient-to-br from-red-500 to-orange-500',
+      industry: ['Sales', 'Business Development', 'Account Management'],
+      features: ['Achievement Focus', 'Results Driven', 'Performance Metrics']
     },
     {
       id: 15,
@@ -211,6 +211,72 @@ const EnhancedTemplateSelector: React.FC<EnhancedTemplateSelectorProps> = ({
       color: 'bg-gradient-to-br from-sky-600 to-blue-700',
       industry: ['Consulting', 'Strategy', 'Business Advisory'],
       features: ['Strategic Focus', 'Problem Solving', 'Client Results']
+    },
+    {
+      id: 16,
+      name: 'Modern Creative',
+      category: 'creative',
+      description: 'Balanced creativity with professionalism',
+      atsScore: 85,
+      popular: true,
+      color: 'bg-gradient-to-br from-purple-600 to-blue-600',
+      industry: ['UX/UI', 'Design', 'Creative', 'Digital'],
+      features: ['Creative Balance', 'Modern Design', 'Professional Appeal']
+    },
+    {
+      id: 17,
+      name: 'Creative Portfolio',
+      category: 'creative',
+      description: 'Artistic design with geometric visual elements',
+      atsScore: 82,
+      popular: true,
+      color: 'bg-gradient-to-br from-pink-500 to-orange-500',
+      industry: ['Design', 'Art', 'Creative Direction', 'Visual Arts'],
+      features: ['Artistic Design', 'Visual Portfolio', 'Creative Showcase']
+    },
+    {
+      id: 18,
+      name: 'Minimalist Elegant',
+      category: 'minimalist',
+      description: 'Sophisticated minimalism with elegant typography',
+      atsScore: 94,
+      popular: false,
+      color: 'bg-gradient-to-br from-gray-500 to-slate-600',
+      industry: ['Executive', 'Luxury', 'Professional Services', 'Consulting'],
+      features: ['Elegant Design', 'Sophisticated Layout', 'Premium Feel']
+    },
+    {
+      id: 19,
+      name: 'Tech Innovator',
+      category: 'tech',
+      description: 'Dark theme code-inspired design for developers',
+      atsScore: 88,
+      popular: true,
+      color: 'bg-gradient-to-br from-gray-800 to-black',
+      industry: ['Software Development', 'DevOps', 'Tech Innovation', 'Programming'],
+      features: ['Dark Theme', 'Code Aesthetic', 'Developer-Focused']
+    },
+    {
+      id: 20,
+      name: 'Executive Elite',
+      category: 'executive',
+      description: 'Luxury design for C-level executives and leaders',
+      atsScore: 91,
+      popular: false,
+      color: 'bg-gradient-to-br from-yellow-600 to-yellow-800',
+      industry: ['C-Level', 'Executive Leadership', 'Board Positions', 'Senior Management'],
+      features: ['Luxury Design', 'Executive Presence', 'Premium Quality']
+    },
+    {
+      id: 21,
+      name: 'Creative Designer Pro',
+      category: 'creative',
+      description: 'Advanced creative design with artistic flair',
+      atsScore: 86,
+      popular: true,
+      color: 'bg-gradient-to-br from-rose-500 to-purple-600',
+      industry: ['Creative Direction', 'Art Direction', 'Design Leadership', 'Creative Strategy'],
+      features: ['Advanced Design', 'Artistic Elements', 'Creative Leadership']
     }
   ];
 

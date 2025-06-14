@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -65,25 +64,25 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     },
     {
       id: 4,
-      name: "Artistic Portfolio", 
-      category: "creative",
-      description: "Visual-heavy template for showcasing creative work",
-      color: "bg-gradient-to-br from-orange-500 to-red-600",
+      name: "Minimalist Clean", 
+      category: "minimalist",
+      description: "Ultra-clean design with maximum readability",
+      color: "bg-gradient-to-br from-gray-400 to-gray-600",
       popular: false,
-      atsScore: 72,
-      features: ["Portfolio", "Visual", "Creative"],
-      industry: ["Art", "Photography", "Design"]
+      atsScore: 96,
+      features: ["Minimal", "Clean", "Readable"],
+      industry: ["Any Industry", "Startups", "Modern"]
     },
     {
       id: 5,
-      name: "Modern Creative",
-      category: "creative", 
-      description: "Balanced creativity with professionalism",
-      color: "bg-gradient-to-br from-teal-500 to-cyan-600",
+      name: "Corporate Classic",
+      category: "professional", 
+      description: "Traditional professional format",
+      color: "bg-gradient-to-br from-blue-700 to-indigo-800",
       popular: false,
-      atsScore: 85,
-      features: ["Modern", "Balanced", "Creative"],
-      industry: ["UX/UI", "Branding", "Digital"]
+      atsScore: 94,
+      features: ["Classic", "Professional", "Reliable"],
+      industry: ["Corporate", "Traditional", "Formal"]
     },
     {
       id: 6,
@@ -98,158 +97,168 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     },
     {
       id: 7,
-      name: "Full Stack Developer",
-      category: "tech",
-      description: "Multi-section layout for showcasing technical skills",
-      color: "bg-gradient-to-br from-indigo-600 to-purple-600",
+      name: "Legal Professional",
+      category: "professional",
+      description: "Authoritative design for legal professionals",
+      color: "bg-gradient-to-br from-stone-600 to-gray-700",
       popular: false,
-      atsScore: 88,
-      features: ["Multi-Column", "Technical", "Skills-Focused"],
-      industry: ["Development", "Programming", "Tech"]
+      atsScore: 97,
+      features: ["Authoritative", "Conservative", "Professional"],
+      industry: ["Legal", "Law", "Compliance"]
     },
     {
       id: 8,
-      name: "DevOps Engineer",
+      name: "Engineering Focus",
       category: "tech",
-      description: "Infrastructure-focused design for DevOps professionals",
-      color: "bg-gradient-to-br from-emerald-600 to-green-700",
+      description: "Technical precision for engineering professionals",
+      color: "bg-gradient-to-br from-slate-700 to-zinc-700",
       popular: false,
-      atsScore: 86,
-      features: ["Infrastructure", "Technical", "Systems"],
-      industry: ["DevOps", "Cloud", "Infrastructure"]
+      atsScore: 95,
+      features: ["Technical", "Precise", "Engineering"],
+      industry: ["Engineering", "Manufacturing", "Technical"]
     },
     {
       id: 9,
-      name: "Research Academic",
-      category: "academic",
-      description: "Publication-focused layout for researchers",
-      color: "bg-gradient-to-br from-amber-600 to-yellow-600",
-      popular: false,
-      atsScore: 94,
-      features: ["Research-Focused", "Publications", "Academic"],
-      industry: ["Research", "Academia", "Science"]
-    },
-    {
-      id: 10,
-      name: "PhD Candidate",
-      category: "academic",
-      description: "Balanced education and research experience",
-      color: "bg-gradient-to-br from-violet-600 to-purple-700",
-      popular: false,
-      atsScore: 91,
-      features: ["Education-Focused", "Research", "Graduate"],
-      industry: ["Academia", "PhD", "Research"]
-    },
-    // Additional templates to reach 20+
-    {
-      id: 11,
-      name: "Startup Founder",
-      category: "professional",
-      description: "Bold design for entrepreneurs and startup leaders",
-      color: "bg-gradient-to-br from-rose-500 to-pink-600",
-      popular: false,
-      atsScore: 87,
-      features: ["Entrepreneurial", "Bold", "Leadership"],
-      industry: ["Startups", "Entrepreneurship", "Innovation"]
-    },
-    {
-      id: 12,
-      name: "Marketing Specialist",
-      category: "creative",
-      description: "Dynamic layout perfect for marketing professionals",
-      color: "bg-gradient-to-br from-yellow-500 to-orange-500",
-      popular: false,
-      atsScore: 83,
-      features: ["Dynamic", "Marketing-Focused", "Results-Driven"],
-      industry: ["Marketing", "Sales", "Communications"]
-    },
-    {
-      id: 13,
-      name: "Healthcare Professional",
-      category: "professional",
-      description: "Clean, trustworthy design for medical professionals",
-      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
-      popular: false,
-      atsScore: 96,
-      features: ["Professional", "Trustworthy", "Clean"],
-      industry: ["Healthcare", "Medical", "Nursing"]
-    },
-    {
-      id: 14,
-      name: "Finance Expert",
-      category: "professional",
-      description: "Sophisticated layout for financial professionals",
-      color: "bg-gradient-to-br from-green-700 to-emerald-700",
-      popular: false,
-      atsScore: 94,
-      features: ["Sophisticated", "Numbers-Focused", "Professional"],
-      industry: ["Finance", "Banking", "Investment"]
-    },
-    {
-      id: 15,
-      name: "Creative Writer",
-      category: "creative",
-      description: "Elegant design for writers and content creators",
-      color: "bg-gradient-to-br from-purple-500 to-indigo-500",
-      popular: false,
-      atsScore: 79,
-      features: ["Elegant", "Content-Focused", "Creative"],
-      industry: ["Writing", "Content", "Publishing"]
-    },
-    {
-      id: 16,
-      name: "Data Scientist",
+      name: "Data Specialist",
       category: "tech",
       description: "Analytics-focused design for data professionals",
       color: "bg-gradient-to-br from-cyan-600 to-blue-600",
       popular: false,
       atsScore: 89,
-      features: ["Analytics-Focused", "Technical", "Data-Driven"],
+      features: ["Analytics", "Data-Driven", "Technical"],
       industry: ["Data Science", "Analytics", "AI/ML"]
     },
     {
-      id: 17,
-      name: "Product Manager",
+      id: 10,
+      name: "Supply Chain",
       category: "professional",
-      description: "Strategic layout for product management roles",
-      color: "bg-gradient-to-br from-indigo-500 to-purple-500",
+      description: "Logistics-focused professional design",
+      color: "bg-gradient-to-br from-orange-600 to-red-600",
       popular: false,
-      atsScore: 88,
-      features: ["Strategic", "Product-Focused", "Leadership"],
-      industry: ["Product Management", "Strategy", "Tech"]
+      atsScore: 91,
+      features: ["Logistics", "Operations", "Professional"],
+      industry: ["Supply Chain", "Logistics", "Operations"]
+    },
+    {
+      id: 11,
+      name: "Clean Modern",
+      category: "modern",
+      description: "Contemporary clean design for modern professionals",
+      color: "bg-gradient-to-br from-teal-500 to-green-600",
+      popular: false,
+      atsScore: 93,
+      features: ["Modern", "Clean", "Professional"],
+      industry: ["Modern", "Startups", "Tech"]
+    },
+    {
+      id: 12,
+      name: "Marketing Creative",
+      category: "creative",
+      description: "Brand-focused design for marketing professionals",
+      color: "bg-gradient-to-br from-violet-600 to-purple-600",
+      popular: false,
+      atsScore: 89,
+      features: ["Creative", "Marketing", "Brand-Focused"],
+      industry: ["Marketing", "Brand", "Digital"]
+    },
+    {
+      id: 13,
+      name: "Academic Scholar",
+      category: "academic",
+      description: "Scholarly design for academic and research positions",
+      color: "bg-gradient-to-br from-amber-600 to-yellow-600",
+      popular: false,
+      atsScore: 93,
+      features: ["Academic", "Research", "Scholarly"],
+      industry: ["Academia", "Research", "Education"]
+    },
+    {
+      id: 14,
+      name: "Sales Champion",
+      category: "sales",
+      description: "Results-driven design highlighting achievements",
+      color: "bg-gradient-to-br from-red-500 to-orange-500",
+      popular: false,
+      atsScore: 90,
+      features: ["Results-Driven", "Achievement", "Sales"],
+      industry: ["Sales", "Business Development", "Account Management"]
+    },
+    {
+      id: 15,
+      name: "Consulting Elite",
+      category: "consulting",
+      description: "Premium design for consulting professionals",
+      color: "bg-gradient-to-br from-sky-600 to-blue-700",
+      popular: false,
+      atsScore: 93,
+      features: ["Strategic", "Premium", "Elite"],
+      industry: ["Consulting", "Strategy", "Advisory"]
+    },
+    {
+      id: 16,
+      name: "Modern Creative",
+      category: "creative",
+      description: "Balanced creativity with professionalism",
+      color: "bg-gradient-to-br from-purple-600 to-blue-600",
+      popular: true,
+      atsScore: 85,
+      features: ["Modern", "Creative", "Balanced"],
+      industry: ["UX/UI", "Design", "Creative"]
+    },
+    {
+      id: 17,
+      name: "Creative Portfolio",
+      category: "creative",
+      description: "Artistic design with geometric elements",
+      color: "bg-gradient-to-br from-pink-500 to-orange-500",
+      popular: true,
+      atsScore: 82,
+      features: ["Artistic", "Portfolio", "Visual"],
+      industry: ["Design", "Art", "Creative"]
     },
     {
       id: 18,
-      name: "Consultant",
-      category: "professional",
-      description: "Professional design for consulting professionals",
-      color: "bg-gradient-to-br from-gray-600 to-blue-600",
+      name: "Minimalist Elegant",
+      category: "minimalist",
+      description: "Sophisticated minimalism with elegant typography",
+      color: "bg-gradient-to-br from-gray-500 to-slate-600",
       popular: false,
-      atsScore: 93,
-      features: ["Professional", "Consulting-Focused", "Strategic"],
-      industry: ["Consulting", "Strategy", "Business"]
+      atsScore: 94,
+      features: ["Elegant", "Minimal", "Sophisticated"],
+      industry: ["Any Industry", "Executive", "Professional"]
     },
     {
       id: 19,
-      name: "Operations Manager",
-      category: "professional",
-      description: "Efficient design for operations professionals",
-      color: "bg-gradient-to-br from-emerald-500 to-green-600",
-      popular: false,
-      atsScore: 90,
-      features: ["Efficient", "Operations-Focused", "Results-Driven"],
-      industry: ["Operations", "Logistics", "Management"]
+      name: "Tech Innovator",
+      category: "tech",
+      description: "Dark theme code-inspired design for developers",
+      color: "bg-gradient-to-br from-gray-800 to-black",
+      popular: true,
+      atsScore: 88,
+      features: ["Dark Theme", "Code-Inspired", "Modern"],
+      industry: ["Software", "Development", "Tech"]
     },
     {
       id: 20,
-      name: "Sales Professional",
-      category: "professional",
-      description: "Results-driven design for sales professionals",
-      color: "bg-gradient-to-br from-red-500 to-orange-500",
+      name: "Executive Elite",
+      category: "executive",
+      description: "Luxury design for C-level executives",
+      color: "bg-gradient-to-br from-yellow-600 to-yellow-800",
       popular: false,
-      atsScore: 85,
-      features: ["Results-Driven", "Sales-Focused", "Dynamic"],
-      industry: ["Sales", "Business Development", "Account Management"]
+      atsScore: 91,
+      features: ["Luxury", "Executive", "Premium"],
+      industry: ["C-Level", "Executive", "Leadership"]
+    },
+    {
+      id: 21,
+      name: "Creative Designer Pro",
+      category: "creative",
+      description: "Advanced creative design with artistic elements",
+      color: "bg-gradient-to-br from-rose-500 to-purple-600",
+      popular: true,
+      atsScore: 86,
+      features: ["Artistic", "Advanced", "Creative"],
+      industry: ["Design", "Creative", "Art Direction"]
     }
   ];
 
