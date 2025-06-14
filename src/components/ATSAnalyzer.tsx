@@ -17,7 +17,8 @@ import {
   Search,
   Eye,
   Award,
-  BarChart3
+  BarChart3,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAPIKey } from '@/hooks/useAPIKey';
@@ -57,30 +58,38 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
   const { hasApiKey, getApiKey } = useAPIKey();
 
   const analyzeWithAI = async () => {
-    if (!hasApiKey) {
-      toast.error('Please set up your AI API key in settings to use ATS analysis');
-      return;
-    }
-
     setIsAnalyzing(true);
     try {
+      const apiKey = getApiKey('gemini') || getApiKey('openai');
+      
+      if (!apiKey) {
+        toast.info('Running basic analysis. Add your AI API key in settings for detailed insights.');
+      }
+
       const { data, error } = await supabase.functions.invoke('ats-ai-analyzer', {
         body: { 
           resumeData, 
           jobDescription,
-          apiKey: getApiKey('gemini') || getApiKey('openai')
+          apiKey
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('ATS analysis error:', error);
+        toast.error('Analysis failed. Running fallback analysis.');
+      }
 
-      setAnalysis(data);
-      toast.success('ATS analysis completed successfully!');
+      if (data) {
+        setAnalysis(data);
+        if (hasApiKey) {
+          toast.success('AI-powered ATS analysis completed!');
+        } else {
+          toast.success('Basic ATS analysis completed!');
+        }
+      }
     } catch (error: any) {
       console.error('ATS analysis error:', error);
       toast.error('Failed to analyze resume. Please try again.');
-      // Fallback to local analysis
-      performLocalAnalysis();
     } finally {
       setIsAnalyzing(false);
     }
@@ -221,9 +230,17 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
     return 'destructive';
   };
 
+  const getSuggestionIcon = (type: string) => {
+    switch (type) {
+      case 'critical': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      default: return <CheckCircle className="w-4 h-4 text-blue-500" />;
+    }
+  };
+
   useEffect(() => {
     if (resumeData && Object.keys(resumeData).length > 0) {
-      performLocalAnalysis();
+      analyzeWithAI();
     }
   }, [resumeData, jobDescription]);
 
@@ -236,6 +253,11 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
           {analysis && (
             <Badge variant={getScoreBadgeVariant(analysis.overallScore)} className="ml-2">
               {analysis.overallScore}% {getScoreLabel(analysis.overallScore)}
+            </Badge>
+          )}
+          {!hasApiKey && (
+            <Badge variant="outline" className="ml-2 text-xs">
+              Basic Mode
             </Badge>
           )}
         </CardTitle>
@@ -253,24 +275,37 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
             </div>
             <Progress value={analysis.overallScore} className="w-full h-3 mb-4" />
             
-            {/* Quick Action Button */}
-            <Button 
-              onClick={analyzeWithAI}
-              disabled={isAnalyzing}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              {isAnalyzing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  AI Analysis in Progress...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  {hasApiKey ? 'Run AI Analysis' : 'Quick Analysis'}
-                </>
+            {/* Action Buttons */}
+            <div className="flex gap-2 justify-center">
+              <Button 
+                onClick={analyzeWithAI}
+                disabled={isAnalyzing}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Re-analyze
+                  </>
+                )}
+              </Button>
+              
+              {!hasApiKey && (
+                <Button 
+                  variant="outline"
+                  onClick={() => toast.info('Go to Settings to add your AI API key for detailed analysis')}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Setup AI
+                </Button>
               )}
-            </Button>
+            </div>
           </div>
         )}
 
@@ -286,7 +321,7 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {Object.entries(analysis.sections).map(([key, section]) => (
                   <div key={key} className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
                     <div className={`text-xl font-bold ${getScoreColor(section.score)}`}>
@@ -294,6 +329,29 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-300 capitalize">
                       {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Key Suggestions */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 dark:text-white">Key Recommendations</h3>
+                {analysis.suggestions.slice(0, 3).map((suggestion, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                    {getSuggestionIcon(suggestion.type)}
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {suggestion.category}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        {suggestion.message}
+                      </div>
+                      {suggestion.action && (
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          💡 {suggestion.action}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -418,51 +476,77 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-purple-600" />
-                  <h3 className="font-semibold">Optimization Tips</h3>
+                  <h3 className="font-semibold">All Optimization Tips</h3>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">ATS Best Practices</h4>
-                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                      <li>• Use standard section headers (Experience, Education, Skills)</li>
-                      <li>• Include relevant keywords from the job description</li>
-                      <li>• Quantify achievements with numbers and percentages</li>
-                      <li>• Use a clean, simple format without complex graphics</li>
-                      <li>• Save as PDF to preserve formatting</li>
-                    </ul>
-                  </div>
+                  {analysis.suggestions.map((suggestion, idx) => (
+                    <div key={idx} className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                      {getSuggestionIcon(suggestion.type)}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {suggestion.category}
+                          </span>
+                          <Badge 
+                            variant={suggestion.type === 'critical' ? 'destructive' : 
+                                   suggestion.type === 'warning' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {suggestion.type}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                          {suggestion.message}
+                        </div>
+                        {suggestion.action && (
+                          <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            💡 Action: {suggestion.action}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                  <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
-                    <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">Content Optimization</h4>
-                    <ul className="text-sm text-green-800 dark:text-green-200 space-y-1">
-                      <li>• Start bullet points with strong action verbs</li>
-                      <li>• Include industry-specific terminology</li>
-                      <li>• Tailor content to match job requirements</li>
-                      <li>• Keep sentences concise and impactful</li>
-                      <li>• Include both technical and soft skills</li>
-                    </ul>
-                  </div>
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">ATS Best Practices</h4>
+                  <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <li>• Use standard section headers (Experience, Education, Skills)</li>
+                    <li>• Include relevant keywords from the job description</li>
+                    <li>• Quantify achievements with numbers and percentages</li>
+                    <li>• Use a clean, simple format without complex graphics</li>
+                    <li>• Save as PDF to preserve formatting</li>
+                  </ul>
                 </div>
               </div>
             </TabsContent>
           </Tabs>
         )}
 
-        {!analysis && (
+        {!analysis && !isAnalyzing && (
           <div className="text-center py-8">
             <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               Add your resume information to get started with ATS analysis
             </p>
             <Button 
-              onClick={performLocalAnalysis}
+              onClick={analyzeWithAI}
               variant="outline"
               className="flex items-center gap-2"
             >
               <Eye className="w-4 h-4" />
               Analyze Current Resume
             </Button>
+          </div>
+        )}
+
+        {isAnalyzing && !analysis && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-300">
+              {hasApiKey ? 'Running AI-powered analysis...' : 'Running basic analysis...'}
+            </p>
           </div>
         )}
       </CardContent>
