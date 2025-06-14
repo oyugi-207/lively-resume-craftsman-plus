@@ -51,6 +51,7 @@ import JobDescriptionEmbedder from '@/components/JobDescriptionEmbedder';
 import { ProfileIntegrationService } from '@/services/profileIntegration';
 import { useAPIKey } from '@/hooks/useAPIKey';
 import ComingSoonFeatures from '@/components/ComingSoonFeatures';
+import LiveFeatures from '@/components/LiveFeatures';
 
 interface ResumeData {
   personal: {
@@ -672,6 +673,15 @@ const Builder: React.FC = () => {
           <ATSOptimizer 
             resumeData={resumeData} 
             onOptimize={handleATSOptimization}
+          />
+        </div>
+
+        {/* Live Features Section - NEW */}
+        <div className="mb-4 sm:mb-6">
+          <LiveFeatures 
+            resumeData={resumeData}
+            onResumeUpdate={setResumeData}
+            jobDescription={jobDescription}
           />
         </div>
 
