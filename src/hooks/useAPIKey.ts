@@ -7,21 +7,28 @@ export const useAPIKey = () => {
 
   useEffect(() => {
     // Check localStorage first
-    const storedKey = localStorage.getItem('gemini_api_key');
+    const storedKey = localStorage.getItem('gemini_api_key') || localStorage.getItem('openai_api_key');
     if (storedKey) {
       setApiKey(storedKey);
     }
     setIsLoading(false);
   }, []);
 
-  const saveApiKey = (key: string) => {
-    localStorage.setItem('gemini_api_key', key);
+  const saveApiKey = (key: string, provider: 'gemini' | 'openai' = 'gemini') => {
+    const storageKey = provider === 'gemini' ? 'gemini_api_key' : 'openai_api_key';
+    localStorage.setItem(storageKey, key);
     setApiKey(key);
   };
 
   const removeApiKey = () => {
     localStorage.removeItem('gemini_api_key');
+    localStorage.removeItem('openai_api_key');
     setApiKey(null);
+  };
+
+  const getApiKey = (provider: 'gemini' | 'openai' = 'gemini'): string | null => {
+    const storageKey = provider === 'gemini' ? 'gemini_api_key' : 'openai_api_key';
+    return localStorage.getItem(storageKey);
   };
 
   return {
@@ -29,6 +36,7 @@ export const useAPIKey = () => {
     isLoading,
     saveApiKey,
     removeApiKey,
+    getApiKey,
     hasApiKey: !!apiKey
   };
 };

@@ -36,6 +36,8 @@ import EnhancedTemplateSelector from './EnhancedTemplateSelector';
 import EnhancedCVParser from './EnhancedCVParser';
 import EnhancedJobDescriptionParser from './EnhancedJobDescriptionParser';
 import ComingSoonFeatures from './ComingSoonFeatures';
+import LiveFeatures from './LiveFeatures';
+import AIIntegration from './AIIntegration';
 
 interface ResumeData {
   personal: {
@@ -111,6 +113,8 @@ const ResumeBuilder: React.FC = () => {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showCVParser, setShowCVParser] = useState(false);
   const [showJobParser, setShowJobParser] = useState(false);
+  const [showAIIntegration, setShowAIIntegration] = useState(false);
+  const [showLiveFeatures, setShowLiveFeatures] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resumeId, setResumeId] = useState<string | null>(null);
@@ -333,11 +337,19 @@ const ResumeBuilder: React.FC = () => {
             </Button>
             <Button
               variant="outline"
-              onClick={() => setShowComingSoon(true)}
+              onClick={() => setShowAIIntegration(true)}
+              className="flex items-center gap-2"
+            >
+              <Brain className="w-4 h-4" />
+              AI Tools
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowLiveFeatures(true)}
               className="flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              Coming Soon
+              Live Features
             </Button>
             <Button
               variant="outline"
@@ -388,7 +400,27 @@ const ResumeBuilder: React.FC = () => {
           </Card>
         </div>
 
-        {showComingSoon ? (
+        {showLiveFeatures ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Live Features & Tools</h2>
+              <Button variant="outline" onClick={() => setShowLiveFeatures(false)}>
+                Back to Builder
+              </Button>
+            </div>
+            <LiveFeatures />
+          </div>
+        ) : showAIIntegration ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Integration</h2>
+              <Button variant="outline" onClick={() => setShowAIIntegration(false)}>
+                Back to Builder
+              </Button>
+            </div>
+            <AIIntegration />
+          </div>
+        ) : showComingSoon ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Upcoming Features</h2>
