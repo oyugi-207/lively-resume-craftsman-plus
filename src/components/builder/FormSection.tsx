@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -114,7 +115,15 @@ const FormSection: React.FC<FormSectionProps> = ({
 }) => {
   const handleTabChange = (newTab: string) => {
     console.log('Tab changing from', activeTab, 'to', newTab);
-    onTabChange(newTab);
+    // Prevent any form submission events from interfering
+    setTimeout(() => {
+      onTabChange(newTab);
+    }, 0);
+  };
+
+  // Prevent form events from bubbling up to tab container
+  const handleFormContainerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const tabs = [
@@ -146,6 +155,11 @@ const FormSection: React.FC<FormSectionProps> = ({
                         key={tab.id}
                         value={tab.id}
                         className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-600/80 dark:data-[state=active]:bg-gray-600 cursor-pointer min-w-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleTabChange(tab.id);
+                        }}
                       >
                         <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                         <span className="text-xs leading-none font-medium truncate">
@@ -161,66 +175,84 @@ const FormSection: React.FC<FormSectionProps> = ({
 
           <div className="min-h-[400px]">
             <TabsContent value="personal" className="mt-0">
-              <PersonalInfoForm 
-                data={resumeData.personal} 
-                onChange={onPersonalInfoChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <PersonalInfoForm 
+                  data={resumeData.personal} 
+                  onChange={onPersonalInfoChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="experience" className="mt-0">
-              <ExperienceFormEnhanced 
-                data={resumeData.experience} 
-                onChange={onExperienceChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <ExperienceFormEnhanced 
+                  data={resumeData.experience} 
+                  onChange={onExperienceChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="education" className="mt-0">
-              <EducationForm 
-                data={resumeData.education} 
-                onChange={onEducationChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <EducationForm 
+                  data={resumeData.education} 
+                  onChange={onEducationChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="skills" className="mt-0">
-              <SkillsForm 
-                data={resumeData.skills} 
-                onChange={onSkillsChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <SkillsForm 
+                  data={resumeData.skills} 
+                  onChange={onSkillsChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="projects" className="mt-0">
-              <ProjectsForm 
-                data={resumeData.projects} 
-                onChange={onProjectsChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <ProjectsForm 
+                  data={resumeData.projects} 
+                  onChange={onProjectsChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="certifications" className="mt-0">
-              <CertificationsForm 
-                data={resumeData.certifications} 
-                onChange={onCertificationsChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <CertificationsForm 
+                  data={resumeData.certifications} 
+                  onChange={onCertificationsChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="languages" className="mt-0">
-              <LanguagesForm 
-                data={resumeData.languages} 
-                onChange={onLanguagesChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <LanguagesForm 
+                  data={resumeData.languages} 
+                  onChange={onLanguagesChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="interests" className="mt-0">
-              <InterestsForm 
-                data={resumeData.interests} 
-                onChange={onInterestsChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <InterestsForm 
+                  data={resumeData.interests} 
+                  onChange={onInterestsChange} 
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="references" className="mt-0">
-              <ReferencesFormEnhanced 
-                data={resumeData.references} 
-                onChange={onReferencesChange} 
-              />
+              <div onClick={handleFormContainerClick}>
+                <ReferencesFormEnhanced 
+                  data={resumeData.references} 
+                  onChange={onReferencesChange} 
+                />
+              </div>
             </TabsContent>
           </div>
         </Tabs>
