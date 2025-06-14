@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
   Settings as SettingsIcon, 
@@ -24,14 +24,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-interface UserPreferences {
-  email_notifications: boolean;
-  browser_notifications: boolean;
-  marketing_notifications: boolean;
-  privacy_analytics: boolean;
-  privacy_data_sharing: boolean;
-}
-
 const Settings = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -43,18 +35,9 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [testingGemini, setTestingGemini] = useState(false);
   const [testingOpenai, setTestingOpenai] = useState(false);
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    email_notifications: true,
-    browser_notifications: true,
-    marketing_notifications: false,
-    privacy_analytics: true,
-    privacy_data_sharing: false
-  });
-  const [loadingPreferences, setLoadingPreferences] = useState(true);
 
   useEffect(() => {
     loadSettings();
-    loadUserPreferences();
     
     // Listen for API key updates from other components
     const handleApiKeyUpdate = (event: CustomEvent) => {
@@ -93,89 +76,6 @@ const Settings = () => {
       }
     } catch (error) {
       console.error('Error loading settings:', error);
-    }
-  };
-
-  const loadUserPreferences = async () => {
-    if (!user) return;
-    
-    try {
-      setLoadingPreferences(true);
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading user preferences:', error);
-        return;
-      }
-
-      if (data) {
-        setPreferences({
-          email_notifications: data.email_notifications,
-          browser_notifications: data.browser_notifications,
-          marketing_notifications: data.marketing_notifications,
-          privacy_analytics: data.privacy_analytics,
-          privacy_data_sharing: data.privacy_data_sharing
-        });
-      } else {
-        // Create default preferences if they don't exist
-        await createDefaultPreferences();
-      }
-    } catch (error) {
-      console.error('Error loading user preferences:', error);
-    } finally {
-      setLoadingPreferences(false);
-    }
-  };
-
-  const createDefaultPreferences = async () => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .insert([{
-          user_id: user.id,
-          email_notifications: true,
-          browser_notifications: true,
-          marketing_notifications: false,
-          privacy_analytics: true,
-          privacy_data_sharing: false
-        }]);
-
-      if (error) {
-        console.error('Error creating default preferences:', error);
-      }
-    } catch (error) {
-      console.error('Error creating default preferences:', error);
-    }
-  };
-
-  const saveUserPreferences = async () => {
-    if (!user) return;
-
-    try {
-      setSaving(true);
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert([{
-          user_id: user.id,
-          ...preferences
-        }]);
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Preferences saved successfully!');
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-      toast.error('Failed to save preferences');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -332,11 +232,10 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="api">API Keys</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -553,155 +452,16 @@ const Settings = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="w-5 h-5" />
-                Notification Preferences
+                Notification Settings
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {loadingPreferences ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Receive updates about your resumes via email
-                      </p>
-                    </div>
-                    <Switch 
-                      checked={preferences.email_notifications}
-                      onCheckedChange={(checked) => 
-                        setPreferences(prev => ({ ...prev, email_notifications: checked }))
-                      }
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Browser Notifications</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Show notifications in your browser
-                      </p>
-                    </div>
-                    <Switch 
-                      checked={preferences.browser_notifications}
-                      onCheckedChange={(checked) => 
-                        setPreferences(prev => ({ ...prev, browser_notifications: checked }))
-                      }
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Marketing Communications</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Receive tips and product updates
-                      </p>
-                    </div>
-                    <Switch 
-                      checked={preferences.marketing_notifications}
-                      onCheckedChange={(checked) => 
-                        setPreferences(prev => ({ ...prev, marketing_notifications: checked }))
-                      }
-                    />
-                  </div>
-                  
-                  <div className="pt-4 border-t">
-                    <Button onClick={saveUserPreferences} disabled={saving}>
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Save Preferences
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="privacy" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Privacy & Security
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loadingPreferences ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Analytics & Performance</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Help us improve the app by sharing anonymous usage data
-                      </p>
-                    </div>
-                    <Switch 
-                      checked={preferences.privacy_analytics}
-                      onCheckedChange={(checked) => 
-                        setPreferences(prev => ({ ...prev, privacy_analytics: checked }))
-                      }
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Data Sharing</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Allow sharing anonymized data with partners for research
-                      </p>
-                    </div>
-                    <Switch 
-                      checked={preferences.privacy_data_sharing}
-                      onCheckedChange={(checked) => 
-                        setPreferences(prev => ({ ...prev, privacy_data_sharing: checked }))
-                      }
-                    />
-                  </div>
-                  
-                  <div className="pt-4 border-t space-y-4">
-                    <Button onClick={saveUserPreferences} disabled={saving}>
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Save Privacy Settings
-                    </Button>
-                    
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-medium mb-2">Data Privacy</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Your resume data is stored securely and is only accessible by you. 
-                        We use industry-standard encryption to protect your information.
-                      </p>
-                      <Button variant="outline" size="sm">
-                        Download My Data
-                      </Button>
-                    </div>
-                    
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-medium mb-2">Account Security</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Manage your account security settings and password.
-                      </p>
-                      <Button variant="outline" size="sm">
-                        Change Password
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  Notification preferences will be available after the database types are updated. 
+                  You can currently view and manage your notifications from the notifications center.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

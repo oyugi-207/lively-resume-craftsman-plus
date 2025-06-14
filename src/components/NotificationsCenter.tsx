@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Bell, CheckCircle, AlertCircle, Info, X, MarkdownIcon } from 'lucide-react';
+import { Bell, CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 
 interface Notification {
   id: string;
