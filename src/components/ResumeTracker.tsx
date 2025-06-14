@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,14 +32,17 @@ interface ResumeTrackingProps {
 interface TrackingData {
   id: string;
   recipient_email: string;
+  recipient_name?: string | null;
   subject: string;
-  sent_at: string;
-  opened_at?: string;
-  downloaded_at?: string;
-  status: 'sent' | 'opened' | 'downloaded';
+  sent_at: string | null;
+  opened_at?: string | null;
+  downloaded_at?: string | null;
+  status: string | null;
   tracking_url: string;
-  location?: string;
-  device?: string;
+  location?: string | null;
+  device?: string | null;
+  company_name?: string | null;
+  job_title?: string | null;
 }
 
 const ResumeTracker: React.FC<ResumeTrackingProps> = ({ resumeData, onClose }) => {
@@ -141,13 +143,15 @@ ${resumeData.personal?.phone || ''}
           id: trackingId,
           user_id: user.id,
           recipient_email: recipientEmail,
-          recipient_name: recipientName,
-          job_title: jobTitle,
-          company_name: companyName,
+          recipient_name: recipientName || null,
           subject: `Application for ${jobTitle || 'Position'}${companyName ? ` at ${companyName}` : ''}`,
+          email_content: createEmailTemplate(),
+          resume_data: resumeData,
+          tracking_url: trackingUrl,
+          sender_name: resumeData.personal?.fullName || 'Applicant',
+          sender_email: resumeData.personal?.email || user.email,
           sent_at: new Date().toISOString(),
-          status: 'sent',
-          tracking_url: trackingUrl
+          status: 'sent'
         }]);
 
       if (trackingError) throw trackingError;
@@ -176,7 +180,7 @@ ${resumeData.personal?.phone || ''}
     toast.success('Tracking URL copied to clipboard');
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | null) => {
     switch (status) {
       case 'sent':
         return <Clock className="w-4 h-4 text-blue-500" />;
@@ -189,16 +193,20 @@ ${resumeData.personal?.phone || ''}
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     const variants = {
       sent: 'bg-blue-100 text-blue-800',
       opened: 'bg-orange-100 text-orange-800',
       downloaded: 'bg-green-100 text-green-800'
     };
 
+    const statusKey = status as keyof typeof variants;
+    const className = variants[statusKey] || 'bg-gray-100 text-gray-800';
+    const displayStatus = status?.charAt(0).toUpperCase() + (status?.slice(1) || '');
+
     return (
-      <Badge className={variants[status as keyof typeof variants] || 'bg-gray-100 text-gray-800'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <Badge className={className}>
+        {displayStatus}
       </Badge>
     );
   };
@@ -392,7 +400,7 @@ ${resumeData.personal?.phone || ''}
                           <div className="text-right">
                             {getStatusBadge(item.status)}
                             <div className="text-xs text-gray-500 mt-1">
-                              {new Date(item.sent_at).toLocaleDateString()}
+                              {item.sent_at ? new Date(item.sent_at).toLocaleDateString() : 'Unknown'}
                             </div>
                           </div>
                         </div>
@@ -425,7 +433,7 @@ ${resumeData.personal?.phone || ''}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-gray-400" />
-                              <span>Sent: {new Date(item.sent_at).toLocaleString()}</span>
+                              <span>Sent: {item.sent_at ? new Date(item.sent_at).toLocaleString() : 'Unknown'}</span>
                             </div>
                             
                             {item.opened_at && (

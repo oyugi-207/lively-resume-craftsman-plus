@@ -91,7 +91,7 @@ export class PDFGenerator {
         yPosition += 2; // Minimal bottom spacing
       };
 
-      // Improved bullet point helper
+      // Improved bullet point helper with proper bullet symbols
       const addBulletPoints = (text: string, indent = 10) => {
         if (!text) return;
         
@@ -103,9 +103,9 @@ export class PDFGenerator {
           checkPageBreak(10);
           
           let bulletText = bullet;
-          // Ensure bullet point
+          // Clean and add bullet if not present
           if (!bulletText.match(/^[•·‣▪▫-]\s/)) {
-            bulletText = `• ${bulletText}`;
+            bulletText = `• ${bulletText.replace(/^[•·‣▪▫-]*\s*/, '')}`; // Remove any existing bullets first
           }
           
           pdf.setFontSize(9);
@@ -118,9 +118,9 @@ export class PDFGenerator {
           for (let i = 0; i < wrappedLines.length; i++) {
             if (i > 0) checkPageBreak(8);
             pdf.text(wrappedLines[i], margin + indent, yPosition);
-            if (i < wrappedLines.length - 1) yPosition += 4.5; // Compact line spacing
+            yPosition += 4.5; // Compact line spacing
           }
-          yPosition += 5; // Compact spacing between bullets
+          yPosition += 3; // Compact spacing between bullets
         }
       };
 
@@ -131,7 +131,7 @@ export class PDFGenerator {
         yPosition += 4; // Reduced section spacing
       }
 
-      // Experience
+      // Experience with proper bullet formatting
       if (resumeData.experience?.length > 0) {
         addSectionHeader('Professional Experience');
         
@@ -235,7 +235,7 @@ export class PDFGenerator {
         yPosition += 6; // Reduced section spacing
       }
 
-      // Projects
+      // Projects with bullet formatting
       if (resumeData.projects?.length > 0) {
         addSectionHeader('Projects');
         

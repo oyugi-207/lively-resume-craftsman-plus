@@ -181,6 +181,69 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_tracking: {
+        Row: {
+          created_at: string | null
+          device: string | null
+          downloaded_at: string | null
+          email_content: string
+          id: string
+          location: string | null
+          opened_at: string | null
+          recipient_email: string
+          recipient_name: string | null
+          resume_data: Json
+          sender_email: string
+          sender_name: string
+          sent_at: string | null
+          status: string | null
+          subject: string
+          tracking_url: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device?: string | null
+          downloaded_at?: string | null
+          email_content: string
+          id?: string
+          location?: string | null
+          opened_at?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          resume_data: Json
+          sender_email: string
+          sender_name: string
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          tracking_url: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device?: string | null
+          downloaded_at?: string | null
+          email_content?: string
+          id?: string
+          location?: string | null
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          resume_data?: Json
+          sender_email?: string
+          sender_name?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          tracking_url?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       resumes: {
         Row: {
           certifications: Json | null

@@ -7,10 +7,23 @@ import { Download, Eye, MapPin, Clock, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface TrackingData {
+  id: string;
+  recipient_email: string;
+  subject: string;
+  sent_at: string | null;
+  opened_at?: string | null;
+  downloaded_at?: string | null;
+  status: string | null;
+  tracking_url: string;
+  location?: string | null;
+  device?: string | null;
+}
+
 const TrackingPage: React.FC = () => {
   const { trackingId } = useParams();
   const [searchParams] = useSearchParams();
-  const [trackingData, setTrackingData] = useState<any>(null);
+  const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<string>('');
 
@@ -159,7 +172,7 @@ const TrackingPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Date:</span>
-                  <span>{new Date(trackingData.sent_at).toLocaleDateString()}</span>
+                  <span>{trackingData.sent_at ? new Date(trackingData.sent_at).toLocaleDateString() : 'Unknown'}</span>
                 </div>
               </div>
             </div>
