@@ -28,6 +28,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Starting send-tracked-resume function");
+    
+    // Check if Resend API key is available
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY environment variable is not set");
+      throw new Error("Email service not configured - missing API key");
+    }
+    console.log("Resend API key found");
+
     const requestData: TrackedEmailRequest = await req.json();
     const {
       recipientEmail,
@@ -41,12 +51,13 @@ const handler = async (req: Request): Promise<Response> => {
       senderEmail
     } = requestData;
 
-    console.log("Sending tracked resume email:", { 
+    console.log("Processing email request:", { 
       recipientEmail, 
       subject, 
       trackingId,
-      hasResumeData: !!resumeData,
-      resumeDataKeys: resumeData ? Object.keys(resumeData) : []
+      senderEmail,
+      senderName,
+      hasResumeData: !!resumeData
     });
 
     // Validate required data
@@ -55,10 +66,17 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Resume data is required");
     }
 
+    if (!recipientEmail || !senderEmail || !senderName) {
+      console.error("Missing required email fields:", { recipientEmail, senderEmail, senderName });
+      throw new Error("Missing required email information");
+    }
+
     // Generate PDF resume with error handling
     let pdfBuffer: Uint8Array;
     try {
+      console.log("Generating PDF...");
       pdfBuffer = await PDFGenerator.generatePDFBuffer(resumeData);
+      console.log("PDF generated successfully, size:", pdfBuffer.length, "bytes");
     } catch (pdfError) {
       console.error("Error generating PDF:", pdfError);
       throw new Error("Failed to generate PDF");
@@ -100,6 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    console.log("Sending email via Resend...");
     const emailResponse = await resend.emails.send({
       from: "Resume Tracker <noreply@resend.dev>",
       to: [recipientEmail],
@@ -116,10 +135,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResponse);
 
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      throw new Error(`Email sending failed: ${emailResponse.error.message}`);
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       emailId: emailResponse.data?.id,
-      trackingId 
+      trackingId,
+      message: "Email sent successfully"
     }), {
       status: 200,
       headers: {
@@ -132,7 +157,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack 
+        details: error.stack,
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,
