@@ -32,13 +32,15 @@ import {
   Sparkles,
   Settings as SettingsIcon,
   Bell,
-  BarChart3
+  BarChart3,
+  Brain
 } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import NotificationsCenter from '@/components/NotificationsCenter';
 import SettingsComponent from '@/components/Settings';
 import JobMarket from '@/components/JobMarket';
 import ResumeTrackingDashboard from '@/components/ResumeTrackingDashboard';
+import ATSChecker from '@/pages/ATSChecker';
 
 interface Resume {
   id: string;
@@ -265,6 +267,8 @@ const Dashboard = () => {
     switch (currentView) {
       case 'tracking':
         return <ResumeTrackingDashboard />;
+      case 'ats':
+        return <ATSChecker />;
       case 'profile':
         return <UserProfile />;
       case 'notifications':
@@ -320,15 +324,15 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
-                CV Optimizer
+                ATS Checker
               </h3>
               <p className="text-purple-700 dark:text-purple-300 text-sm">
-                Optimize your CV with AI
+                AI-powered ATS analysis
               </p>
             </div>
-            <Button onClick={() => navigate('/cv-optimizer')} className="bg-purple-600 hover:bg-purple-700">
-              <Zap className="w-4 h-4 mr-2" />
-              Optimize
+            <Button onClick={() => setCurrentView('ats')} className="bg-purple-600 hover:bg-purple-700">
+              <Brain className="w-4 h-4 mr-2" />
+              Check
             </Button>
           </div>
         </Card>
@@ -561,6 +565,7 @@ const Dashboard = () => {
               <nav className="hidden lg:flex items-center space-x-1">
                 {[
                   { id: 'overview', label: 'Overview', icon: Briefcase },
+                  { id: 'ats', label: 'ATS Checker', icon: Brain },
                   { id: 'tracking', label: 'Tracking', icon: BarChart3 },
                   { id: 'jobs', label: 'Jobs', icon: Search },
                   { id: 'profile', label: 'Profile', icon: User },
@@ -614,6 +619,7 @@ const Dashboard = () => {
         <div className="flex space-x-1 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: Briefcase },
+            { id: 'ats', label: 'ATS', icon: Brain },
             { id: 'tracking', label: 'Tracking', icon: BarChart3 },
             { id: 'jobs', label: 'Jobs', icon: Search },
             { id: 'profile', label: 'Profile', icon: User },

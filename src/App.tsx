@@ -12,6 +12,7 @@ import Builder from "./pages/Builder";
 import Templates from "./pages/Templates";
 import CVOptimizer from "./pages/CVOptimizer";
 import CoverLetterBuilder from "./pages/CoverLetterBuilder";
+import ATSChecker from "./pages/ATSChecker";
 import NotFound from "./pages/NotFound";
 import TrackingPage from "./pages/TrackingPage";
 import NotificationSystem from "@/components/NotificationSystem";
@@ -34,6 +35,7 @@ function App() {
                   <Route path="/builder" element={<Builder />} />
                   <Route path="/templates" element={<Templates />} />
                   <Route path="/cv-optimizer" element={<CVOptimizer />} />
+                  <Route path="/ats-checker" element={<ATSChecker />} />
                   <Route path="/cover-letter" element={<CoverLetterBuilder />} />
                   <Route path="/cover-letter-builder" element={<CoverLetterBuilder />} />
                   <Route path="/track/:trackingId" element={<TrackingPage />} />
