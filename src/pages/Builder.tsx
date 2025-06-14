@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -117,6 +116,12 @@ const Builder: React.FC = () => {
   const [previewScale] = useState(0.3);
   const [showCVParser, setShowCVParser] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
+
+  // Make sure activeTab state change is properly handled
+  const handleTabChange = (newTab: string) => {
+    console.log('Builder: Tab changing to', newTab);
+    setActiveTab(newTab);
+  };
 
   useEffect(() => {
     if (user) {
@@ -540,7 +545,7 @@ const Builder: React.FC = () => {
             <FormSection
               resumeData={resumeData}
               activeTab={activeTab}
-              onTabChange={setActiveTab}
+              onTabChange={handleTabChange}
               onPersonalInfoChange={updatePersonalInfo}
               onExperienceChange={updateExperience}
               onEducationChange={updateEducation}
