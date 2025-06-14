@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,11 +64,19 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
 
     setGeneratingAI(projectId);
     try {
-      const prompt = `Generate a professional project description for a resume. 
+      const prompt = `Generate a professional project description for a resume/CV. 
       Project Name: ${project.name}
       Technologies: ${project.technologies || 'Various technologies'}
+      Start Date: ${project.startDate || 'Not specified'}
+      End Date: ${project.endDate || 'Not specified'}
       
-      Create a compelling 2-3 line description highlighting the project's purpose, key features, and impact. Focus on technical achievements and business value. Make it sound professional and impressive for a resume.`;
+      Create a compelling 2-3 sentence description that highlights:
+      - The project's main purpose and objectives
+      - Key technical achievements and features implemented
+      - Business impact or value delivered
+      - Technical skills demonstrated
+      
+      Make it sound professional, impressive, and suitable for a resume. Focus on quantifiable results where possible and use action verbs. Write in past tense if the project is completed, or present tense if ongoing.`;
 
       const { data: result, error } = await supabase.functions.invoke('gemini-ai-optimize', {
         body: { 
@@ -80,11 +89,13 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
 
       if (result?.content) {
         updateProject(projectId, 'description', result.content.trim());
-        toast.success('AI description generated successfully!');
+        toast.success('✨ AI description generated successfully!');
+      } else {
+        throw new Error('No content received from AI');
       }
     } catch (error: any) {
       console.error('AI generation error:', error);
-      toast.error(`Failed to generate description: ${error.message}`);
+      toast.error(`Failed to generate description: ${error.message || 'Unknown error'}`);
     } finally {
       setGeneratingAI(null);
     }
@@ -147,7 +158,7 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
                   value={project.name}
                   onChange={(e) => updateProject(project.id, 'name', e.target.value)}
                   placeholder="E-commerce Platform"
-                  className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                  className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 dark:border-violet-700 dark:bg-gray-800"
                 />
               </div>
               
@@ -161,7 +172,7 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
                     value={project.link}
                     onChange={(e) => updateProject(project.id, 'link', e.target.value)}
                     placeholder="https://github.com/username/project"
-                    className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 pr-10"
+                    className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 pr-10 dark:border-violet-700 dark:bg-gray-800"
                   />
                   {project.link && (
                     <a
@@ -184,8 +195,8 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
                 <Input
                   value={project.startDate}
                   onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
-                  placeholder="2024"
-                  className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                  placeholder="Jan 2024"
+                  className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 dark:border-violet-700 dark:bg-gray-800"
                 />
               </div>
               
@@ -197,8 +208,8 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
                 <Input
                   value={project.endDate}
                   onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
-                  placeholder="2024"
-                  className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                  placeholder="Present"
+                  className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 dark:border-violet-700 dark:bg-gray-800"
                 />
               </div>
             </div>
@@ -212,8 +223,8 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
               <Input
                 value={project.technologies}
                 onChange={(e) => updateProject(project.id, 'technologies', e.target.value)}
-                placeholder="React, Node.js, MongoDB, AWS"
-                className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                placeholder="React, Node.js, MongoDB, AWS, Docker"
+                className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 dark:border-violet-700 dark:bg-gray-800"
               />
             </div>
 
@@ -226,36 +237,45 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
                   size="sm"
                   onClick={() => generateAIDescription(project.id)}
                   disabled={generatingAI === project.id || !project.name}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 shadow-sm"
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 shadow-sm dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-700"
                 >
                   {generatingAI === project.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Wand2 className="w-4 h-4 text-purple-600" />
                   )}
-                  <span className="text-purple-700">Generate with AI</span>
+                  <span className="text-purple-700 dark:text-purple-300">
+                    {generatingAI === project.id ? 'Generating...' : 'Generate with AI'}
+                  </span>
                 </Button>
               </div>
               <Textarea
                 value={project.description}
                 onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                placeholder="Describe the project's purpose, key features, and impact..."
+                placeholder="Describe the project's purpose, key features, technologies used, and impact. AI can help generate this content based on your project details above."
                 rows={4}
-                className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                className="border-violet-200 focus:border-violet-500 focus:ring-violet-500/20 dark:border-violet-700 dark:bg-gray-800"
               />
+              {project.description && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <span>✓ Description added</span>
+                  {project.description.includes('•') && <span>• Bullet points detected</span>}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       ))}
 
       {data.length === 0 && (
-        <Card className="border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50/50 to-purple-50/50">
+        <Card className="border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50/50 to-purple-50/50 dark:border-violet-700 dark:from-violet-950/20 dark:to-purple-950/20">
           <CardContent className="text-center py-12">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FolderOpen className="w-8 h-8 text-violet-600" />
+            <div className="w-16 h-16 bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900 dark:to-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FolderOpen className="w-8 h-8 text-violet-600 dark:text-violet-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900">No projects added yet</h3>
-            <p className="text-sm text-gray-600 mb-4">Click "Add Project" to showcase your notable work and achievements</p>
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">No projects added yet</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Click "Add Project" to showcase your notable work and achievements</p>
+            <p className="text-xs text-violet-600 dark:text-violet-400">💡 Tip: Use AI to generate professional descriptions automatically!</p>
           </CardContent>
         </Card>
       )}
