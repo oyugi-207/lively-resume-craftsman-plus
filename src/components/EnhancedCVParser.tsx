@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,32 +19,100 @@ import {
   Brain,
   Zap
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAPIKey } from '@/hooks/useAPIKey';
 
 interface EnhancedCVParserProps {
   onDataExtracted: (data: any) => void;
   onClose: () => void;
 }
 
+type ExtractionMode = 'manual' | 'ai';
+
 const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, onClose }) => {
+  const { apiKey } = useAPIKey();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [extractionStats, setExtractionStats] = useState<any>(null);
+  const [mode, setMode] = useState<ExtractionMode>('ai');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
+  // --- AI-powered extraction ---
+  const extractWithAI = async (file: File) => {
+    setIsProcessing(true);
+    setProgress(10);
+    try {
+      if (!apiKey) {
+        toast.error('Please set your Gemini API key in Settings');
+        setIsProcessing(false);
+        return;
+      }
+      // Convert file to base64
+      const fileReader = new FileReader();
+      fileReader.onload = async () => {
+        try {
+          setProgress(30);
+          const base64String = fileReader.result as string;
+          const base64Content = base64String.split(',')[1];
+          setProgress(45);
+
+          const { data: result, error } = await supabase.functions.invoke('cv-reader-ai', {
+            body: { 
+              fileContent: base64Content,
+              fileName: file.name,
+              fileType: file.type,
+              apiKey
+            }
+          });
+
+          setProgress(75);
+          if (error) throw error;
+
+          if (result?.extractedData) {
+            setExtractedData(result.extractedData);
+
+            // Collect stats for better preview
+            setExtractionStats({
+              experienceEntries: result.extractedData?.experience?.length ?? 0,
+              educationEntries: result.extractedData?.education?.length ?? 0,
+              skillsFound: result.extractedData?.skills?.length ?? 0,
+              projectsFound: result.extractedData?.projects?.length ?? 0,
+              certificationsFound: result.extractedData?.certifications?.length ?? 0,
+              languagesFound: result.extractedData?.languages?.length ?? 0,
+            });
+
+            setProgress(100);
+            toast.success('AI CV extraction complete!');
+          } else {
+            throw new Error('No data could be extracted from your CV with AI.');
+          }
+        } catch (err: any) {
+          toast.error(err.message || 'AI extraction failed!');
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      fileReader.readAsDataURL(file);
+    } catch (err: any) {
+      setIsProcessing(false);
+      toast.error('Failed to read file for AI extraction');
+    }
+  };
+
+  // --- Manual/local extraction ---
   const advancedTextExtraction = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           let text = reader.result as string;
-          
           // Enhanced text cleaning and preprocessing
           text = text
-            .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ') // Remove control characters
-            .replace(/\s+/g, ' ') // Normalize whitespace
-            .replace(/[^\x20-\x7E\n]/g, ' ') // Keep only printable ASCII and newlines
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .replace(/[^\x20-\x7E\n]/g, ' ')
             .trim();
-          
           resolve(text);
         } catch (error) {
           reject(error);
@@ -480,9 +547,16 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      processFile(file);
+      setUploadedFile(file);
+
+      // In AI mode, trigger AI extract; else, use manual mode
+      if (mode === 'ai') {
+        extractWithAI(file);
+      } else {
+        processFile(file);
+      }
     }
-  }, []);
+  }, [mode, apiKey]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -509,10 +583,10 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
-            Enhanced AI CV Parser
-            <Badge variant="secondary" className="ml-2">
+            Enhanced CV Parser
+            <Badge variant={mode === 'ai' ? "secondary" : "outline"} className="ml-2">
               <Zap className="w-3 h-3 mr-1" />
-              Powered by AI
+              {mode === 'ai' ? "AI Extraction" : "Manual Extraction"}
             </Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -521,11 +595,33 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {/* Mode Switcher */}
+          <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+            <label className="text-sm font-medium">Extraction Method:</label>
+            <div className="flex flex-row gap-2">
+              <Button
+                variant={mode === 'ai' ? 'default' : 'outline'}
+                onClick={() => setMode('ai')}
+                className={mode === 'ai' ? 'bg-gradient-to-r from-blue-500 to-purple-700' : ''}
+              >
+                AI Extraction (Recommended)
+              </Button>
+              <Button
+                variant={mode === 'manual' ? 'default' : 'outline'}
+                onClick={() => setMode('manual')}
+                className={mode === 'manual' ? 'bg-gradient-to-r from-gray-300 to-gray-500 dark:from-gray-700 dark:to-gray-900' : ''}
+              >
+                Manual (Local Parser)
+              </Button>
+            </div>
+          </div>
+
+          {/* Dropzone for upload */}
           {!extractedData && (
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}
+                ${isDragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'}
                 ${isProcessing ? 'pointer-events-none opacity-50' : ''}
               `}
             >
@@ -536,16 +632,18 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
                 ) : (
                   <Upload className="w-12 h-12 text-gray-400" />
                 )}
-                
                 <div>
                   <p className="text-lg font-medium">
-                    {isProcessing ? 'AI is analyzing your CV...' : 'Upload your CV for AI Analysis'}
+                    {isProcessing
+                      ? (mode === 'ai'
+                          ? 'AI is analyzing your CV...'
+                          : 'Processing your CV...')
+                      : 'Upload your CV'}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Advanced parsing with AI-powered extraction for PDF, DOC, DOCX, and TXT files (max 10MB)
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    PDF, DOC, DOCX, or TXT, max 10MB.
                   </p>
                 </div>
-                
                 {isProcessing && (
                   <div className="w-full max-w-xs">
                     <Progress value={progress} className="w-full" />
@@ -556,98 +654,84 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
             </div>
           )}
 
-          {extractedData && extractionStats && (
+          {/* Preview of Extraction */}
+          {extractedData && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-green-600">
                 <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">CV parsed successfully with enhanced AI extraction!</span>
+                <span className="font-medium">CV extraction complete! Preview below.</span>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="bg-blue-50 dark:bg-blue-900/50 p-3 rounded-lg">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-blue-900">Personal Info</span>
+                    <span className="font-medium text-blue-900 dark:text-blue-100">Personal</span>
                   </div>
-                  <p className="text-sm text-blue-700 mt-1">
-                    {extractionStats.personalInfoComplete}/7 fields found
+                  <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
+                    {extractionStats?.personalInfoComplete ?? Object.values(extractedData.personal).filter(Boolean).length}/7 fields found
                   </p>
                 </div>
-
-                <div className="bg-green-50 p-3 rounded-lg">
+                <div className="bg-green-50 dark:bg-green-900/40 p-3 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-green-900">Experience</span>
+                    <span className="font-medium text-green-900 dark:text-green-100">Experience</span>
                   </div>
-                  <p className="text-sm text-green-700 mt-1">
-                    {extractionStats.experienceEntries} positions
+                  <p className="text-sm text-green-700 dark:text-green-200 mt-1">
+                    {extractionStats?.experienceEntries ?? extractedData.experience?.length ?? 0} positions
                   </p>
                 </div>
-
-                <div className="bg-purple-50 p-3 rounded-lg">
+                <div className="bg-purple-50 dark:bg-purple-900/40 p-3 rounded-lg">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4 text-purple-600" />
-                    <span className="font-medium text-purple-900">Education</span>
+                    <span className="font-medium text-purple-900 dark:text-purple-100">Education</span>
                   </div>
-                  <p className="text-sm text-purple-700 mt-1">
-                    {extractionStats.educationEntries} entries
+                  <p className="text-sm text-purple-700 dark:text-purple-200 mt-1">
+                    {extractionStats?.educationEntries ?? extractedData.education?.length ?? 0} entries
                   </p>
                 </div>
-
-                <div className="bg-orange-50 p-3 rounded-lg">
+                <div className="bg-orange-50 dark:bg-orange-900/40 p-3 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-orange-600" />
-                    <span className="font-medium text-orange-900">Skills</span>
+                    <span className="font-medium text-orange-900 dark:text-orange-100">Skills</span>
                   </div>
-                  <p className="text-sm text-orange-700 mt-1">
-                    {extractionStats.skillsFound} identified
+                  <p className="text-sm text-orange-700 dark:text-orange-200 mt-1">
+                    {extractionStats?.skillsFound ?? extractedData.skills?.length ?? 0} identified
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold mb-3">Extracted Personal Information</h3>
-                  <div className="space-y-2 text-sm">
-                    {extractedData.personal.fullName && (
-                      <p><strong>Name:</strong> {extractedData.personal.fullName}</p>
-                    )}
-                    {extractedData.personal.email && (
-                      <p><strong>Email:</strong> {extractedData.personal.email}</p>
-                    )}
-                    {extractedData.personal.phone && (
-                      <p><strong>Phone:</strong> {extractedData.personal.phone}</p>
-                    )}
-                    {extractedData.personal.location && (
-                      <p><strong>Location:</strong> {extractedData.personal.location}</p>
-                    )}
-                    {extractedData.personal.linkedin && (
-                      <p><strong>LinkedIn:</strong> {extractedData.personal.linkedin}</p>
-                    )}
-                    {extractedData.personal.github && (
-                      <p><strong>GitHub:</strong> {extractedData.personal.github}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-3">Extraction Summary</h3>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Experience Entries:</strong> {extractionStats.experienceEntries}</p>
-                    <p><strong>Education Records:</strong> {extractionStats.educationEntries}</p>
-                    <p><strong>Projects Found:</strong> {extractionStats.projectsFound}</p>
-                    <p><strong>Certifications:</strong> {extractionStats.certificationsFound}</p>
-                    <p><strong>Languages:</strong> {extractionStats.languagesFound}</p>
-                  </div>
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
+                <h3 className="font-bold mb-3">Personal Information Preview</h3>
+                <div className="space-y-1 text-sm text-gray-800 dark:text-gray-100">
+                  <p><b>Name:</b> {extractedData.personal.fullName || <span className="italic text-gray-400">N/A</span>}</p>
+                  <p><b>Email:</b> {extractedData.personal.email || <span className="italic text-gray-400">N/A</span>}</p>
+                  <p><b>Phone:</b> {extractedData.personal.phone || <span className="italic text-gray-400">N/A</span>}</p>
+                  <p><b>Location:</b> {extractedData.personal.location || <span className="italic text-gray-400">N/A</span>}</p>
                 </div>
               </div>
-
-              {extractedData.skills.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3">AI-Detected Skills ({extractedData.skills.length})</h3>
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
+                <h3 className="font-bold mb-3">Experience ({extractedData.experience?.length ?? 0})</h3>
+                {Array.isArray(extractedData.experience) && extractedData.experience.length > 0 ? (
+                  <ul className="text-sm text-gray-800 dark:text-gray-100 space-y-2">
+                    {extractedData.experience.slice(0, 5).map((exp: any, idx: number) => (
+                      <li key={exp.id || idx}>
+                        <strong>{exp.position}</strong> at <span className="text-blue-800 dark:text-blue-300">{exp.company}</span>{' '}
+                        <span className="opacity-70">{exp.startDate ? `(${exp.startDate} - ${exp.endDate})` : ''}</span>
+                        <div className="text-xs mt-1">{exp.description}</div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-xs text-gray-400">No positions found.</div>
+                )}
+              </div>
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
+                <h3 className="font-bold mb-3">Skills Detected ({extractedData.skills?.length ?? 0})</h3>
+                {Array.isArray(extractedData.skills) && extractedData.skills.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {extractedData.skills.slice(0, 20).map((skill: string, index: number) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
+                    {extractedData.skills.slice(0, 20).map((skill: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
                         {skill}
                       </Badge>
                     ))}
@@ -657,14 +741,20 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
                       </Badge>
                     )}
                   </div>
-                </div>
-              )}
-
+                ) : (
+                  <div className="text-xs text-gray-400">No skills detected.</div>
+                )}
+              </div>
               <div className="flex gap-3 pt-4">
                 <Button onClick={handleUseData} className="flex-1">
-                  Use Enhanced Data
+                  Use Extracted Data
                 </Button>
-                <Button variant="outline" onClick={() => setExtractedData(null)}>
+                <Button variant="outline" onClick={() => {
+                  setExtractedData(null);
+                  setExtractionStats(null);
+                  setUploadedFile(null);
+                  setProgress(0);
+                }}>
                   Upload Different File
                 </Button>
               </div>

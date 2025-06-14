@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,6 +92,7 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
 
   return (
     <div className="space-y-6">
+      {/* Enhanced header with AI info */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -100,7 +100,10 @@ const ProjectsFormEnhanced: React.FC<ProjectsFormEnhancedProps> = ({ data, onCha
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Projects</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Showcase your notable projects</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Showcase notable projects - use <Wand2 className="inline w-4 h-4 text-purple-500" />{" "} 
+              <b>AI Generate</b> for instant, polished descriptions!
+            </p>
           </div>
         </div>
         <Button onClick={addProject} className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg">
