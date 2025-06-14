@@ -82,10 +82,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to generate PDF");
     }
 
-    // Create tracking pixel HTML
+    // Create tracking pixel HTML (invisible)
     const trackingPixel = `<img src="${trackingUrl}/pixel.png" width="1" height="1" style="display:none;" />`;
     
-    // Enhanced HTML email with tracking
+    // Clean, professional HTML email
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -95,22 +95,10 @@ const handler = async (req: Request): Promise<Response> => {
         <title>${subject}</title>
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="white-space: pre-line;">${emailContent}</div>
+        <div style="white-space: pre-line; margin-bottom: 30px;">${emailContent}</div>
         
-        <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; text-align: center;">
-          <h3 style="color: #495057; margin-bottom: 15px;">📄 Resume Attached</h3>
-          <p style="color: #6c757d; margin-bottom: 20px;">Please find my resume attached to this email for your review.</p>
-          <a href="${trackingUrl}" 
-             style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            📥 View Resume Online
-          </a>
-          <p style="font-size: 12px; color: #868e96; margin-top: 15px;">
-            Click the button above to view and download the latest version of my resume.
-          </p>
-        </div>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d; text-align: center;">
-          <p>This email was sent by ${senderName} (${senderEmail})</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+          <p>Best regards,<br>${senderName}<br>${senderEmail}</p>
         </div>
         
         ${trackingPixel}
@@ -120,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email via Resend...");
     const emailResponse = await resend.emails.send({
-      from: "Resume Tracker <noreply@resend.dev>",
+      from: `${senderName} <${senderEmail}>`,
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,
