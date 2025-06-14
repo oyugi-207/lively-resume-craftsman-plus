@@ -13,6 +13,7 @@ import Templates from "./pages/Templates";
 import CVOptimizer from "./pages/CVOptimizer";
 import CoverLetterBuilder from "./pages/CoverLetterBuilder";
 import NotFound from "./pages/NotFound";
+import TrackingPage from "./pages/TrackingPage";
 import NotificationSystem from "@/components/NotificationSystem";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ function App() {
                   <Route path="/cv-optimizer" element={<CVOptimizer />} />
                   <Route path="/cover-letter" element={<CoverLetterBuilder />} />
                   <Route path="/cover-letter-builder" element={<CoverLetterBuilder />} />
+                  <Route path="/track/:trackingId" element={<TrackingPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

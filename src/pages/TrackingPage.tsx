@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Eye, MapPin, Clock, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PDFGenerator } from '@/components/PDFGenerator';
 
 interface TrackingData {
   id: string;
@@ -18,6 +19,8 @@ interface TrackingData {
   tracking_url: string;
   location?: string | null;
   device?: string | null;
+  resume_data?: any;
+  sender_name?: string;
 }
 
 const TrackingPage: React.FC = () => {
@@ -104,15 +107,14 @@ const TrackingPage: React.FC = () => {
 
       if (error) throw error;
 
-      // Generate and download the resume PDF
-      // For now, we'll create a simple download
-      toast.success('Resume download started!');
-      
-      // You would implement actual PDF generation here
-      const link = document.createElement('a');
-      link.href = `/api/download-resume/${trackingId}`;
-      link.download = 'resume.pdf';
-      link.click();
+      // Generate and download the resume PDF using the stored resume data
+      if (trackingData.resume_data) {
+        const filename = `${trackingData.sender_name?.replace(/\s+/g, '_') || 'Resume'}.pdf`;
+        await PDFGenerator.generateTextPDF(trackingData.resume_data, 0, filename);
+        toast.success('Resume downloaded successfully!');
+      } else {
+        toast.error('Resume data not available for download');
+      }
 
     } catch (error) {
       console.error('Error tracking download:', error);
@@ -224,8 +226,8 @@ const TrackingPage: React.FC = () => {
                 <span className="text-xs text-gray-600">Viewed</span>
               </div>
               <div className="text-center">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Download className="w-5 h-5 text-gray-400" />
+                <div className={`w-8 h-8 ${trackingData.status === 'downloaded' ? 'bg-green-100' : 'bg-gray-100'} rounded-full flex items-center justify-center mx-auto mb-2`}>
+                  <Download className={`w-5 h-5 ${trackingData.status === 'downloaded' ? 'text-green-600' : 'text-gray-400'}`} />
                 </div>
                 <span className="text-xs text-gray-600">Download</span>
               </div>
