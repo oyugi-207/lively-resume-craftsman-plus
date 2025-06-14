@@ -33,7 +33,8 @@ import {
   Settings as SettingsIcon,
   Bell,
   BarChart3,
-  Brain
+  Brain,
+  Upload
 } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import NotificationsCenter from '@/components/NotificationsCenter';
@@ -41,6 +42,7 @@ import SettingsComponent from '@/components/Settings';
 import JobMarket from '@/components/JobMarket';
 import ResumeTrackingDashboard from '@/components/ResumeTrackingDashboard';
 import ATSChecker from '@/pages/ATSChecker';
+import CVUploadEditor from '@/components/CVUploadEditor';
 
 interface Resume {
   id: string;
@@ -71,6 +73,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('resumes');
   const [currentView, setCurrentView] = useState('overview');
+  const [showCVUploader, setShowCVUploader] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -320,6 +323,23 @@ const Dashboard = () => {
           </div>
         </Card>
 
+        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                CV Upload & Editor
+              </h3>
+              <p className="text-orange-700 dark:text-orange-300 text-sm">
+                AI-powered CV extraction & editing
+              </p>
+            </div>
+            <Button onClick={() => setShowCVUploader(true)} className="bg-orange-600 hover:bg-orange-700">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
+          </div>
+        </Card>
+
         <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
           <div className="flex items-center justify-between">
             <div>
@@ -333,23 +353,6 @@ const Dashboard = () => {
             <Button onClick={() => setCurrentView('ats')} className="bg-purple-600 hover:bg-purple-700">
               <Brain className="w-4 h-4 mr-2" />
               Check
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
-                Templates
-              </h3>
-              <p className="text-orange-700 dark:text-orange-300 text-sm">
-                Browse premium templates
-              </p>
-            </div>
-            <Button onClick={() => navigate('/templates')} className="bg-orange-600 hover:bg-orange-700">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Browse
             </Button>
           </div>
         </Card>
@@ -643,6 +646,11 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto p-6">
         {renderCurrentView()}
       </div>
+
+      {/* CV Upload & Editor Modal */}
+      {showCVUploader && (
+        <CVUploadEditor onClose={() => setShowCVUploader(false)} />
+      )}
     </div>
   );
 };
