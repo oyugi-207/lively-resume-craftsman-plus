@@ -2,21 +2,35 @@
 import { ResumeData } from './ResumePreviewProps';
 
 export const enhanceResumeData = (data: ResumeData): ResumeData => {
+  // Convert skills to string array if it's in object format
+  let skillsArray: string[] = [];
+  
+  if (data.skills && Array.isArray(data.skills)) {
+    if (data.skills.length > 0) {
+      // Check if skills are objects with name property
+      if (typeof data.skills[0] === 'object' && data.skills[0] !== null && 'name' in data.skills[0]) {
+        skillsArray = (data.skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name);
+      } else {
+        skillsArray = data.skills as string[];
+      }
+    }
+  }
+  
+  // Add default skills if none provided
+  if (skillsArray.length === 0) {
+    skillsArray = ['Leadership', 'Strategic Planning', 'Project Management', 'Team Building', 'Problem Solving', 'Communication', 'Data Analysis', 'Process Improvement'];
+  }
+
   return {
     ...data,
-    // Normalize skills to string array for template compatibility
-    skills: data.skills.length > 0 ? 
-      (Array.isArray(data.skills) && typeof data.skills[0] === 'object' 
-        ? (data.skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name)
-        : data.skills as string[]
-      ) : ['Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management'],
+    skills: skillsArray,
     
     // Add sample data for preview if sections are empty
     projects: data.projects.length > 0 ? data.projects : [{
       id: 1,
-      name: 'Sample Project',
-      description: 'Professional project showcasing skills and expertise',
-      technologies: 'Various Technologies',
+      name: 'Strategic Initiative Project',
+      description: 'Led cross-functional team to deliver high-impact business solution\n• Achieved 25% efficiency improvement\n• Managed $500K budget\n• Coordinated with 15+ stakeholders',
+      technologies: 'Project Management, Data Analysis, Process Optimization',
       link: '',
       startDate: '2023',
       endDate: '2024'
@@ -37,7 +51,7 @@ export const enhanceResumeData = (data: ResumeData): ResumeData => {
     }],
     
     interests: data.interests.length > 0 ? data.interests : [
-      'Professional Development', 'Technology', 'Innovation'
+      'Professional Development', 'Technology Innovation', 'Leadership Excellence'
     ],
     
     references: data.references && data.references.length > 0 ? data.references : [{

@@ -85,7 +85,7 @@ export class PDFGenerator {
         renderEducationSection(context, resumeData.education);
       }
 
-      // Core Competencies (Skills) - Enhanced
+      // Core Competencies (Skills) - Enhanced with better title
       if (resumeData.skills?.length > 0) {
         addSectionHeader(context, 'Core Competencies');
         renderSkillsSection(context, resumeData.skills);

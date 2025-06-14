@@ -31,11 +31,7 @@ export interface ResumeData {
     courses?: string;
     honors?: string;
   }>;
-  skills: Array<{
-    name: string;
-    level: string;
-    category: string;
-  }> | string[];
+  skills: string[];
   certifications: Array<{
     id: number;
     name: string;
