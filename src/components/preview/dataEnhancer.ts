@@ -8,7 +8,8 @@ export const enhanceResumeData = (data: ResumeData): ResumeData => {
   if (data.skills && Array.isArray(data.skills)) {
     if (data.skills.length > 0) {
       // Check if skills are objects with name property
-      if (typeof data.skills[0] === 'object' && data.skills[0] !== null && 'name' in data.skills[0]) {
+      const firstSkill = data.skills[0];
+      if (firstSkill && typeof firstSkill === 'object' && 'name' in firstSkill) {
         skillsArray = (data.skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name);
       } else {
         skillsArray = data.skills as string[];
