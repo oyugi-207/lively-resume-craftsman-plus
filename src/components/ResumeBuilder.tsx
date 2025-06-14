@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -189,7 +188,7 @@ const ResumeBuilder: React.FC = () => {
               },
           experience: Array.isArray(resume.experience) ? resume.experience as ResumeData['experience'] : [],
           education: Array.isArray(resume.education) ? resume.education as ResumeData['education'] : [],
-          skills: Array.isArray(resume.skills) ? resume.skills as any : [],
+          skills: Array.isArray(resume.skills) ? resume.skills : [],
           certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
@@ -269,7 +268,7 @@ const ResumeBuilder: React.FC = () => {
     setResumeData(prev => ({ ...prev, education: data }));
   };
 
-  const updateSkills = (data: any) => {
+  const updateSkills = (data: Array<{name: string; level: string; category: string}> | string[]) => {
     setResumeData(prev => ({ ...prev, skills: data }));
   };
 

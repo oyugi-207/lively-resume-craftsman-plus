@@ -57,11 +57,11 @@ interface ResumeData {
     courses?: string;
     honors?: string;
   }>;
-  skills: string[] | Array<{
+  skills: Array<{
     name: string;
     level: string;
     category: string;
-  }>;
+  }> | string[];
   certifications: Array<{
     id: number;
     name: string;
@@ -147,12 +147,14 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
   const SelectedTemplate = templates[template] || ModernProfessionalTemplate;
 
   // Add sample data for empty sections to ensure preview shows all capabilities
-  const enhancedData: ResumeData = {
+  const enhancedData = {
     ...data,
-    // Add sample skills if none exist
-    skills: data.skills.length > 0 ? data.skills : [
-      'Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management'
-    ],
+    // Add sample skills if none exist - normalize to string array for template compatibility
+    skills: data.skills.length > 0 ? 
+      (Array.isArray(data.skills) && typeof data.skills[0] === 'object' 
+        ? (data.skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name)
+        : data.skills as string[]
+      ) : ['Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management'],
     // Add sample project if none exist
     projects: data.projects.length > 0 ? data.projects : [{
       id: 1,
