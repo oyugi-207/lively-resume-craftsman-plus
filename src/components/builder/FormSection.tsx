@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,7 +21,7 @@ import ProjectsForm from '@/components/ProjectsForm';
 import CertificationsForm from '@/components/CertificationsForm';
 import LanguagesForm from '@/components/LanguagesForm';
 import InterestsForm from '@/components/InterestsForm';
-import ReferencesForm from '@/components/ReferencesForm';
+import ReferencesFormEnhanced from '@/components/enhanced-forms/ReferencesFormEnhanced';
 
 interface ResumeData {
   personal: {
@@ -136,27 +135,28 @@ const FormSection: React.FC<FormSectionProps> = ({
       <CardContent className="relative p-3 sm:p-4 lg:p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           
-          {/* Improved Tab Navigation */}
-          <div className="mb-4 sm:mb-6 overflow-x-auto">
-            <TabsList className="inline-flex h-auto bg-gray-100/50 dark:bg-gray-700/50 rounded-lg p-1 min-w-full">
-              <div className="grid grid-cols-3 sm:grid-cols-9 gap-1 w-full">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <TabsTrigger 
-                      key={tab.id}
-                      value={tab.id}
-                      className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-600/80 dark:data-[state=active]:bg-gray-600 cursor-pointer"
-                    >
-                      <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="text-xs leading-none font-medium">
-                        {window.innerWidth < 640 ? tab.shortLabel : tab.label}
-                      </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </div>
-            </TabsList>
+          <div className="mb-4 sm:mb-6">
+            <div className="overflow-x-auto">
+              <TabsList className="inline-flex h-auto bg-gray-100/50 dark:bg-gray-700/50 rounded-lg p-1 min-w-full">
+                <div className="grid grid-cols-3 sm:grid-cols-9 gap-1 w-full">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <TabsTrigger 
+                        key={tab.id}
+                        value={tab.id}
+                        className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-md transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-600/80 dark:data-[state=active]:bg-gray-600 cursor-pointer min-w-0"
+                      >
+                        <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="text-xs leading-none font-medium truncate">
+                          {window.innerWidth < 640 ? tab.shortLabel : tab.label}
+                        </span>
+                      </TabsTrigger>
+                    );
+                  })}
+                </div>
+              </TabsList>
+            </div>
           </div>
 
           <div className="min-h-[400px]">
@@ -217,7 +217,7 @@ const FormSection: React.FC<FormSectionProps> = ({
             </TabsContent>
 
             <TabsContent value="references" className="mt-0">
-              <ReferencesForm 
+              <ReferencesFormEnhanced 
                 data={resumeData.references} 
                 onChange={onReferencesChange} 
               />
