@@ -1,28 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  User, 
-  Briefcase, 
-  GraduationCap, 
-  Award, 
-  Languages, 
-  Heart,
-  FolderOpen,
-  Palette,
-  Download,
-  Save,
-  Eye,
-  Upload,
-  FileText,
-  Sparkles,
-  Brain
-} from 'lucide-react';
+import { useAPIKey } from '@/hooks/useAPIKey';
+
+// Import new components
+import BuilderHeader from './builder/BuilderHeader';
+import FormNavigation from './builder/FormNavigation';
+import PreviewSection from './builder/PreviewSection';
+
+// Import form components
 import PersonalInfoForm from './PersonalInfoForm';
 import ExperienceFormEnhanced from './ExperienceFormEnhanced';
 import EducationForm from './EducationForm';
@@ -31,14 +20,15 @@ import ProjectsForm from './ProjectsForm';
 import CertificationsForm from './CertificationsForm';
 import LanguagesForm from './LanguagesForm';
 import InterestsForm from './InterestsForm';
-import ImprovedResumePreview from './ImprovedResumePreview';
+import ReferencesForm from './ReferencesForm';
+
+// Import modal components
 import EnhancedTemplateSelector from './EnhancedTemplateSelector';
 import EnhancedCVExtractor from './EnhancedCVExtractor';
 import EnhancedJobDescriptionParser from './EnhancedJobDescriptionParser';
-import ComingSoonFeatures from './ComingSoonFeatures';
-import LiveFeatures from './LiveFeatures';
 import AIIntegration from './AIIntegration';
-import ReferencesForm from './ReferencesForm';
+import LiveFeatures from './LiveFeatures';
+import ComingSoonFeatures from './ComingSoonFeatures';
 import ColorCustomizer from './ColorCustomizer';
 
 interface ResumeData {
@@ -114,6 +104,9 @@ interface ResumeData {
 
 const ResumeBuilder: React.FC = () => {
   const { user } = useAuth();
+  const { apiKey } = useAPIKey();
+  
+  // State management
   const [resumeData, setResumeData] = useState<ResumeData>({
     personal: {
       fullName: '',
@@ -134,16 +127,23 @@ const ResumeBuilder: React.FC = () => {
   });
   
   const [selectedTemplate, setSelectedTemplate] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [resumeId, setResumeId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('personal');
+  const [importingProfile, setImportingProfile] = useState(false);
+  
+  // Modal states
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showCVExtractor, setShowCVExtractor] = useState(false);
   const [showJobParser, setShowJobParser] = useState(false);
   const [showAIIntegration, setShowAIIntegration] = useState(false);
   const [showLiveFeatures, setShowLiveFeatures] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [resumeId, setResumeId] = useState<string | null>(null);
+  
+  // Additional state
   const [references, setReferences] = useState<any[]>([]);
   const [customColors, setCustomColors] = useState<any>(null);
+  const [atsScore, setAtsScore] = useState(95);
 
   useEffect(() => {
     if (user) {
@@ -269,6 +269,7 @@ const ResumeBuilder: React.FC = () => {
     }
   };
 
+  // Update functions
   const updatePersonalInfo = (data: any) => {
     setResumeData(prev => ({ ...prev, personal: data }));
   };
@@ -311,7 +312,71 @@ const ResumeBuilder: React.FC = () => {
     setResumeData(prev => ({ ...prev, custom_colors: colors }));
   };
 
+  // AI and other handlers
+  const handleAIOptimize = async () => {
+    if (!resumeData.personal.fullName) {
+      toast.error('Please add personal information first');
+      return;
+    }
+
+    if (!apiKey) {
+      toast.error('Please set your Gemini API key in Settings first');
+      return;
+    }
+
+    try {
+      toast.info('AI is optimizing your resume...');
+      
+      const { data, error } = await supabase.functions.invoke('gemini-ai-optimize', {
+        body: { 
+          resumeData,
+          apiKey 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.suggestions?.length > 0) {
+        let updatedData = { ...resumeData };
+        
+        data.suggestions.forEach((suggestion: any) => {
+          if (suggestion.section === 'summary' && suggestion.confidence > 0.7) {
+            updatedData.personal.summary = suggestion.suggested;
+          }
+        });
+        
+        setResumeData(updatedData);
+        setAtsScore(data.atsScore || 85);
+        
+        toast.success('Resume optimized with AI suggestions!');
+      } else {
+        toast.info('No improvements suggested at this time');
+      }
+    } catch (error: any) {
+      console.error('AI optimization error:', error);
+      toast.error('Failed to optimize resume with AI. Please check your API key in Settings.');
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!resumeData.personal.fullName) {
+      toast.error('Please add your name before downloading');
+      return;
+    }
+    toast.info('PDF download feature will be implemented soon!');
+  };
+
+  const handleImportProfile = async () => {
+    setImportingProfile(true);
+    // Simulate import
+    setTimeout(() => {
+      setImportingProfile(false);
+      toast.success('Profile import feature will be implemented soon!');
+    }, 2000);
+  };
+
   const handleCVDataExtracted = (data: any) => {
+    // Handle CV data extraction
     setResumeData(prevData => ({
       ...prevData,
       personal: {
@@ -325,8 +390,6 @@ const ResumeBuilder: React.FC = () => {
       certifications: data.certifications.length > 0 ? data.certifications : prevData.certifications,
       languages: data.languages.length > 0 ? data.languages : prevData.languages,
       interests: data.interests.length > 0 ? [...new Set([...prevData.interests, ...data.interests])] : prevData.interests,
-      references: prevData.references,
-      custom_colors: prevData.custom_colors
     }));
     toast.success('CV data successfully imported and merged with existing data!');
   };
@@ -349,23 +412,6 @@ const ResumeBuilder: React.FC = () => {
         skills: Array.isArray(prev.skills) ? [...prev.skills, ...newSkills] : newSkills
       }));
     }
-
-    if (data.experience && data.jobTitle) {
-      const tailoredExperience = {
-        id: Date.now(),
-        position: data.jobTitle,
-        company: data.company || 'Target Company',
-        location: data.location || '',
-        startDate: '',
-        endDate: '',
-        description: `• Applied ${data.skills?.technical?.slice(0, 3).join(', ')} to deliver results\n• Demonstrated expertise in ${data.skills?.soft?.slice(0, 2).join(' and ')}\n• Collaborated with cross-functional teams to achieve objectives`
-      };
-
-      setResumeData(prev => ({
-        ...prev,
-        experience: [tailoredExperience, ...prev.experience]
-      }));
-    }
   };
 
   // Convert skills to string array for EnhancedSkillsForm compatibility
@@ -374,108 +420,38 @@ const ResumeBuilder: React.FC = () => {
     : resumeData.skills as string[];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Enhanced Resume Builder</h1>
-            <p className="text-gray-600 dark:text-gray-400">Create your professional resume with AI-powered tools and enhanced templates</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowCVExtractor(true)}
-              className="flex items-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Upload CV
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowJobParser(true)}
-              className="flex items-center gap-2"
-            >
-              <FileText className="w-4 h-4" />
-              Job Parser
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowAIIntegration(true)}
-              className="flex items-center gap-2"
-            >
-              <Brain className="w-4 h-4" />
-              AI Tools
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowLiveFeatures(true)}
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              Live Features
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowTemplateSelector(true)}
-              className="flex items-center gap-2"
-            >
-              <Palette className="w-4 h-4" />
-              Templates
-            </Button>
-            <Button
-              onClick={saveResumeData}
-              disabled={saving}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save Resume'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Current Template Info */}
-        <div className="mb-6">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Template: {getTemplateName(selectedTemplate)}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Template {selectedTemplate + 1} - Professional design with excellent ATS compatibility
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge className="bg-green-100 text-green-800">
-                  ATS Score: 95%
-                </Badge>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                  <Brain className="w-3 h-3 mr-1" />
-                  AI Enhanced
-                </Badge>
-              </div>
-            </div>
-          </Card>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        
+        {/* Enhanced Header */}
+        <BuilderHeader
+          selectedTemplate={selectedTemplate}
+          atsScore={atsScore}
+          saving={saving}
+          importingProfile={importingProfile}
+          onShowCVParser={() => setShowCVExtractor(true)}
+          onImportProfile={handleImportProfile}
+          onShowJobScanner={() => toast.info('Job Scanner feature coming soon!')}
+          onShowJobParser={() => setShowJobParser(true)}
+          onShowTemplateSelector={() => setShowTemplateSelector(true)}
+          onAIOptimize={handleAIOptimize}
+          onDownloadPDF={handleDownloadPDF}
+          onSave={saveResumeData}
+        />
 
         {/* Color Customizer */}
         <div className="mb-6">
           <ColorCustomizer onColorChange={handleColorChange} currentColors={customColors} />
         </div>
 
+        {/* Feature Sections */}
         {showLiveFeatures ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Live Features & Tools</h2>
-              <Button variant="outline" onClick={() => setShowLiveFeatures(false)}>
+              <button onClick={() => setShowLiveFeatures(false)} className="text-blue-600 hover:text-blue-700">
                 Back to Builder
-              </Button>
+              </button>
             </div>
             <LiveFeatures resumeData={resumeData} onResumeUpdate={setResumeData} />
           </div>
@@ -483,9 +459,9 @@ const ResumeBuilder: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Integration</h2>
-              <Button variant="outline" onClick={() => setShowAIIntegration(false)}>
+              <button onClick={() => setShowAIIntegration(false)} className="text-blue-600 hover:text-blue-700">
                 Back to Builder
-              </Button>
+              </button>
             </div>
             <AIIntegration />
           </div>
@@ -493,147 +469,97 @@ const ResumeBuilder: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Upcoming Features</h2>
-              <Button variant="outline" onClick={() => setShowComingSoon(false)}>
+              <button onClick={() => setShowComingSoon(false)} className="text-blue-600 hover:text-blue-700">
                 Back to Builder
-              </Button>
+              </button>
             </div>
             <ComingSoonFeatures />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
             {/* Form Section */}
-            <div className="space-y-6">
-              <Tabs defaultValue="personal" className="w-full">
-                <TabsList className="grid grid-cols-5 lg:grid-cols-9 mb-6">
-                  <TabsTrigger value="personal" className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span className="hidden sm:inline">Personal</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="experience" className="flex items-center gap-1">
-                    <Briefcase className="w-4 h-4" />
-                    <span className="hidden sm:inline">Experience</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="education" className="flex items-center gap-1">
-                    <GraduationCap className="w-4 h-4" />
-                    <span className="hidden sm:inline">Education</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="skills" className="flex items-center gap-1">
-                    <Award className="w-4 h-4" />
-                    <span className="hidden sm:inline">Skills</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="projects" className="flex items-center gap-1">
-                    <FolderOpen className="w-4 h-4" />
-                    <span className="hidden sm:inline">Projects</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="certifications" className="flex items-center gap-1">
-                    <Award className="w-4 h-4" />
-                    <span className="hidden sm:inline">Certs</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="languages" className="flex items-center gap-1">
-                    <Languages className="w-4 h-4" />
-                    <span className="hidden sm:inline">Languages</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="interests" className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    <span className="hidden sm:inline">Interests</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="references" className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span className="hidden sm:inline">References</span>
-                  </TabsTrigger>
-                </TabsList>
+            <div className="xl:col-span-2 space-y-6">
+              <Card className="shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/3 to-purple-600/3"></div>
+                <CardContent className="relative p-6">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    
+                    <FormNavigation activeTab={activeTab} />
 
-                <TabsContent value="personal">
-                  <PersonalInfoForm 
-                    data={resumeData.personal} 
-                    onChange={updatePersonalInfo} 
-                  />
-                </TabsContent>
+                    <TabsContent value="personal">
+                      <PersonalInfoForm 
+                        data={resumeData.personal} 
+                        onChange={updatePersonalInfo} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="experience">
-                  <ExperienceFormEnhanced 
-                    data={resumeData.experience} 
-                    onChange={updateExperience} 
-                  />
-                </TabsContent>
+                    <TabsContent value="experience">
+                      <ExperienceFormEnhanced 
+                        data={resumeData.experience} 
+                        onChange={updateExperience} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="education">
-                  <EducationForm 
-                    data={resumeData.education} 
-                    onChange={updateEducation} 
-                  />
-                </TabsContent>
+                    <TabsContent value="education">
+                      <EducationForm 
+                        data={resumeData.education} 
+                        onChange={updateEducation} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="skills">
-                  <EnhancedSkillsForm 
-                    data={skillsForForm} 
-                    onChange={updateSkills} 
-                  />
-                </TabsContent>
+                    <TabsContent value="skills">
+                      <EnhancedSkillsForm 
+                        data={skillsForForm} 
+                        onChange={updateSkills} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="projects">
-                  <ProjectsForm 
-                    data={resumeData.projects} 
-                    onChange={updateProjects} 
-                  />
-                </TabsContent>
+                    <TabsContent value="projects">
+                      <ProjectsForm 
+                        data={resumeData.projects} 
+                        onChange={updateProjects} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="certifications">
-                  <CertificationsForm 
-                    data={resumeData.certifications} 
-                    onChange={updateCertifications} 
-                  />
-                </TabsContent>
+                    <TabsContent value="certifications">
+                      <CertificationsForm 
+                        data={resumeData.certifications} 
+                        onChange={updateCertifications} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="languages">
-                  <LanguagesForm 
-                    data={resumeData.languages} 
-                    onChange={updateLanguages} 
-                  />
-                </TabsContent>
+                    <TabsContent value="languages">
+                      <LanguagesForm 
+                        data={resumeData.languages} 
+                        onChange={updateLanguages} 
+                      />
+                    </TabsContent>
 
-                <TabsContent value="interests">
-                  <InterestsForm 
-                    data={resumeData.interests} 
-                    onChange={updateInterests} 
-                  />
-                </TabsContent>
-
-                <TabsContent value="references">
-                  <ReferencesForm 
-                    data={references} 
-                    onChange={updateReferences} 
-                  />
-                </TabsContent>
-              </Tabs>
+                    <TabsContent value="interests">
+                      <InterestsForm 
+                        data={resumeData.interests} 
+                        onChange={updateInterests} 
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Preview Section */}
-            <div className="lg:sticky lg:top-8">
-              <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="w-5 h-5" />
-                    Live Preview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="bg-gray-100 dark:bg-gray-800 p-4">
-                    <ImprovedResumePreview 
-                      data={resumeData} 
-                      template={selectedTemplate}
-                      scale={0.6}
-                      customColors={customColors}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="xl:col-span-1">
+              <PreviewSection
+                resumeData={resumeData}
+                selectedTemplate={selectedTemplate}
+                customColors={customColors}
+              />
             </div>
           </div>
         )}
       </div>
 
-      {/* Enhanced CV Extractor Modal */}
+      {/* Modals */}
       {showCVExtractor && (
         <EnhancedCVExtractor
           onDataExtracted={handleCVDataExtracted}
@@ -641,14 +567,12 @@ const ResumeBuilder: React.FC = () => {
         />
       )}
 
-      {/* Enhanced Job Description Parser Modal */}
       <EnhancedJobDescriptionParser
         isOpen={showJobParser}
         onClose={() => setShowJobParser(false)}
         onParsed={handleJobDescriptionParsed}
       />
 
-      {/* Template Selector Modal */}
       <EnhancedTemplateSelector
         isOpen={showTemplateSelector}
         selectedTemplate={selectedTemplate}
@@ -657,34 +581,6 @@ const ResumeBuilder: React.FC = () => {
       />
     </div>
   );
-};
-
-const getTemplateName = (index: number): string => {
-  const names = [
-    'Modern Professional',     // 0
-    'Executive Leadership',    // 1  
-    'Creative Designer',       // 2
-    'Tech Specialist',         // 3
-    'Minimalist Clean',        // 4
-    'Corporate Classic',       // 5
-    'Professional Blue',       // 6
-    'Legal Professional',      // 7
-    'Engineering Focus',       // 8
-    'Data Specialist',         // 9
-    'Supply Chain Manager',    // 10
-    'Clean Modern',            // 11
-    'Marketing Creative',      // 12
-    'Academic Scholar',        // 13
-    'Sales Champion',          // 14
-    'Consulting Elite',        // 15
-    'Modern Creative',         // 16
-    'Creative Portfolio',      // 17
-    'Minimalist Elegant',      // 18
-    'Tech Innovator',          // 19
-    'Executive Elite',         // 20
-    'Creative Designer Pro'    // 21
-  ];
-  return names[index] || 'Modern Professional';
 };
 
 export default ResumeBuilder;
