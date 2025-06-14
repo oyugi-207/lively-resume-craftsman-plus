@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -8,18 +9,17 @@ export class PDFGenerator {
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
       let yPosition = margin;
-      let currentPage = 1;
 
-      // Enhanced template-specific styling and colors for modern design
+      // Enhanced template-specific styling for modern design
       const getTemplateStyle = (templateId: number) => {
         const styles = {
-          0: { // Modern Professional - Enhanced
-            primaryColor: [59, 130, 246], // Modern blue
+          0: { // Modern Professional
+            primaryColor: [59, 130, 246],
             secondaryColor: [71, 85, 105],
-            accentColor: [16, 185, 129], // Green accent
+            accentColor: [16, 185, 129],
             headerBg: true,
             fontFamily: 'helvetica',
-            headerHeight: 40
+            headerHeight: 35
           },
           1: { // Executive
             primaryColor: [31, 41, 55],
@@ -27,7 +27,7 @@ export class PDFGenerator {
             accentColor: [168, 85, 247],
             headerBg: false,
             fontFamily: 'helvetica',
-            headerHeight: 35
+            headerHeight: 30
           },
           2: { // Creative
             primaryColor: [147, 51, 234],
@@ -35,7 +35,7 @@ export class PDFGenerator {
             accentColor: [59, 130, 246],
             headerBg: true,
             fontFamily: 'helvetica',
-            headerHeight: 45
+            headerHeight: 38
           },
           3: { // Tech
             primaryColor: [34, 197, 94],
@@ -43,7 +43,7 @@ export class PDFGenerator {
             accentColor: [59, 130, 246],
             headerBg: true,
             fontFamily: 'courier',
-            headerHeight: 42
+            headerHeight: 35
           },
           4: { // Minimalist
             primaryColor: [75, 85, 99],
@@ -51,7 +51,7 @@ export class PDFGenerator {
             accentColor: [59, 130, 246],
             headerBg: false,
             fontFamily: 'helvetica',
-            headerHeight: 30
+            headerHeight: 25
           },
           5: { // Corporate Classic
             primaryColor: [31, 41, 55],
@@ -59,7 +59,7 @@ export class PDFGenerator {
             accentColor: [168, 85, 247],
             headerBg: false,
             fontFamily: 'times',
-            headerHeight: 35
+            headerHeight: 30
           }
         };
         return styles[templateId as keyof typeof styles] || styles[0];
@@ -72,10 +72,9 @@ export class PDFGenerator {
         pdf.setTextColor(color[0], color[1], color[2]);
       };
 
-      const addNewPageIfNeeded = (requiredSpace: number = 15) => {
+      const addNewPageIfNeeded = (requiredSpace: number = 12) => {
         if (yPosition > pageHeight - requiredSpace) {
           pdf.addPage();
-          currentPage++;
           yPosition = margin;
           return true;
         }
@@ -84,7 +83,6 @@ export class PDFGenerator {
 
       const cleanAndFormatText = (text: string): string => {
         if (!text) return '';
-        
         return text
           .replace(/\r\n/g, '\n')
           .replace(/\r/g, '\n')
@@ -94,36 +92,34 @@ export class PDFGenerator {
       };
 
       const addSectionHeader = (title: string) => {
-        addNewPageIfNeeded(10);
+        addNewPageIfNeeded(8);
         
         // Modern section header with enhanced styling
-        pdf.setFontSize(11);
+        pdf.setFontSize(10);
         pdf.setFont(style.fontFamily, 'bold');
         setColor(style.primaryColor);
         
-        // Add a subtle background rectangle for modern look (using lighter opacity alternative)
-        pdf.setFillColor(style.primaryColor[0], style.primaryColor[1], style.primaryColor[2]);
-        // Create a very light version of the color instead of using setGlobalAlpha
-        const lightColor = style.primaryColor.map(c => Math.min(255, c + 200));
+        // Add subtle background rectangle
+        const lightColor = style.primaryColor.map(c => Math.min(255, c + 190));
         pdf.setFillColor(lightColor[0], lightColor[1], lightColor[2]);
-        pdf.rect(margin - 2, yPosition - 3, pageWidth - 2 * margin + 4, 7, 'F');
+        pdf.rect(margin - 1, yPosition - 2.5, pageWidth - 2 * margin + 2, 6, 'F');
         
         pdf.text(title.toUpperCase(), margin, yPosition);
         
-        // Modern underline with gradient effect
+        // Modern underline
         pdf.setDrawColor(style.accentColor[0], style.accentColor[1], style.accentColor[2]);
-        pdf.setLineWidth(0.5);
-        pdf.line(margin, yPosition + 1, pageWidth - margin, yPosition + 1);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, yPosition + 0.5, pageWidth - margin, yPosition + 0.5);
         
-        yPosition += 8;
+        yPosition += 6;
         return yPosition;
       };
 
-      const addText = (text: string, fontSize = 10, fontWeight = 'normal', color = [0, 0, 0], indent = 0) => {
+      const addText = (text: string, fontSize = 9, fontWeight = 'normal', color = [0, 0, 0], indent = 0) => {
         if (!text) return yPosition;
         
         const cleanText = cleanAndFormatText(text);
-        addNewPageIfNeeded(fontSize + 2);
+        addNewPageIfNeeded(fontSize + 1);
         
         pdf.setFontSize(fontSize);
         pdf.setFont(style.fontFamily, fontWeight);
@@ -133,20 +129,20 @@ export class PDFGenerator {
         const lines = pdf.splitTextToSize(cleanText, maxWidth);
         
         for (const line of lines) {
-          addNewPageIfNeeded(fontSize * 0.4);
+          addNewPageIfNeeded(fontSize * 0.35);
           pdf.text(line, margin + indent, yPosition);
-          yPosition += fontSize * 0.35; // Tighter line spacing
+          yPosition += fontSize * 0.3;
         }
         
-        return yPosition + 1; // Minimal spacing after text blocks
+        return yPosition + 0.5;
       };
 
-      const addBulletPoints = (text: string, fontSize = 9) => {
+      const addBulletPoints = (text: string, fontSize = 8) => {
         if (!text) return yPosition;
         
         const cleanText = cleanAndFormatText(text);
         
-        // Enhanced bullet point parsing - split by various delimiters
+        // Enhanced bullet point parsing
         const sentences = cleanText
           .split(/[.\n•·‣▪▫-]/)
           .map(sentence => sentence.trim())
@@ -155,54 +151,63 @@ export class PDFGenerator {
         for (let i = 0; i < sentences.length; i++) {
           const sentence = sentences[i];
           if (sentence) {
-            addNewPageIfNeeded(fontSize + 1);
+            addNewPageIfNeeded(fontSize + 0.5);
             
             pdf.setFontSize(fontSize);
             pdf.setFont(style.fontFamily, 'normal');
             pdf.setTextColor(0, 0, 0);
             
-            // Modern bullet point design with simple circle
+            // Modern bullet point design
             pdf.setFillColor(style.accentColor[0], style.accentColor[1], style.accentColor[2]);
-            pdf.circle(margin + 6, yPosition - 1, 0.7, 'F'); // Small filled circle
+            pdf.circle(margin + 4, yPosition - 0.5, 0.5, 'F');
             
-            // Clean the sentence and ensure proper formatting
+            // Clean the sentence
             const cleanedSentence = sentence.replace(/^[•·‣▪▫-]\s*/, '').trim();
             
-            // Add bullet text with proper wrapping and consistent spacing
-            const maxWidth = pageWidth - 2 * margin - 10;
+            // Add bullet text with proper wrapping
+            const maxWidth = pageWidth - 2 * margin - 8;
             const wrappedLines = pdf.splitTextToSize(cleanedSentence, maxWidth);
             
             let lineY = yPosition;
             for (let j = 0; j < wrappedLines.length; j++) {
               if (j > 0) {
-                addNewPageIfNeeded(fontSize * 0.35);
-                lineY += fontSize * 0.35;
+                addNewPageIfNeeded(fontSize * 0.3);
+                lineY += fontSize * 0.3;
               }
-              pdf.text(wrappedLines[j], margin + 10, lineY);
+              pdf.text(wrappedLines[j], margin + 8, lineY);
             }
             
-            // Tighter vertical spacing between bullet points
-            yPosition = lineY + fontSize * 0.4;
+            yPosition = lineY + fontSize * 0.35;
           }
         }
         
-        return yPosition + 1;
+        return yPosition + 0.5;
       };
 
-      // Add hidden job description for ATS (invisible text)
+      // Add hidden job description for ATS (completely invisible)
       const addHiddenJobDescription = (jobDesc?: string) => {
         if (jobDesc && jobDesc.trim().length > 20) {
           pdf.setTextColor(255, 255, 255); // White text (invisible)
-          pdf.setFontSize(1); // Tiny font
-          const hiddenText = `ATS_KEYWORDS: ${cleanAndFormatText(jobDesc)}`;
+          pdf.setFontSize(0.1); // Extremely tiny font
           
-          const chunks = hiddenText.match(/.{1,100}/g) || [hiddenText];
-          let hiddenY = pageHeight - 10;
+          // Split job description into keywords
+          const keywords = jobDesc
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 3)
+            .slice(0, 50)
+            .join(' ');
           
-          for (const chunk of chunks) {
-            if (hiddenY < pageHeight - 5) {
+          // Add keywords at bottom of page (invisible)
+          const hiddenText = `KEYWORDS: ${keywords}`;
+          const chunks = hiddenText.match(/.{1,80}/g) || [hiddenText];
+          let hiddenY = pageHeight - 8;
+          
+          for (const chunk of chunks.slice(0, 3)) {
+            if (hiddenY < pageHeight - 2) {
               pdf.text(chunk, margin, hiddenY);
-              hiddenY += 2;
+              hiddenY += 1;
             }
           }
         }
@@ -210,27 +215,27 @@ export class PDFGenerator {
 
       // Enhanced modern header rendering
       if (style.headerBg) {
-        // Solid header background instead of gradient
+        // Header background
         pdf.setFillColor(style.primaryColor[0], style.primaryColor[1], style.primaryColor[2]);
         pdf.rect(0, 0, pageWidth, style.headerHeight, 'F');
         
         // Name with enhanced typography
-        pdf.setFontSize(20);
+        pdf.setFontSize(18);
         pdf.setFont(style.fontFamily, 'bold');
         pdf.setTextColor(255, 255, 255);
         const nameText = resumeData.personal?.fullName || 'Your Name';
-        pdf.text(nameText, margin, 18);
+        pdf.text(nameText, margin, 15);
         
-        // Professional subtitle/title
+        // Professional subtitle
         if (resumeData.personal?.summary) {
-          const titleLine = resumeData.personal.summary.split('.')[0].substring(0, 50) + '...';
-          pdf.setFontSize(10);
+          const titleLine = resumeData.personal.summary.split('.')[0].substring(0, 45) + '...';
+          pdf.setFontSize(9);
           pdf.setTextColor(240, 240, 240);
-          pdf.text(titleLine, margin, 26);
+          pdf.text(titleLine, margin, 22);
         }
         
-        // Contact information with modern styling
-        pdf.setFontSize(8);
+        // Contact information
+        pdf.setFontSize(7);
         pdf.setTextColor(230, 230, 230);
         const contactInfo = [
           resumeData.personal?.email,
@@ -238,27 +243,27 @@ export class PDFGenerator {
           resumeData.personal?.location
         ].filter(Boolean).join(' • ');
         if (contactInfo) {
-          pdf.text(contactInfo, margin, 32);
+          pdf.text(contactInfo, margin, 28);
         }
         
-        yPosition = style.headerHeight + 6;
+        yPosition = style.headerHeight + 4;
       } else {
         // Modern centered header without background
-        pdf.setFontSize(22);
+        pdf.setFontSize(20);
         pdf.setFont(style.fontFamily, 'bold');
         setColor(style.primaryColor);
         const nameWidth = pdf.getTextWidth(resumeData.personal?.fullName || 'Your Name');
         pdf.text(resumeData.personal?.fullName || 'Your Name', (pageWidth - nameWidth) / 2, yPosition);
-        yPosition += 4;
+        yPosition += 3;
 
         // Professional line under name
         pdf.setDrawColor(style.accentColor[0], style.accentColor[1], style.accentColor[2]);
-        pdf.setLineWidth(0.8);
+        pdf.setLineWidth(0.5);
         pdf.line((pageWidth - nameWidth) / 2, yPosition, (pageWidth + nameWidth) / 2, yPosition);
-        yPosition += 3;
+        yPosition += 2;
 
         // Contact information
-        pdf.setFontSize(9);
+        pdf.setFontSize(8);
         pdf.setFont(style.fontFamily, 'normal');
         setColor(style.secondaryColor);
         const contactInfo = [
@@ -270,48 +275,48 @@ export class PDFGenerator {
         if (contactInfo) {
           const contactWidth = pdf.getTextWidth(contactInfo);
           pdf.text(contactInfo, (pageWidth - contactWidth) / 2, yPosition);
-          yPosition += 4;
+          yPosition += 3;
         }
 
-        yPosition += 4;
+        yPosition += 3;
       }
 
-      // Professional Summary with enhanced formatting
+      // Professional Summary
       if (resumeData.personal?.summary) {
         yPosition = addSectionHeader('Professional Summary');
-        yPosition = addText(resumeData.personal.summary, 9, 'normal', [0, 0, 0]);
-        yPosition += 2;
+        yPosition = addText(resumeData.personal.summary, 8, 'normal', [0, 0, 0]);
+        yPosition += 1;
       }
 
-      // Professional Experience with improved layout
+      // Professional Experience
       if (resumeData.experience?.length > 0) {
         yPosition = addSectionHeader('Professional Experience');
         
         for (const exp of resumeData.experience) {
-          addNewPageIfNeeded(15);
+          addNewPageIfNeeded(12);
           
-          // Job title with enhanced styling
-          yPosition = addText(exp.position || 'Position', 10, 'bold', [0, 0, 0]);
+          // Job title
+          yPosition = addText(exp.position || 'Position', 9, 'bold', [0, 0, 0]);
           
-          // Company and dates with modern formatting
+          // Company and dates
           const startDate = exp.startDate ? new Date(exp.startDate + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
           const endDate = exp.endDate ? (exp.endDate.toLowerCase() === 'present' ? 'Present' : new Date(exp.endDate + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })) : 'Present';
           const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : '';
           
           const companyLine = `${exp.company || 'Company'}${dateRange ? ` | ${dateRange}` : ''}`;
-          yPosition = addText(companyLine, 9, 'normal', style.primaryColor);
+          yPosition = addText(companyLine, 8, 'normal', style.primaryColor);
           
-          // Location with modern styling
+          // Location
           if (exp.location) {
-            yPosition = addText(exp.location, 8, 'italic', style.secondaryColor);
+            yPosition = addText(exp.location, 7, 'italic', style.secondaryColor);
           }
           
-          // Description with improved bullet formatting
+          // Description with bullet formatting
           if (exp.description) {
-            yPosition = addBulletPoints(exp.description, 8);
+            yPosition = addBulletPoints(exp.description, 7);
           }
           
-          yPosition += 2;
+          yPosition += 1;
         }
       }
 
@@ -320,23 +325,23 @@ export class PDFGenerator {
         yPosition = addSectionHeader('Key Projects');
         
         for (const project of resumeData.projects) {
-          addNewPageIfNeeded(10);
+          addNewPageIfNeeded(8);
           
-          yPosition = addText(project.name || 'Project Name', 10, 'bold', [0, 0, 0]);
+          yPosition = addText(project.name || 'Project Name', 9, 'bold', [0, 0, 0]);
           
           if (project.technologies) {
-            yPosition = addText(`Technologies: ${project.technologies}`, 8, 'italic', style.secondaryColor);
+            yPosition = addText(`Technologies: ${project.technologies}`, 7, 'italic', style.secondaryColor);
           }
           
           if (project.description) {
-            yPosition = addBulletPoints(project.description, 8);
+            yPosition = addBulletPoints(project.description, 7);
           }
           
           if (project.link) {
-            yPosition = addText(`Link: ${project.link}`, 7, 'normal', style.primaryColor);
+            yPosition = addText(`Link: ${project.link}`, 6, 'normal', style.primaryColor);
           }
           
-          yPosition += 1;
+          yPosition += 0.5;
         }
       }
 
@@ -345,67 +350,67 @@ export class PDFGenerator {
         yPosition = addSectionHeader('Education');
         
         for (const edu of resumeData.education) {
-          addNewPageIfNeeded(8);
+          addNewPageIfNeeded(6);
           
-          yPosition = addText(edu.degree || 'Degree', 9, 'bold', [0, 0, 0]);
+          yPosition = addText(edu.degree || 'Degree', 8, 'bold', [0, 0, 0]);
           const schoolLine = `${edu.school || 'School'}${edu.endDate ? ` | ${new Date(edu.endDate + '-01').getFullYear()}` : ''}`;
-          yPosition = addText(schoolLine, 8, 'normal', style.primaryColor);
+          yPosition = addText(schoolLine, 7, 'normal', style.primaryColor);
           
           if (edu.location) {
-            yPosition = addText(edu.location, 8, 'italic', style.secondaryColor);
+            yPosition = addText(edu.location, 7, 'italic', style.secondaryColor);
           }
           
           if (edu.gpa) {
-            yPosition = addText(`GPA: ${edu.gpa}`, 8, 'normal', [0, 0, 0]);
+            yPosition = addText(`GPA: ${edu.gpa}`, 7, 'normal', [0, 0, 0]);
           }
-          yPosition += 1;
+          yPosition += 0.5;
         }
       }
 
-      // Skills Section with modern grid layout
+      // Skills Section with modern layout
       if (resumeData.skills?.length > 0) {
         yPosition = addSectionHeader('Core Competencies');
         
-        const skillsPerLine = templateId === 3 ? 4 : 5;
+        const skillsPerLine = templateId === 3 ? 3 : 4;
         for (let i = 0; i < resumeData.skills.length; i += skillsPerLine) {
-          addNewPageIfNeeded(4);
+          addNewPageIfNeeded(3);
           
           const skillGroup = resumeData.skills.slice(i, i + skillsPerLine);
           
-          // Modern skill pills design
+          // Modern skill pills
           let xPosition = margin;
           for (const skill of skillGroup) {
-            const skillWidth = pdf.getTextWidth(skill) + 6;
+            const skillWidth = pdf.getTextWidth(skill) + 4;
             
-            // Skill background with lighter color instead of alpha
-            const lightAccent = style.accentColor.map(c => Math.min(255, c + 180));
+            // Skill background
+            const lightAccent = style.accentColor.map(c => Math.min(255, c + 170));
             pdf.setFillColor(lightAccent[0], lightAccent[1], lightAccent[2]);
-            pdf.rect(xPosition, yPosition - 2, skillWidth, 5, 'F');
+            pdf.rect(xPosition, yPosition - 1.5, skillWidth, 3.5, 'F');
             
             // Skill text
-            pdf.setFontSize(7);
+            pdf.setFontSize(6);
             pdf.setFont(style.fontFamily, 'normal');
             setColor(style.primaryColor);
-            pdf.text(skill, xPosition + 3, yPosition);
+            pdf.text(skill, xPosition + 2, yPosition);
             
-            xPosition += skillWidth + 4;
-            if (xPosition > pageWidth - margin - 30) break;
+            xPosition += skillWidth + 3;
+            if (xPosition > pageWidth - margin - 25) break;
           }
           
-          yPosition += 6;
+          yPosition += 4;
         }
-        yPosition += 1;
+        yPosition += 0.5;
       }
 
-      // Check if we need more space for remaining sections
+      // Additional sections in columns
       const hasMoreSections = (resumeData.certifications?.length > 0) || 
                              (resumeData.languages?.length > 0) || 
                              (resumeData.interests?.length > 0);
       
       if (hasMoreSections) {
-        const remainingSpace = pageHeight - yPosition - 20;
-        if (remainingSpace < 20) {
-          addNewPageIfNeeded(20);
+        const remainingSpace = pageHeight - yPosition - 15;
+        if (remainingSpace < 15) {
+          addNewPageIfNeeded(15);
         }
 
         const columnWidth = (pageWidth - 3 * margin) / 2;
@@ -416,26 +421,26 @@ export class PDFGenerator {
         if (resumeData.certifications?.length > 0) {
           leftColumnY = yPosition;
           
-          pdf.setFontSize(9);
+          pdf.setFontSize(8);
           pdf.setFont(style.fontFamily, 'bold');
           setColor(style.primaryColor);
           pdf.text('CERTIFICATIONS', margin, leftColumnY);
-          leftColumnY += 3;
+          leftColumnY += 2.5;
           
           for (const cert of resumeData.certifications) {
-            if (leftColumnY > pageHeight - 10) {
-              addNewPageIfNeeded(10);
+            if (leftColumnY > pageHeight - 8) {
+              addNewPageIfNeeded(8);
               leftColumnY = yPosition;
             }
             
-            pdf.setFontSize(7);
+            pdf.setFontSize(6);
             pdf.setFont(style.fontFamily, 'normal');
             pdf.setTextColor(0, 0, 0);
             const certText = `• ${cert.name} - ${cert.issuer} (${cert.date})`;
             const lines = pdf.splitTextToSize(certText, columnWidth);
             for (const line of lines) {
               pdf.text(line, margin, leftColumnY);
-              leftColumnY += 2.5;
+              leftColumnY += 2;
             }
           }
         }
@@ -443,21 +448,21 @@ export class PDFGenerator {
         // Right column - Languages
         if (resumeData.languages?.length > 0) {
           const rightColumnX = margin + columnWidth + margin;
-          rightColumnY = Math.max(yPosition, leftColumnY - 10);
+          rightColumnY = Math.max(yPosition, leftColumnY - 8);
           
-          pdf.setFontSize(9);
+          pdf.setFontSize(8);
           pdf.setFont(style.fontFamily, 'bold');
           setColor(style.primaryColor);
           pdf.text('LANGUAGES', rightColumnX, rightColumnY);
-          rightColumnY += 3;
+          rightColumnY += 2.5;
           
           for (const lang of resumeData.languages) {
-            if (rightColumnY < pageHeight - 6) {
-              pdf.setFontSize(7);
+            if (rightColumnY < pageHeight - 5) {
+              pdf.setFontSize(6);
               pdf.setFont(style.fontFamily, 'normal');
               pdf.setTextColor(0, 0, 0);
               pdf.text(`• ${lang.language} (${lang.proficiency})`, rightColumnX, rightColumnY);
-              rightColumnY += 2.5;
+              rightColumnY += 2;
             }
           }
         }
@@ -466,19 +471,19 @@ export class PDFGenerator {
         if (resumeData.interests?.length > 0) {
           const maxColumnY = Math.max(leftColumnY, rightColumnY);
           yPosition = maxColumnY + 1;
-          addNewPageIfNeeded(8);
+          addNewPageIfNeeded(6);
           
-          pdf.setFontSize(9);
+          pdf.setFontSize(8);
           pdf.setFont(style.fontFamily, 'bold');
           setColor(style.primaryColor);
           pdf.text('INTERESTS', margin, yPosition);
-          yPosition += 2;
+          yPosition += 1.5;
           
-          const interestsText = resumeData.interests.slice(0, 10).join(' • ');
-          pdf.setFontSize(7);
+          const interestsText = resumeData.interests.slice(0, 8).join(' • ');
+          pdf.setFontSize(6);
           pdf.setFont(style.fontFamily, 'normal');
           pdf.setTextColor(0, 0, 0);
-          yPosition = addText(interestsText, 7, 'normal', [0, 0, 0]);
+          yPosition = addText(interestsText, 6, 'normal', [0, 0, 0]);
         }
       }
 
@@ -503,14 +508,13 @@ export class PDFGenerator {
     }
   }
 
-  // Helper function to extract relevant keywords for ATS optimization
+  // Enhanced keyword extraction for ATS optimization
   static extractRelevantKeywords(jobDescription: string, experienceText: string): string[] {
     if (!jobDescription || !experienceText) return [];
     
     const jobWords = jobDescription.toLowerCase().match(/\b\w{3,}\b/g) || [];
     const expWords = experienceText.toLowerCase().match(/\b\w{3,}\b/g) || [];
     
-    // Find common meaningful words (exclude common words)
     const commonWords = new Set(['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'will', 'can', 'has', 'have', 'had', 'this', 'that', 'they', 'them', 'their', 'there', 'where', 'when', 'what', 'who', 'how', 'why', 'all', 'any', 'some', 'more', 'most', 'other', 'such', 'than', 'very', 'just', 'only', 'also', 'even', 'well', 'back', 'still', 'way', 'new', 'old', 'good', 'great', 'first', 'last', 'long', 'own', 'over', 'think', 'time', 'work', 'life', 'day', 'year', 'may', 'come', 'its', 'now', 'people', 'take', 'get', 'use', 'her', 'him', 'his', 'she', 'see', 'go']);
     
     const relevantWords = jobWords.filter(word => 
@@ -519,7 +523,7 @@ export class PDFGenerator {
       word.length > 3
     );
     
-    return [...new Set(relevantWords)].slice(0, 10);
+    return [...new Set(relevantWords)].slice(0, 15);
   }
 
   static async generateAdvancedPDF(resumeData: any, templateId: number = 0, filename: string = 'resume.pdf', jobDescription?: string): Promise<void> {
