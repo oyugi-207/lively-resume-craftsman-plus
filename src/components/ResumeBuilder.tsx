@@ -171,8 +171,8 @@ const ResumeBuilder: React.FC = () => {
         setSelectedTemplate(resume.template_id || 0);
         
         // Handle references and custom_colors safely
-        const resumeReferences = resume.references || [];
-        const resumeCustomColors = resume.custom_colors || null;
+        const resumeReferences = (resume as any).references || [];
+        const resumeCustomColors = (resume as any).custom_colors || null;
         
         setReferences(Array.isArray(resumeReferences) ? resumeReferences : []);
         setCustomColors(resumeCustomColors);
@@ -189,7 +189,7 @@ const ResumeBuilder: React.FC = () => {
               },
           experience: Array.isArray(resume.experience) ? resume.experience as ResumeData['experience'] : [],
           education: Array.isArray(resume.education) ? resume.education as ResumeData['education'] : [],
-          skills: Array.isArray(resume.skills) ? resume.skills : [],
+          skills: Array.isArray(resume.skills) ? resume.skills as any : [],
           certifications: Array.isArray(resume.certifications) ? resume.certifications as ResumeData['certifications'] : [],
           languages: Array.isArray(resume.languages) ? resume.languages as ResumeData['languages'] : [],
           interests: Array.isArray(resume.interests) ? resume.interests as string[] : [],
@@ -269,7 +269,7 @@ const ResumeBuilder: React.FC = () => {
     setResumeData(prev => ({ ...prev, education: data }));
   };
 
-  const updateSkills = (data: string[] | any[]) => {
+  const updateSkills = (data: any) => {
     setResumeData(prev => ({ ...prev, skills: data }));
   };
 

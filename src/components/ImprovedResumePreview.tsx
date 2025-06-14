@@ -147,7 +147,7 @@ const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, s
   const SelectedTemplate = templates[template] || ModernProfessionalTemplate;
 
   // Add sample data for empty sections to ensure preview shows all capabilities
-  const enhancedData = {
+  const enhancedData: ResumeData = {
     ...data,
     // Add sample skills if none exist
     skills: data.skills.length > 0 ? data.skills : [
