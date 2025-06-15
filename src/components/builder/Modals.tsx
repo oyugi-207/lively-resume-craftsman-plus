@@ -3,7 +3,7 @@ import React from 'react';
 import EnhancedTemplateSelector from '@/components/EnhancedTemplateSelector';
 import JobDescriptionParser from '@/components/JobDescriptionParser';
 import JobScanner from '@/components/JobScanner';
-import CVParser from '@/components/CVParser';
+import CVReaderEnhanced from '@/components/enhanced-forms/CVReaderEnhanced';
 import { toast } from 'sonner';
 
 interface ModalsProps {
@@ -66,7 +66,7 @@ const Modals: React.FC<ModalsProps> = ({
       )}
 
       {showCVParser && (
-        <CVParser
+        <CVReaderEnhanced
           onDataExtracted={onCVDataExtracted}
           onClose={onCloseCVParser}
         />
