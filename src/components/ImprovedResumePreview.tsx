@@ -1,29 +1,7 @@
 
 import React from 'react';
-import { 
-  ModernProfessionalTemplate, 
-  ExecutiveTemplate, 
-  CreativeTemplate, 
-  TechTemplate, 
-  MinimalistTemplate,
-  CorporateClassicTemplate,
-  ProfessionalBlueTemplate,
-  LegalProfessionalTemplate,
-  EngineeringFocusTemplate,
-  DataSpecialistTemplate,
-  SupplyChainTemplate,
-  CleanModernTemplate,
-  MarketingCreativeTemplate,
-  AcademicScholarTemplate,
-  SalesChampionTemplate,
-  ConsultingEliteTemplate
-} from './ResumeTemplates';
-import ModernCreativeTemplate from './ResumeTemplates/ModernCreativeTemplate';
-import CreativePortfolioTemplate from './ResumeTemplates/CreativePortfolioTemplate';
-import MinimalistElegantTemplate from './ResumeTemplates/MinimalistElegantTemplate';
-import TechInnovatorTemplate from './ResumeTemplates/TechInnovatorTemplate';
-import ExecutiveEliteTemplate from './ResumeTemplates/ExecutiveEliteTemplate';
-import CreativeDesignerTemplate from './ResumeTemplates/CreativeDesignerTemplate';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, ExternalLink, Phone, Mail, Globe } from 'lucide-react';
 
 interface ResumeData {
   personal: {
@@ -32,9 +10,6 @@ interface ResumeData {
     phone: string;
     location: string;
     summary: string;
-    website?: string;
-    linkedin?: string;
-    github?: string;
   };
   experience: Array<{
     id: number;
@@ -52,16 +27,12 @@ interface ResumeData {
     location: string;
     startDate: string;
     endDate: string;
-    gpa: string;
+    gpa?: string;
     description?: string;
     courses?: string;
     honors?: string;
   }>;
-  skills: Array<{
-    name: string;
-    level: string;
-    category: string;
-  }> | string[];
+  skills: string[];
   certifications: Array<{
     id: number;
     name: string;
@@ -93,116 +64,269 @@ interface ResumeData {
     phone: string;
     relationship: string;
   }>;
-  jobDescription?: string;
 }
 
-interface ResumePreviewProps {
+interface ImprovedResumePreviewProps {
   data: ResumeData;
-  template: number;
+  template?: number;
   scale?: number;
-  customColors?: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    text: string;
-    background: string;
-  };
 }
 
-const ImprovedResumePreview: React.FC<ResumePreviewProps> = ({ data, template, scale = 1, customColors }) => {
-  const containerStyle = {
-    transform: `scale(${scale})`,
-    transformOrigin: 'top left',
-    width: `${100 / scale}%`,
-    height: `${100 / scale}%`,
+const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({ 
+  data, 
+  template = 0, 
+  scale = 0.3 
+}) => {
+  const formatDateRange = (startDate: string, endDate: string) => {
+    if (!startDate) return '';
+    const start = startDate ? new Date(startDate + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '';
+    const end = endDate ? new Date(endDate + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'Present';
+    return `${start} - ${end}`;
   };
 
-  // Complete template mapping with all templates including the new ones
-  const templates = [
-    ModernProfessionalTemplate,     // 0 - Modern Professional
-    ExecutiveTemplate,              // 1 - Executive Leadership  
-    CreativeTemplate,               // 2 - Creative Designer
-    TechTemplate,                   // 3 - Tech Specialist
-    MinimalistTemplate,             // 4 - Minimalist Clean
-    CorporateClassicTemplate,       // 5 - Corporate Classic
-    ProfessionalBlueTemplate,       // 6 - Professional Blue
-    LegalProfessionalTemplate,      // 7 - Legal Professional
-    EngineeringFocusTemplate,       // 8 - Engineering Focus
-    DataSpecialistTemplate,         // 9 - Data Specialist
-    SupplyChainTemplate,            // 10 - Supply Chain Manager
-    CleanModernTemplate,            // 11 - Clean Modern
-    MarketingCreativeTemplate,      // 12 - Marketing Creative
-    AcademicScholarTemplate,        // 13 - Academic Scholar
-    SalesChampionTemplate,          // 14 - Sales Champion
-    ConsultingEliteTemplate,        // 15 - Consulting Elite
-    ModernCreativeTemplate,         // 16 - Modern Creative
-    CreativePortfolioTemplate,      // 17 - Creative Portfolio
-    MinimalistElegantTemplate,      // 18 - Minimalist Elegant
-    TechInnovatorTemplate,          // 19 - Tech Innovator
-    ExecutiveEliteTemplate,         // 20 - Executive Elite
-    CreativeDesignerTemplate,       // 21 - Creative Designer Pro
-  ];
-
-  // Ensure we have a valid template
-  const SelectedTemplate = templates[template] || ModernProfessionalTemplate;
-
-  // Add sample data for empty sections to ensure preview shows all capabilities
-  const enhancedData = {
-    ...data,
-    // Add sample skills if none exist - normalize to string array for template compatibility
-    skills: data.skills.length > 0 ? 
-      (Array.isArray(data.skills) && typeof data.skills[0] === 'object' 
-        ? (data.skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name)
-        : data.skills as string[]
-      ) : ['Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management'],
-    // Add sample project if none exist
-    projects: data.projects.length > 0 ? data.projects : [{
-      id: 1,
-      name: 'Sample Project',
-      description: 'Professional project showcasing skills and expertise',
-      technologies: 'Various Technologies',
-      link: '',
-      startDate: '2023',
-      endDate: '2024'
-    }],
-    // Add sample certifications if none exist
-    certifications: data.certifications.length > 0 ? data.certifications : [{
-      id: 1,
-      name: 'Professional Certification',
-      issuer: 'Industry Organization',
-      date: '2024',
-      credentialId: ''
-    }],
-    // Add sample languages if none exist
-    languages: data.languages.length > 0 ? data.languages : [{
-      id: 1,
-      language: 'English',
-      proficiency: 'Native'
-    }],
-    // Add sample interests if none exist
-    interests: data.interests.length > 0 ? data.interests : [
-      'Professional Development', 'Technology', 'Innovation'
-    ],
-    // Add sample references if none exist
-    references: data.references && data.references.length > 0 ? data.references : [{
-      id: 1,
-      name: 'Professional Reference',
-      title: 'Senior Manager',
-      company: 'Previous Company',
-      email: 'reference@company.com',
-      phone: '+1 (555) 123-4567',
-      relationship: 'Former Supervisor'
-    }]
+  const formatBulletPoints = (description: string) => {
+    if (!description) return [];
+    return description.split('\n').filter(line => line.trim()).map(line => line.replace(/^[•·‣▪▫-]\s*/, ''));
   };
 
   return (
-    <div style={containerStyle} className="w-full">
-      <div className="bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-200" 
-           style={{ width: '210mm', minHeight: '297mm' }}>
-        <div className="w-full h-full">
-          <SelectedTemplate data={enhancedData} customColors={customColors} />
+    <div 
+      className="bg-white text-black p-8 font-sans leading-relaxed shadow-lg"
+      style={{ 
+        transform: `scale(${scale})`, 
+        transformOrigin: 'top left',
+        width: `${100 / scale}%`,
+        height: `${100 / scale}%`,
+        minHeight: '1056px', // A4 height
+        maxWidth: '816px' // A4 width
+      }}
+    >
+      {/* Header Section */}
+      <div className="text-center mb-8 pb-6 border-b-2 border-blue-600">
+        <h1 className="text-4xl font-bold text-blue-800 mb-3">
+          {data.personal.fullName || 'Your Name'}
+        </h1>
+        <div className="flex justify-center items-center gap-6 text-gray-700 text-sm">
+          {data.personal.email && (
+            <div className="flex items-center gap-1">
+              <Mail className="w-4 h-4" />
+              {data.personal.email}
+            </div>
+          )}
+          {data.personal.phone && (
+            <div className="flex items-center gap-1">
+              <Phone className="w-4 h-4" />
+              {data.personal.phone}
+            </div>
+          )}
+          {data.personal.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
+              {data.personal.location}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Professional Summary */}
+      {data.personal.summary && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+            PROFESSIONAL SUMMARY
+          </h2>
+          <p className="text-gray-700 leading-relaxed">
+            {data.personal.summary}
+          </p>
+        </div>
+      )}
+
+      {/* Professional Experience */}
+      {data.experience && data.experience.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+            PROFESSIONAL EXPERIENCE
+          </h2>
+          {data.experience.map((exp) => (
+            <div key={exp.id} className="mb-6">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">{exp.position}</h3>
+                  <div className="text-blue-600 font-medium">{exp.company}</div>
+                </div>
+                <div className="text-right text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {formatDateRange(exp.startDate, exp.endDate)}
+                  </div>
+                  {exp.location && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      {exp.location}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {exp.description && (
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                  {formatBulletPoints(exp.description).map((point, index) => (
+                    <li key={index}>{point}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Education */}
+      {data.education && data.education.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+            EDUCATION
+          </h2>
+          {data.education.map((edu) => (
+            <div key={edu.id} className="mb-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">{edu.degree}</h3>
+                  <div className="text-blue-600 font-medium">{edu.school}</div>
+                  {edu.gpa && (
+                    <div className="text-sm text-gray-600">GPA: {edu.gpa}</div>
+                  )}
+                </div>
+                <div className="text-right text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {formatDateRange(edu.startDate, edu.endDate)}
+                  </div>
+                  {edu.location && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      {edu.location}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Key Projects - Now using actual data */}
+      {data.projects && data.projects.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+            KEY PROJECTS
+          </h2>
+          {data.projects.map((project) => (
+            <div key={project.id} className="mb-6">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">{project.name}</h3>
+                  {project.technologies && (
+                    <div className="text-sm text-blue-600 font-medium">
+                      Technologies: {project.technologies}
+                    </div>
+                  )}
+                </div>
+                <div className="text-right text-sm text-gray-600">
+                  {(project.startDate || project.endDate) && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDateRange(project.startDate, project.endDate)}
+                    </div>
+                  )}
+                  {project.link && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <ExternalLink className="w-3 h-3" />
+                      <span className="text-blue-600">Link: {project.link}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {project.description && (
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                  {formatBulletPoints(project.description).map((point, index) => (
+                    <li key={index}>{point}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Skills */}
+      {data.skills && data.skills.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+            TECHNICAL SKILLS
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {data.skills.map((skill, index) => (
+              <Badge key={index} variant="outline" className="text-gray-700 border-gray-400">
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Certifications */}
+      {data.certifications && data.certifications.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+            CERTIFICATIONS
+          </h2>
+          {data.certifications.map((cert) => (
+            <div key={cert.id} className="mb-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-gray-800">{cert.name}</h3>
+                  <div className="text-blue-600">{cert.issuer}</div>
+                  {cert.credentialId && (
+                    <div className="text-sm text-gray-600">ID: {cert.credentialId}</div>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600">{cert.date}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Languages */}
+      {data.languages && data.languages.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+            LANGUAGES
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {data.languages.map((lang) => (
+              <div key={lang.id} className="flex justify-between">
+                <span className="text-gray-800">{lang.language}</span>
+                <span className="text-gray-600">{lang.proficiency}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Interests */}
+      {data.interests && data.interests.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+            INTERESTS
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {data.interests.map((interest, index) => (
+              <Badge key={index} variant="outline" className="text-gray-700 border-gray-400">
+                {interest}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
