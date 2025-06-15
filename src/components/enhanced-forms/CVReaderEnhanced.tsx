@@ -6,6 +6,7 @@ import { Upload, FileText, Loader2, CheckCircle, AlertCircle, Zap } from 'lucide
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAPIKey } from '@/hooks/useAPIKey';
 
 interface CVReaderEnhancedProps {
   onDataExtracted: (data: any) => void;
@@ -16,6 +17,7 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const { apiKey } = useAPIKey();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -42,6 +44,11 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
       return;
     }
 
+    if (!apiKey) {
+      toast.error('Please set your Gemini API key in Settings first');
+      return;
+    }
+
     setProcessing(true);
     try {
       // Convert file to base64
@@ -51,24 +58,25 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
           const base64Data = fileReader.result as string;
           const base64Content = base64Data.split(',')[1];
 
-          console.log('Calling resume parser API...');
-          const { data: result, error } = await supabase.functions.invoke('resume-parser-api', {
+          console.log('Calling Gemini AI CV reader...');
+          const { data: result, error } = await supabase.functions.invoke('cv-reader-ai', {
             body: { 
               fileContent: base64Content,
               fileName: uploadedFile.name,
-              fileType: uploadedFile.type
+              fileType: uploadedFile.type,
+              apiKey: apiKey
             }
           });
 
           if (error) {
-            console.error('Resume parser error:', error);
+            console.error('Gemini CV reader error:', error);
             throw error;
           }
 
           if (result?.extractedData) {
             console.log('Extracted data:', result.extractedData);
             onDataExtracted(result.extractedData);
-            toast.success('CV data extracted successfully with AI!');
+            toast.success('CV data extracted successfully with Gemini AI!');
             onClose();
           } else {
             toast.error('No data could be extracted from the CV');
@@ -97,10 +105,10 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            AI CV Reader
+            Gemini AI CV Reader
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Upload your CV and let AI extract the information to auto-fill your resume
+            Upload your CV and let Gemini AI extract the information to auto-fill your resume
           </p>
         </CardHeader>
         
@@ -151,18 +159,18 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
             
             <Button
               onClick={extractCVData}
-              disabled={!uploadedFile || processing}
+              disabled={!uploadedFile || processing || !apiKey}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               {processing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing CV...
+                  Processing with Gemini AI...
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Extract Data with AI
+                  Extract Data with Gemini AI
                 </>
               )}
             </Button>
@@ -175,10 +183,15 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
               <div className="text-sm">
                 <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-1">How it works:</h4>
                 <ul className="text-blue-800 dark:text-blue-400 space-y-1">
-                  <li>• AI reads your CV and extracts personal info, experience, education, and skills</li>
+                  <li>• Gemini AI reads your CV and extracts personal info, experience, education, and skills</li>
                   <li>• Extracted data is automatically filled into the corresponding form fields</li>
                   <li>• You can review and edit the information before saving</li>
                   <li>• Supports PDF, DOC, and DOCX formats</li>
+                  {!apiKey && (
+                    <li className="text-orange-600 dark:text-orange-400 font-medium">
+                      • Please set your Gemini API key in Settings to use this feature
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>
