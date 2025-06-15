@@ -1,7 +1,7 @@
 
 import React from 'react';
 import EnhancedTemplateSelector from '@/components/EnhancedTemplateSelector';
-import JobDescriptionParser from '@/components/JobDescriptionParser';
+import EnhancedJobDescriptionParser from '@/components/EnhancedJobDescriptionParser';
 import JobScanner from '@/components/JobScanner';
 import CVReaderEnhanced from '@/components/enhanced-forms/CVReaderEnhanced';
 import { toast } from 'sonner';
@@ -47,7 +47,7 @@ const Modals: React.FC<ModalsProps> = ({
       )}
 
       {showJobParser && (
-        <JobDescriptionParser
+        <EnhancedJobDescriptionParser
           isOpen={showJobParser}
           onClose={onCloseJobParser}
           onParsed={onJobDescriptionParsed}

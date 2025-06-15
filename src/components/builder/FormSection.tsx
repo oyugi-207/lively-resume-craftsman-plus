@@ -1,90 +1,29 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  User, 
-  Briefcase, 
-  GraduationCap, 
-  Award, 
-  Languages, 
-  Heart,
-  FolderOpen,
-  Users
-} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles } from 'lucide-react';
 
-// Import all form components
-import PersonalInfoForm from '@/components/PersonalInfoForm';
-import ExperienceFormEnhanced from '@/components/ExperienceFormEnhanced';
-import EducationForm from '@/components/EducationForm';
-import SkillsForm from '@/components/SkillsForm';
-import ProjectsForm from '@/components/ProjectsForm';
-import CertificationsForm from '@/components/CertificationsForm';
-import LanguagesForm from '@/components/LanguagesForm';
-import InterestsForm from '@/components/InterestsForm';
-import ReferencesFormEnhanced from '@/components/enhanced-forms/ReferencesFormEnhanced';
-
-interface ResumeData {
-  personal: {
-    fullName: string;
-    email: string;
-    phone: string;
-    location: string;
-    summary: string;
-  };
-  experience: Array<{
-    id: number;
-    company: string;
-    position: string;
-    location: string;
-    startDate: string;
-    endDate: string;
-    description: string;
-  }>;
-  education: Array<{
-    id: number;
-    school: string;
-    degree: string;
-    location: string;
-    startDate: string;
-    endDate: string;
-    gpa: string;
-  }>;
-  skills: string[];
-  certifications: Array<{
-    id: number;
-    name: string;
-    issuer: string;
-    date: string;
-    credentialId: string;
-  }>;
-  languages: Array<{
-    id: number;
-    language: string;
-    proficiency: string;
-  }>;
-  interests: string[];
-  projects: Array<{
-    id: number;
-    name: string;
-    description: string;
-    technologies: string;
-    link: string;
-    startDate: string;
-    endDate: string;
-  }>;
-  references: Array<{
-    id: number;
-    name: string;
-    title: string;
-    company: string;
-    email: string;
-    phone: string;
-    relationship: string;
-  }>;
-}
+// Import form components
+import PersonalInfoForm from '@/components/forms/PersonalInfoForm';
+import ExperienceForm from '@/components/forms/ExperienceForm';
+import EducationForm from '@/components/forms/EducationForm';
+import SkillsForm from '@/components/forms/SkillsForm';
+import ProjectsForm from '@/components/forms/ProjectsForm';
+import CertificationsForm from '@/components/forms/CertificationsForm';
+import LanguagesForm from '@/components/forms/LanguagesForm';
+import InterestsForm from '@/components/forms/InterestsForm';
+import ReferencesForm from '@/components/forms/ReferencesForm';
+import EnhancedSkillsForm from '@/components/EnhancedSkillsForm';
+import CertificationsFormEnhanced from '@/components/CertificationsFormEnhanced';
+import LanguagesFormEnhanced from '@/components/LanguagesFormEnhanced';
+import InterestsFormEnhanced from '@/components/InterestsFormEnhanced';
+import ReferencesFormEnhanced from '@/components/ReferencesFormEnhanced';
+import PersonalInfoFormEnhanced from '@/components/enhanced-forms/PersonalInfoFormEnhanced';
+import ExperienceFormEnhanced from '@/components/enhanced-forms/ExperienceFormEnhanced';
+import ProjectsFormEnhanced from '@/components/enhanced-forms/ProjectsFormEnhanced';
 
 interface FormSectionProps {
-  resumeData: ResumeData;
+  resumeData: any;
   activeTab: string;
   onTabChange: (tab: string) => void;
   onPersonalInfoChange: (data: any) => void;
@@ -112,149 +51,117 @@ const FormSection: React.FC<FormSectionProps> = ({
   onInterestsChange,
   onReferencesChange
 }) => {
-  const handleTabChange = (newTab: string) => {
-    console.log('Tab changing from', activeTab, 'to', newTab);
-    setTimeout(() => {
-      onTabChange(newTab);
-    }, 0);
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'personal':
+        return (
+          <PersonalInfoFormEnhanced
+            data={resumeData.personal}
+            onChange={onPersonalInfoChange}
+          />
+        );
+      case 'experience':
+        return (
+          <ExperienceFormEnhanced
+            data={resumeData.experience}
+            onChange={onExperienceChange}
+          />
+        );
+      case 'education':
+        return (
+          <EducationForm
+            data={resumeData.education}
+            onChange={onEducationChange}
+          />
+        );
+      case 'skills':
+        return (
+          <EnhancedSkillsForm
+            data={resumeData.skills}
+            onChange={onSkillsChange}
+          />
+        );
+      case 'projects':
+        return (
+          <ProjectsFormEnhanced
+            data={resumeData.projects}
+            onChange={onProjectsChange}
+          />
+        );
+      case 'certifications':
+        return (
+          <CertificationsFormEnhanced
+            data={resumeData.certifications}
+            onChange={onCertificationsChange}
+          />
+        );
+      case 'languages':
+        return (
+          <LanguagesFormEnhanced
+            data={resumeData.languages}
+            onChange={onLanguagesChange}
+          />
+        );
+      case 'interests':
+        return (
+          <InterestsFormEnhanced
+            data={resumeData.interests}
+            onChange={onInterestsChange}
+          />
+        );
+      case 'references':
+        return (
+          <ReferencesFormEnhanced
+            data={resumeData.references}
+            onChange={onReferencesChange}
+          />
+        );
+      default:
+        return null;
+    }
   };
-
-  const handleFormContainerClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
-  const tabs = [
-    { id: 'personal', label: 'Personal', shortLabel: 'Personal', icon: User },
-    { id: 'experience', label: 'Experience', shortLabel: 'Work', icon: Briefcase },
-    { id: 'education', label: 'Education', shortLabel: 'Education', icon: GraduationCap },
-    { id: 'skills', label: 'Skills', shortLabel: 'Skills', icon: Award },
-    { id: 'projects', label: 'Projects', shortLabel: 'Projects', icon: FolderOpen },
-    { id: 'certifications', label: 'Certifications', shortLabel: 'Certs', icon: Award },
-    { id: 'languages', label: 'Languages', shortLabel: 'Lang', icon: Languages },
-    { id: 'interests', label: 'Interests', shortLabel: 'Interests', icon: Heart },
-    { id: 'references', label: 'References', shortLabel: 'References', icon: Users }
-  ];
 
   return (
-    <Card className="shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 dark:from-blue-400/10 dark:to-purple-400/10"></div>
-      <CardContent className="relative p-3 sm:p-4 lg:p-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          
-          <div className="mb-4 sm:mb-6">
-            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-              <TabsList className="inline-flex h-auto bg-gray-100/70 dark:bg-gray-700/70 rounded-xl p-1 min-w-full shadow-inner">
-                <div className="grid grid-cols-3 sm:grid-cols-9 gap-1 w-full">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <TabsTrigger 
-                        key={tab.id}
-                        value={tab.id}
-                        className="flex flex-col items-center gap-1 p-2 sm:p-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-lg rounded-lg transition-all duration-300 hover:bg-white/90 dark:hover:bg-gray-600/90 cursor-pointer min-w-0 group"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleTabChange(tab.id);
-                        }}
-                      >
-                        <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-gray-600 dark:text-gray-300 group-data-[state=active]:text-blue-600 dark:group-data-[state=active]:text-blue-400 transition-colors" />
-                        <span className="text-xs leading-none font-medium truncate text-gray-700 dark:text-gray-300 group-data-[state=active]:text-blue-700 dark:group-data-[state=active]:text-blue-300">
-                          {window.innerWidth < 640 ? tab.shortLabel : tab.label}
-                        </span>
-                      </TabsTrigger>
-                    );
-                  })}
-                </div>
-              </TabsList>
-            </div>
-          </div>
-
-          <div className="min-h-[400px] bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6">
-            <TabsContent value="personal" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <PersonalInfoForm 
-                  data={resumeData.personal} 
-                  onChange={onPersonalInfoChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="experience" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <ExperienceFormEnhanced 
-                  data={resumeData.experience} 
-                  onChange={onExperienceChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="education" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <EducationForm 
-                  data={resumeData.education} 
-                  onChange={onEducationChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="skills" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <SkillsForm 
-                  data={resumeData.skills} 
-                  onChange={onSkillsChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="projects" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <ProjectsForm 
-                  data={resumeData.projects} 
-                  onChange={onProjectsChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="certifications" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <CertificationsForm 
-                  data={resumeData.certifications} 
-                  onChange={onCertificationsChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="languages" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <LanguagesForm 
-                  data={resumeData.languages} 
-                  onChange={onLanguagesChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="interests" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <InterestsForm 
-                  data={resumeData.interests} 
-                  onChange={onInterestsChange} 
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="references" className="mt-0">
-              <div onClick={handleFormContainerClick}>
-                <ReferencesFormEnhanced 
-                  data={resumeData.references} 
-                  onChange={onReferencesChange} 
-                />
-              </div>
-            </TabsContent>
-          </div>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <Tabs defaultValue={activeTab} className="w-full">
+      <TabsList className="bg-white/80 dark:bg-gray-900/80 border rounded-lg shadow-sm flex justify-between">
+        <div className="flex overflow-x-auto hide-scrollbar">
+          <TabsTrigger value="personal" onClick={() => onTabChange('personal')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Personal
+          </TabsTrigger>
+          <TabsTrigger value="experience" onClick={() => onTabChange('experience')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Experience
+          </TabsTrigger>
+          <TabsTrigger value="education" onClick={() => onTabChange('education')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Education
+          </TabsTrigger>
+          <TabsTrigger value="skills" onClick={() => onTabChange('skills')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Skills
+          </TabsTrigger>
+          <TabsTrigger value="projects" onClick={() => onTabChange('projects')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Projects
+          </TabsTrigger>
+          <TabsTrigger value="certifications" onClick={() => onTabChange('certifications')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Certifications
+          </TabsTrigger>
+          <TabsTrigger value="languages" onClick={() => onTabChange('languages')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Languages
+          </TabsTrigger>
+          <TabsTrigger value="interests" onClick={() => onTabChange('interests')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            Interests
+          </TabsTrigger>
+          <TabsTrigger value="references" onClick={() => onTabChange('references')} className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-900 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-50">
+            References
+          </TabsTrigger>
+        </div>
+        <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full">
+          <Sparkles className="mr-1 w-4 h-4" />
+          AI-Powered
+        </Badge>
+      </TabsList>
+      <div className="mt-4">
+        {renderTabContent()}
+      </div>
+    </Tabs>
   );
 };
 
