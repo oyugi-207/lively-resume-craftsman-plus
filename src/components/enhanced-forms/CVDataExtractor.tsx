@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             return a.transform[4] - b.transform[4]; // Same line, left to right
           });
           
-          let currentY = null;
+          let currentY: number | null = null;
           let lineText = '';
           
           for (let j = 0; j < sortedItems.length; j++) {
@@ -90,13 +91,13 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
           }
         }
         
-        return this.cleanAndFormatText(fullText);
+        return cleanAndFormatText(fullText);
       } else {
-        return await this.extractPDFTextFallback(file);
+        return await extractPDFTextFallback(file);
       }
     } catch (error) {
       console.error('PDF extraction error:', error);
-      return await this.extractPDFTextFallback(file);
+      return await extractPDFTextFallback(file);
     }
   };
 
@@ -162,7 +163,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
           
           // Join lines and preserve structure
           text = lines.join('\n');
-          text = this.cleanAndFormatText(text);
+          text = cleanAndFormatText(text);
           
           resolve(text);
         } catch (error) {
@@ -214,7 +215,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
           }
           
           let text = paragraphs.join('\n');
-          text = this.cleanAndFormatText(text);
+          text = cleanAndFormatText(text);
           
           resolve(text);
         } catch (error) {
@@ -265,15 +266,15 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       
       if (file.type === 'application/pdf') {
         console.log('Processing PDF file...');
-        text = await this.extractPDFText(file);
+        text = await extractPDFText(file);
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         console.log('Processing DOCX file...');
-        text = await this.extractDOCXText(file);
+        text = await extractDOCXText(file);
       } else if (file.type === 'text/plain') {
         console.log('Processing text file...');
         text = await new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onload = (e) => resolve((e.target?.result as string) || '');
           reader.onerror = reject;
           reader.readAsText(file);
         });
@@ -283,8 +284,8 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
           const reader = new FileReader();
           reader.onload = (e) => {
             try {
-              const content = e.target?.result as string;
-              const cleanText = this.cleanAndFormatText(content);
+              const content = (e.target?.result as string) || '';
+              const cleanText = cleanAndFormatText(content);
               resolve(cleanText);
             } catch (error) {
               reject(error);
@@ -301,210 +302,6 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       if (!text || text.length < 10) {
         throw new Error('Could not extract readable text from the file. Please ensure the file contains text content and try again.');
       }
-      
-      return text;
-    } catch (error) {
-      console.error('Text extraction failed:', error);
-      throw new Error(`Failed to extract text from ${file.type || 'file'}. The file might be corrupted or in an unsupported format.`);
-    }
-  };
-
-  // Enhanced PDF extraction using modern browser APIs and better parsing
-  const extractPDFText = async (file: File): Promise<string> => {
-    try {
-      // Try using a more sophisticated approach with PDF.js library
-      const pdfjsLib = (window as any).pdfjsLib;
-      
-      if (pdfjsLib) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items
-            .map((item: any) => item.str)
-            .join(' ');
-          fullText += pageText + '\n';
-        }
-        
-        return fullText.trim();
-      } else {
-        // Fallback to improved binary parsing
-        return await extractPDFTextFallback(file);
-      }
-    } catch (error) {
-      console.error('PDF extraction error:', error);
-      return await extractPDFTextFallback(file);
-    }
-  };
-
-  // Improved fallback PDF text extraction
-  const extractPDFTextFallback = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const uint8Array = new Uint8Array(arrayBuffer);
-          let text = '';
-          
-          // More sophisticated PDF parsing
-          let i = 0;
-          while (i < uint8Array.length - 3) {
-            // Look for text objects and streams
-            if (uint8Array[i] === 0x42 && uint8Array[i + 1] === 0x54) { // "BT" - Begin Text
-              i += 2;
-              let textContent = '';
-              let inParentheses = false;
-              let parenDepth = 0;
-              
-              while (i < uint8Array.length - 1) {
-                const byte = uint8Array[i];
-                const char = String.fromCharCode(byte);
-                
-                if (char === '(') {
-                  inParentheses = true;
-                  parenDepth++;
-                } else if (char === ')') {
-                  parenDepth--;
-                  if (parenDepth <= 0) {
-                    inParentheses = false;
-                    if (textContent.trim()) {
-                      text += textContent.trim() + ' ';
-                      textContent = '';
-                    }
-                  }
-                } else if (inParentheses && parenDepth > 0) {
-                  // Only capture readable characters
-                  if (byte >= 32 && byte <= 126) {
-                    textContent += char;
-                  } else if (byte === 10 || byte === 13) {
-                    textContent += ' ';
-                  }
-                } else if (char === 'E' && uint8Array[i + 1] === 84) { // "ET" - End Text
-                  break;
-                }
-                i++;
-              }
-            } else {
-              i++;
-            }
-          }
-          
-          // Clean up the extracted text
-          text = text
-            .replace(/\s+/g, ' ')
-            .replace(/[^\x20-\x7E\n]/g, ' ')
-            .trim();
-          
-          resolve(text);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read PDF file'));
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
-  // Enhanced DOCX extraction
-  const extractDOCXText = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const uint8Array = new Uint8Array(arrayBuffer);
-          
-          // Look for document.xml content in the DOCX zip structure
-          const decoder = new TextDecoder('utf-8');
-          const content = decoder.decode(uint8Array);
-          
-          // Extract text between XML tags
-          const xmlPattern = /<w:t[^>]*>([^<]*)<\/w:t>/g;
-          let match;
-          let text = '';
-          
-          while ((match = xmlPattern.exec(content)) !== null) {
-            if (match[1]) {
-              text += match[1] + ' ';
-            }
-          }
-          
-          // Also try to extract from plain text sections
-          const textPattern = />[^<]{3,}</g;
-          const textMatches = content.match(textPattern);
-          if (textMatches) {
-            textMatches.forEach(match => {
-              const cleanText = match.replace(/[><]/g, '').trim();
-              if (cleanText.length > 2 && /[a-zA-Z]/.test(cleanText)) {
-                text += cleanText + ' ';
-              }
-            });
-          }
-          
-          resolve(text.trim());
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read DOCX file'));
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
-  // Main text extraction function
-  const extractTextFromFile = async (file: File): Promise<string> => {
-    console.log('Extracting text from file:', file.name, 'Type:', file.type);
-    
-    try {
-      let text = '';
-      
-      if (file.type === 'application/pdf') {
-        console.log('Processing PDF file...');
-        text = await this.extractPDFText(file);
-      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        console.log('Processing DOCX file...');
-        text = await this.extractDOCXText(file);
-      } else if (file.type === 'text/plain') {
-        console.log('Processing text file...');
-        text = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.onerror = reject;
-          reader.readAsText(file);
-        });
-      } else {
-        // Generic text extraction for other formats
-        console.log('Processing generic file...');
-        text = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const content = e.target?.result as string;
-              // Try to extract readable text
-              const cleanText = content
-                .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-              resolve(cleanText);
-            } catch (error) {
-              reject(error);
-            }
-          };
-          reader.onerror = reject;
-          reader.readAsText(file);
-        });
-      }
-      
-      console.log('Extracted text length:', text.length);
-      console.log('Text preview:', text.substring(0, 200));
       
       return text;
     } catch (error) {
