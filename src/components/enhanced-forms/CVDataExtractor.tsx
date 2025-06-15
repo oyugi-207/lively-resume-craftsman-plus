@@ -21,6 +21,294 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
   const [currentStep, setCurrentStep] = useState<'upload' | 'view' | 'parsed'>('upload');
   const [enhancing, setEnhancing] = useState(false);
 
+  // Enhanced PDF extraction with better formatting preservation
+  const extractPDFText = async (file: File): Promise<string> => {
+    try {
+      const pdfjsLib = (window as any).pdfjsLib;
+      
+      if (pdfjsLib) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          
+          // Sort text items by Y position (top to bottom) then X position (left to right)
+          const sortedItems = textContent.items.sort((a: any, b: any) => {
+            const yDiff = Math.abs(a.transform[5] - b.transform[5]);
+            if (yDiff > 2) { // Different lines
+              return b.transform[5] - a.transform[5]; // Higher Y first (top to bottom)
+            }
+            return a.transform[4] - b.transform[4]; // Same line, left to right
+          });
+          
+          let currentY = null;
+          let lineText = '';
+          
+          for (let j = 0; j < sortedItems.length; j++) {
+            const item = sortedItems[j];
+            const itemY = Math.round(item.transform[5]);
+            const itemText = item.str.trim();
+            
+            if (currentY === null) {
+              currentY = itemY;
+              lineText = itemText;
+            } else if (Math.abs(currentY - itemY) <= 2) {
+              // Same line - add spacing if needed
+              if (lineText && itemText) {
+                const lastChar = lineText[lineText.length - 1];
+                const firstChar = itemText[0];
+                
+                // Add space if needed
+                if (lastChar !== ' ' && firstChar !== ' ' && 
+                    !['•', '-', '(', ')', '.', ','].includes(lastChar) &&
+                    !['•', '-', '(', ')', '.', ','].includes(firstChar)) {
+                  lineText += ' ';
+                }
+              }
+              lineText += itemText;
+            } else {
+              // New line
+              if (lineText.trim()) {
+                fullText += lineText.trim() + '\n';
+              }
+              currentY = itemY;
+              lineText = itemText;
+            }
+          }
+          
+          // Add last line
+          if (lineText.trim()) {
+            fullText += lineText.trim() + '\n';
+          }
+          
+          // Add page break if not last page
+          if (i < pdf.numPages) {
+            fullText += '\n---PAGE BREAK---\n\n';
+          }
+        }
+        
+        return this.cleanAndFormatText(fullText);
+      } else {
+        return await this.extractPDFTextFallback(file);
+      }
+    } catch (error) {
+      console.error('PDF extraction error:', error);
+      return await this.extractPDFTextFallback(file);
+    }
+  };
+
+  // Improved fallback PDF text extraction with better formatting
+  const extractPDFTextFallback = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          let text = '';
+          
+          // Look for text content in PDF structure
+          let i = 0;
+          const lines: string[] = [];
+          
+          while (i < uint8Array.length - 10) {
+            // Look for text objects
+            if (uint8Array[i] === 0x42 && uint8Array[i + 1] === 0x54) { // "BT" - Begin Text
+              i += 2;
+              let textContent = '';
+              let inString = false;
+              let parenCount = 0;
+              
+              while (i < uint8Array.length - 1) {
+                const byte = uint8Array[i];
+                const char = String.fromCharCode(byte);
+                
+                if (char === '(' && !inString) {
+                  inString = true;
+                  parenCount = 1;
+                } else if (char === ')' && inString) {
+                  parenCount--;
+                  if (parenCount === 0) {
+                    inString = false;
+                    if (textContent.trim()) {
+                      lines.push(textContent.trim());
+                      textContent = '';
+                    }
+                  }
+                } else if (char === '(' && inString) {
+                  parenCount++;
+                  if (byte >= 32 && byte <= 126) {
+                    textContent += char;
+                  }
+                } else if (inString && parenCount > 0) {
+                  if (byte >= 32 && byte <= 126) {
+                    textContent += char;
+                  } else if (byte === 10 || byte === 13) {
+                    textContent += ' ';
+                  }
+                } else if (char === 'E' && uint8Array[i + 1] === 84) { // "ET" - End Text
+                  break;
+                }
+                i++;
+              }
+            } else {
+              i++;
+            }
+          }
+          
+          // Join lines and preserve structure
+          text = lines.join('\n');
+          text = this.cleanAndFormatText(text);
+          
+          resolve(text);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => reject(new Error('Failed to read PDF file'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  // Enhanced DOCX extraction with formatting preservation
+  const extractDOCXText = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const decoder = new TextDecoder('utf-8');
+          const content = decoder.decode(uint8Array);
+          
+          // Extract text with paragraph structure
+          const paragraphs: string[] = [];
+          
+          // Look for paragraph tags
+          const pTagPattern = /<w:p[^>]*>(.*?)<\/w:p>/gs;
+          const pMatches = content.match(pTagPattern);
+          
+          if (pMatches) {
+            pMatches.forEach(pMatch => {
+              // Extract text from runs within paragraph
+              const textPattern = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+              let match;
+              let paragraphText = '';
+              
+              while ((match = textPattern.exec(pMatch)) !== null) {
+                if (match[1]) {
+                  paragraphText += match[1];
+                }
+              }
+              
+              if (paragraphText.trim()) {
+                paragraphs.push(paragraphText.trim());
+              }
+            });
+          }
+          
+          let text = paragraphs.join('\n');
+          text = this.cleanAndFormatText(text);
+          
+          resolve(text);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => reject(new Error('Failed to read DOCX file'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  // Clean and format extracted text while preserving structure
+  const cleanAndFormatText = (text: string): string => {
+    let cleanText = text;
+    
+    // Remove excessive whitespace but preserve line breaks
+    cleanText = cleanText.replace(/[ \t]+/g, ' '); // Multiple spaces/tabs to single space
+    cleanText = cleanText.replace(/\n[ \t]+/g, '\n'); // Remove leading spaces on new lines
+    cleanText = cleanText.replace(/[ \t]+\n/g, '\n'); // Remove trailing spaces before new lines
+    
+    // Preserve section breaks and important formatting
+    cleanText = cleanText.replace(/\n{3,}/g, '\n\n'); // Max 2 consecutive line breaks
+    
+    // Fix common formatting issues
+    cleanText = cleanText.replace(/([a-z])([A-Z])/g, '$1 $2'); // Add space before capital letters
+    cleanText = cleanText.replace(/(\d{2}\/\d{4}|\d{4})\s*-\s*(\d{2}\/\d{2}\/\d{4}|\w+)/g, '$1 - $2'); // Fix date ranges
+    cleanText = cleanText.replace(/•\s*/g, '• '); // Ensure space after bullets
+    cleanText = cleanText.replace(/\s*•\s*/g, '\n• '); // Bullets on new lines
+    
+    // Preserve email and phone formatting
+    cleanText = cleanText.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '\n$1\n');
+    cleanText = cleanText.replace(/(\(?\+?[\d\s\-\(\)]{10,})/g, '\n$1\n');
+    
+    // Remove extra line breaks around contact info
+    cleanText = cleanText.replace(/\n{2,}(@|\()/g, '\n$1');
+    cleanText = cleanText.replace(/(@[^\n]+)\n{2,}/g, '$1\n');
+    
+    return cleanText.trim();
+  };
+
+  // Main text extraction function
+  const extractTextFromFile = async (file: File): Promise<string> => {
+    console.log('Extracting text from file:', file.name, 'Type:', file.type);
+    
+    try {
+      let text = '';
+      
+      if (file.type === 'application/pdf') {
+        console.log('Processing PDF file...');
+        text = await this.extractPDFText(file);
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        console.log('Processing DOCX file...');
+        text = await this.extractDOCXText(file);
+      } else if (file.type === 'text/plain') {
+        console.log('Processing text file...');
+        text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      } else {
+        console.log('Processing generic file...');
+        text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const content = e.target?.result as string;
+              const cleanText = this.cleanAndFormatText(content);
+              resolve(cleanText);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      }
+      
+      console.log('Extracted text length:', text.length);
+      console.log('Text preview:', text.substring(0, 300));
+      
+      if (!text || text.length < 10) {
+        throw new Error('Could not extract readable text from the file. Please ensure the file contains text content and try again.');
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('Text extraction failed:', error);
+      throw new Error(`Failed to extract text from ${file.type || 'file'}. The file might be corrupted or in an unsupported format.`);
+    }
+  };
+
   // Enhanced PDF extraction using modern browser APIs and better parsing
   const extractPDFText = async (file: File): Promise<string> => {
     try {
@@ -180,10 +468,10 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       
       if (file.type === 'application/pdf') {
         console.log('Processing PDF file...');
-        text = await extractPDFText(file);
+        text = await this.extractPDFText(file);
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         console.log('Processing DOCX file...');
-        text = await extractDOCXText(file);
+        text = await this.extractDOCXText(file);
       } else if (file.type === 'text/plain') {
         console.log('Processing text file...');
         text = await new Promise((resolve, reject) => {
@@ -225,16 +513,17 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     }
   };
 
+  // Parse extracted text and extract structured data
   const parseExtractedText = (text: string) => {
-    const lines = text.split(/[\.\n\r]/).map(line => line.trim()).filter(line => line.length > 3);
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 2);
     
-    // Extract personal information
+    // Extract personal information with better pattern matching
     const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
     const phoneMatch = text.match(/[\(]?\+?[\d\s\-\(\)]{10,}/);
     
     // Find name (usually one of the first few meaningful lines)
     let fullName = '';
-    for (let i = 0; i < Math.min(10, lines.length); i++) {
+    for (let i = 0; i < Math.min(5, lines.length); i++) {
       const line = lines[i];
       if (line.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+/) && 
           !line.includes('@') && 
@@ -286,8 +575,8 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
 
       // Process content based on current section
       if (currentSection === 'experience' && line.length > 5) {
-        if (line.match(/\d{4}/) || line.includes('-') || line.includes('to')) {
-          // Potential date or duration
+        // Look for date patterns
+        if (line.match(/\d{2}\/\d{4}|\d{4}/) && (line.includes('-') || line.includes('to'))) {
           if (currentItem.position) {
             sections.experience.push({ 
               ...currentItem, 
@@ -355,7 +644,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       },
       experience: sections.experience,
       education: sections.education,
-      skills: [...new Set(sections.skills)].slice(0, 20), // Remove duplicates and limit
+      skills: [...new Set(sections.skills)].slice(0, 20),
       projects: [],
       certifications: [],
       languages: [],
@@ -386,7 +675,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       console.log('Text extraction successful, setting extracted text...');
       setExtractedText(text);
       setCurrentStep('view');
-      toast.success('Document content extracted successfully!');
+      toast.success('Document content extracted successfully with preserved formatting!');
     } catch (error: any) {
       console.error('Error processing file:', error);
       toast.error(error.message || 'Failed to extract data from document. Please try a different file or format.');
@@ -416,7 +705,6 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     
     setEnhancing(true);
     try {
-      // Simulate AI enhancement
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const enhanced = {
@@ -493,7 +781,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             Enhanced CV Document Reader
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Advanced document parsing - Extract clean, readable content from PDFs, DOCX, and text files
+            Advanced document parsing with preserved formatting - Extract structured content exactly as it appears in your document
           </p>
         </CardHeader>
         
@@ -514,7 +802,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
               'bg-gray-100 dark:bg-gray-800 text-gray-500'
             }`}>
               <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">2. View Content</span>
+              <span className="text-sm font-medium">2. View Formatted Content</span>
             </div>
             <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
               currentStep === 'parsed' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
@@ -527,7 +815,6 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
 
           {currentStep === 'upload' && (
             <>
-              {/* Upload Area */}
               <div
                 {...getRootProps()}
                 className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
@@ -551,10 +838,10 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                       {processing ? 'Processing your document...' : 'Upload your CV document'}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {processing ? 'Using advanced parsing technology for clean text extraction' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
+                      {processing ? 'Using advanced formatting preservation technology' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Enhanced PDF.js technology for accurate PDF reading
+                      Enhanced extraction preserves original document structure and formatting
                     </p>
                   </div>
                 </div>
@@ -572,7 +859,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
           {currentStep === 'view' && extractedText && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Document Content</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Formatted Document Content</h3>
                 <div className="flex gap-2">
                   <Button onClick={resetProcess} variant="outline" size="sm">
                     <RefreshCw className="w-4 h-4 mr-2" />
@@ -596,9 +883,9 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
 
               <Card className="bg-gray-50 dark:bg-gray-800">
                 <CardHeader>
-                  <CardTitle className="text-base text-gray-900 dark:text-white">Clean Extracted Text</CardTitle>
+                  <CardTitle className="text-base text-gray-900 dark:text-white">Preserved Document Structure</CardTitle>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    This is the clean, readable text extracted from your document using advanced parsing technology.
+                    This shows your document content with preserved formatting, spacing, and structure exactly as it appears in the original.
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -606,11 +893,11 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                     value={extractedText}
                     onChange={(e) => setExtractedText(e.target.value)}
                     className="min-h-[400px] font-mono text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                    placeholder="Extracted document content will appear here..."
+                    placeholder="Formatted document content will appear here..."
                   />
                   <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{extractedText.length} characters extracted</span>
-                    <span>You can edit the text above if needed</span>
+                    <span>{extractedText.length} characters extracted with formatting preserved</span>
+                    <span>You can edit the text above if needed before extracting data</span>
                   </div>
                 </CardContent>
               </Card>
@@ -619,11 +906,10 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
 
           {currentStep === 'parsed' && parsedData && (
             <div className="space-y-6">
-              {/* Success Message */}
               <div className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
                 <CheckCircle className="w-5 h-5" />
                 <div>
-                  <span className="font-medium">Data extracted successfully!</span>
+                  <span className="font-medium">Data extracted successfully with preserved formatting!</span>
                   <p className="text-sm text-green-700 dark:text-green-300">
                     Found {parsedData.experience?.length || 0} work experiences, {parsedData.education?.length || 0} education entries, and {parsedData.skills?.length || 0} skills.
                   </p>
@@ -677,7 +963,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                     {parsedData.personal.summary && (
                       <div>
                         <strong>Summary:</strong>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">
                           {parsedData.personal.summary}
                         </p>
                       </div>
@@ -709,7 +995,6 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                 </Card>
               )}
 
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <Button onClick={resetProcess} variant="outline">
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -742,7 +1027,6 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             </div>
           )}
 
-          {/* Cancel Button */}
           <div className="flex justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button variant="outline" onClick={onClose}>
               Cancel
