@@ -19,7 +19,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState<string>('');
   const [parsedData, setParsedData] = useState<any>(null);
-  const [currentStep, setCurrentStep] = useState<'upload' | 'view' | 'parsed'>('upload');
+  const [currentStep, setCurrentStep] = useState<'upload' | 'parsed'>('upload');
   const [enhancing, setEnhancing] = useState(false);
 
   // Enhanced PDF extraction with better formatting preservation
@@ -310,9 +310,9 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     }
   };
 
-  // Parse extracted text and extract structured data
+  // Parse extracted text and extract structured data - preserving ALL original information
   const parseExtractedText = (text: string) => {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 2);
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     
     // Extract personal information with better pattern matching
     const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
@@ -338,7 +338,11 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       experience: [],
       education: [],
       skills: [],
-      summary: ''
+      summary: '',
+      projects: [],
+      certifications: [],
+      languages: [],
+      interests: []
     };
 
     let currentSection = '';
@@ -349,7 +353,11 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       experience: ['experience', 'work', 'employment', 'career', 'professional'],
       education: ['education', 'qualification', 'degree', 'university', 'college', 'school'],
       skills: ['skill', 'technical', 'competenc', 'expertise', 'proficient'],
-      summary: ['summary', 'objective', 'profile', 'about']
+      summary: ['summary', 'objective', 'profile', 'about'],
+      projects: ['project', 'portfolio'],
+      certifications: ['certification', 'certificate', 'license'],
+      languages: ['language', 'linguistic'],
+      interests: ['interest', 'hobby', 'activities']
     };
     
     for (let i = 0; i < lines.length; i++) {
@@ -366,29 +374,54 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       }
       
       if (foundSection) {
+        // Save current item before switching sections
+        if (currentSection === 'experience' && currentItem.position) {
+          sections.experience.push({ 
+            ...currentItem, 
+            id: Date.now() + Math.random(),
+            startDate: currentItem.startDate || '',
+            endDate: currentItem.endDate || '',
+            location: currentItem.location || ''
+          });
+        } else if (currentSection === 'education' && currentItem.degree) {
+          sections.education.push({ 
+            ...currentItem, 
+            id: Date.now() + Math.random(),
+            startDate: currentItem.startDate || '',
+            endDate: currentItem.endDate || '',
+            location: currentItem.location || '',
+            gpa: currentItem.gpa || ''
+          });
+        }
+        
         currentSection = foundSection;
+        currentItem = {};
         continue;
       }
 
       // Process content based on current section
       if (currentSection === 'experience' && line.length > 5) {
         // Look for date patterns
-        if (line.match(/\d{2}\/\d{4}|\d{4}/) && (line.includes('-') || line.includes('to'))) {
+        const datePattern = /(\d{2}\/\d{4}|\d{4})\s*-\s*(\d{2}\/\d{4}|\d{4}|present|current)/i;
+        if (datePattern.test(line)) {
+          const dateMatch = line.match(datePattern);
           if (currentItem.position) {
             sections.experience.push({ 
               ...currentItem, 
               id: Date.now() + Math.random(),
-              startDate: '',
-              endDate: '',
-              location: ''
+              startDate: dateMatch ? dateMatch[1] : '',
+              endDate: dateMatch ? dateMatch[2] : '',
+              location: currentItem.location || ''
             });
             currentItem = {};
           }
-        } else if (!currentItem.position && line.length > 5 && line.length < 100) {
+          currentItem.startDate = dateMatch ? dateMatch[1] : '';
+          currentItem.endDate = dateMatch ? dateMatch[2] : '';
+        } else if (!currentItem.position && line.length > 5 && line.length < 100 && !line.includes('•')) {
           currentItem.position = line;
-        } else if (!currentItem.company && line.length > 2 && line.length < 80) {
+        } else if (!currentItem.company && line.length > 2 && line.length < 80 && !line.includes('•')) {
           currentItem.company = line;
-        } else if (line.length > 10) {
+        } else if (line.includes('•') || line.length > 10) {
           currentItem.description = (currentItem.description || '') + line + '\n';
         }
       } else if (currentSection === 'education' && line.length > 3) {
@@ -416,6 +449,45 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
         sections.skills.push(...skills);
       } else if (currentSection === 'summary' && line.length > 15) {
         sections.summary += line + ' ';
+      } else if (currentSection === 'projects' && line.length > 5) {
+        if (!currentItem.name && line.length < 80) {
+          currentItem.name = line;
+        } else if (currentItem.name && !currentItem.description) {
+          currentItem.description = line;
+          sections.projects.push({
+            ...currentItem,
+            id: Date.now() + Math.random(),
+            technologies: '',
+            link: '',
+            startDate: '',
+            endDate: ''
+          });
+          currentItem = {};
+        }
+      } else if (currentSection === 'certifications' && line.length > 5) {
+        sections.certifications.push({
+          id: Date.now() + Math.random(),
+          name: line,
+          issuer: '',
+          date: '',
+          credentialId: ''
+        });
+      } else if (currentSection === 'languages' && line.length > 2) {
+        const languages = line.split(/[,•\-\n]/)
+          .map(s => s.trim())
+          .filter(s => s.length > 1);
+        languages.forEach(lang => {
+          sections.languages.push({
+            id: Date.now() + Math.random(),
+            language: lang,
+            proficiency: 'Professional'
+          });
+        });
+      } else if (currentSection === 'interests' && line.length > 2) {
+        const interests = line.split(/[,•\-\n]/)
+          .map(s => s.trim())
+          .filter(s => s.length > 1);
+        sections.interests.push(...interests);
       }
     }
 
@@ -424,9 +496,9 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       sections.experience.push({ 
         ...currentItem, 
         id: Date.now() + Math.random(),
-        startDate: '',
-        endDate: '',
-        location: ''
+        startDate: currentItem.startDate || '',
+        endDate: currentItem.endDate || '',
+        location: currentItem.location || ''
       });
     }
 
@@ -441,11 +513,11 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       },
       experience: sections.experience,
       education: sections.education,
-      skills: [...new Set(sections.skills)].slice(0, 20),
-      projects: [],
-      certifications: [],
-      languages: [],
-      interests: []
+      skills: [...new Set(sections.skills)],
+      projects: sections.projects,
+      certifications: sections.certifications,
+      languages: sections.languages,
+      interests: [...new Set(sections.interests)]
     };
   };
 
@@ -469,29 +541,17 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
         throw new Error('Could not extract readable text from the file. Please ensure the file contains text content and try again.');
       }
 
-      console.log('Text extraction successful, setting extracted text...');
+      console.log('Text extraction successful, parsing data...');
       setExtractedText(text);
-      setCurrentStep('view');
-      toast.success('Document content extracted successfully with preserved formatting!');
+      
+      // Automatically parse the data and show template view
+      const parsed = parseExtractedText(text);
+      setParsedData(parsed);
+      setCurrentStep('parsed');
+      toast.success('CV data extracted and organized successfully!');
     } catch (error: any) {
       console.error('Error processing file:', error);
       toast.error(error.message || 'Failed to extract data from document. Please try a different file or format.');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const parseData = () => {
-    if (!extractedText) return;
-    
-    setProcessing(true);
-    try {
-      const parsed = parseExtractedText(extractedText);
-      setParsedData(parsed);
-      setCurrentStep('parsed');
-      toast.success('Data parsed successfully!');
-    } catch (error) {
-      toast.error('Failed to parse document data');
     } finally {
       setProcessing(false);
     }
@@ -575,41 +635,14 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            Enhanced CV Document Reader
+            Smart CV Template Organizer
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Advanced document parsing with preserved formatting - Extract structured content exactly as it appears in your document
+            Upload your CV and see it automatically organized in a professional template format
           </p>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Progress Steps */}
-          <div className="flex items-center justify-center space-x-4 mb-6">
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-              currentStep === 'upload' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
-              extractedText ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
-              'bg-gray-100 dark:bg-gray-800 text-gray-500'
-            }`}>
-              <Upload className="w-4 h-4" />
-              <span className="text-sm font-medium">1. Upload</span>
-            </div>
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-              currentStep === 'view' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
-              currentStep === 'parsed' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
-              'bg-gray-100 dark:bg-gray-800 text-gray-500'
-            }`}>
-              <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">2. View Formatted Content</span>
-            </div>
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-              currentStep === 'parsed' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
-              'bg-gray-100 dark:bg-gray-800 text-gray-500'
-            }`}>
-              <Edit3 className="w-4 h-4" />
-              <span className="text-sm font-medium">3. Extract Data</span>
-            </div>
-          </div>
-
           {currentStep === 'upload' && (
             <>
               <div
@@ -632,13 +665,13 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                   
                   <div>
                     <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
-                      {processing ? 'Processing your document...' : 'Upload your CV document'}
+                      {processing ? 'Processing and organizing your CV...' : 'Upload your CV document'}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {processing ? 'Using advanced formatting preservation technology' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
+                      {processing ? 'Extracting content and arranging it in a professional template' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Enhanced extraction preserves original document structure and formatting
+                      Your information will be automatically organized without losing any details
                     </p>
                   </div>
                 </div>
@@ -653,149 +686,203 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             </>
           )}
 
-          {currentStep === 'view' && extractedText && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Formatted Document Content</h3>
-                <div className="flex gap-2">
-                  <Button onClick={resetProcess} variant="outline" size="sm">
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Upload Different File
-                  </Button>
-                  <Button onClick={parseData} disabled={processing}>
-                    {processing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Extracting Data...
-                      </>
-                    ) : (
-                      <>
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        Extract Structured Data
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Card className="bg-gray-50 dark:bg-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-base text-gray-900 dark:text-white">Preserved Document Structure</CardTitle>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    This shows your document content with preserved formatting, spacing, and structure exactly as it appears in the original.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    value={extractedText}
-                    onChange={(e) => setExtractedText(e.target.value)}
-                    className="min-h-[400px] font-mono text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                    placeholder="Formatted document content will appear here..."
-                  />
-                  <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{extractedText.length} characters extracted with formatting preserved</span>
-                    <span>You can edit the text above if needed before extracting data</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           {currentStep === 'parsed' && parsedData && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
                 <CheckCircle className="w-5 h-5" />
                 <div>
-                  <span className="font-medium">Data extracted successfully with preserved formatting!</span>
+                  <span className="font-medium">CV successfully organized in professional template!</span>
                   <p className="text-sm text-green-700 dark:text-green-300">
                     Found {parsedData.experience?.length || 0} work experiences, {parsedData.education?.length || 0} education entries, and {parsedData.skills?.length || 0} skills.
                   </p>
                 </div>
               </div>
 
-              {/* Data Summary */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {parsedData.personal?.fullName ? '✓' : '—'}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Personal Info</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {parsedData.experience?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Experience</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {parsedData.education?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Education</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    {parsedData.skills?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Skills</div>
-                </div>
-              </div>
-
-              {/* Personal Information Preview */}
-              {parsedData.personal && (
-                <Card className="bg-gray-50 dark:bg-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-gray-900 dark:text-white">Personal Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-gray-700 dark:text-gray-300">
-                    {parsedData.personal.fullName && (
-                      <div><strong>Name:</strong> {parsedData.personal.fullName}</div>
-                    )}
-                    {parsedData.personal.email && (
-                      <div><strong>Email:</strong> {parsedData.personal.email}</div>
-                    )}
-                    {parsedData.personal.phone && (
-                      <div><strong>Phone:</strong> {parsedData.personal.phone}</div>
-                    )}
-                    {parsedData.personal.summary && (
-                      <div>
-                        <strong>Summary:</strong>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">
-                          {parsedData.personal.summary}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Skills Preview */}
-              {parsedData.skills?.length > 0 && (
-                <Card className="bg-gray-50 dark:bg-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-gray-900 dark:text-white">Skills Found</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {parsedData.skills.slice(0, 15).map((skill: string, index: number) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                      {parsedData.skills.length > 15 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{parsedData.skills.length - 15} more
-                        </Badge>
+              {/* Organized CV Template Display */}
+              <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <CardContent className="p-6">
+                  {/* Header */}
+                  <div className="text-center border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      {parsedData.personal?.fullName || 'Professional Name'}
+                    </h1>
+                    <div className="flex items-center justify-center flex-wrap gap-4 text-gray-600 dark:text-gray-400 text-sm">
+                      {parsedData.personal?.email && (
+                        <span>{parsedData.personal.email}</span>
+                      )}
+                      {parsedData.personal?.phone && (
+                        <span>{parsedData.personal.phone}</span>
+                      )}
+                      {parsedData.personal?.location && (
+                        <span>{parsedData.personal.location}</span>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+
+                  {/* Professional Summary */}
+                  {parsedData.personal?.summary && (
+                    <div className="mb-6">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                        Professional Summary
+                      </h2>
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {parsedData.personal.summary}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Work Experience */}
+                  {parsedData.experience?.length > 0 && (
+                    <div className="mb-6">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                        Professional Experience
+                      </h2>
+                      <div className="space-y-4">
+                        {parsedData.experience.map((exp: any, index: number) => (
+                          <div key={index} className="border-l-2 border-blue-200 dark:border-blue-800 pl-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-white">{exp.position}</h3>
+                                <p className="text-blue-600 dark:text-blue-400 font-medium">{exp.company}</p>
+                                {exp.location && <p className="text-gray-600 dark:text-gray-400 text-sm">{exp.location}</p>}
+                              </div>
+                              {(exp.startDate || exp.endDate) && (
+                                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                                  {exp.startDate} - {exp.endDate}
+                                </span>
+                              )}
+                            </div>
+                            {exp.description && (
+                              <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                                {exp.description}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Education */}
+                  {parsedData.education?.length > 0 && (
+                    <div className="mb-6">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                        Education
+                      </h2>
+                      <div className="space-y-3">
+                        {parsedData.education.map((edu: any, index: number) => (
+                          <div key={index} className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold text-gray-900 dark:text-white">{edu.degree}</h3>
+                              <p className="text-blue-600 dark:text-blue-400">{edu.school}</p>
+                              {edu.location && <p className="text-gray-600 dark:text-gray-400 text-sm">{edu.location}</p>}
+                              {edu.gpa && <p className="text-gray-600 dark:text-gray-400 text-sm">GPA: {edu.gpa}</p>}
+                            </div>
+                            {(edu.startDate || edu.endDate) && (
+                              <span className="text-gray-500 dark:text-gray-400 text-sm">
+                                {edu.startDate} - {edu.endDate}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {parsedData.skills?.length > 0 && (
+                    <div className="mb-6">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                        Skills & Competencies
+                      </h2>
+                      <div className="flex flex-wrap gap-2">
+                        {parsedData.skills.map((skill: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional sections in grid layout */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Projects */}
+                    {parsedData.projects?.length > 0 && (
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                          Projects
+                        </h2>
+                        <div className="space-y-3">
+                          {parsedData.projects.map((project: any, index: number) => (
+                            <div key={index}>
+                              <h3 className="font-semibold text-gray-900 dark:text-white">{project.name}</h3>
+                              {project.description && (
+                                <p className="text-gray-700 dark:text-gray-300 text-sm">{project.description}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Certifications */}
+                    {parsedData.certifications?.length > 0 && (
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                          Certifications
+                        </h2>
+                        <div className="space-y-2">
+                          {parsedData.certifications.map((cert: any, index: number) => (
+                            <div key={index}>
+                              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{cert.name}</h3>
+                              {cert.issuer && <p className="text-gray-600 dark:text-gray-400 text-sm">{cert.issuer}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Languages */}
+                    {parsedData.languages?.length > 0 && (
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                          Languages
+                        </h2>
+                        <div className="space-y-1">
+                          {parsedData.languages.map((lang: any, index: number) => (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span className="text-gray-700 dark:text-gray-300">{lang.language}</span>
+                              <span className="text-gray-500 dark:text-gray-400">{lang.proficiency}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Interests */}
+                    {parsedData.interests?.length > 0 && (
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">
+                          Interests
+                        </h2>
+                        <div className="flex flex-wrap gap-2">
+                          {parsedData.interests.map((interest: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {interest}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="flex gap-3">
                 <Button onClick={resetProcess} variant="outline">
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Start Over
+                  Upload Different File
                 </Button>
                 
                 <Button
@@ -818,7 +905,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                 
                 <Button onClick={handleUseData} className="flex-1">
                   <Edit3 className="w-4 h-4 mr-2" />
-                  Use This Data
+                  Use This Organized Data
                 </Button>
               </div>
             </div>
