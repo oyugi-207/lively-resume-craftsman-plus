@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Loader2, CheckCircle, AlertCircle, Eye, Edit3, Zap } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, AlertCircle, Eye, Edit3, Zap, RefreshCw } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -17,48 +17,101 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<any>(null);
-  const [showRawData, setShowRawData] = useState(false);
+  const [extractedText, setExtractedText] = useState<string>('');
+  const [parsedData, setParsedData] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState<'upload' | 'view' | 'parsed'>('upload');
   const [enhancing, setEnhancing] = useState(false);
 
   const extractTextFromFile = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           let text = '';
           
           if (file.type === 'text/plain') {
             text = e.target?.result as string;
           } else if (file.type === 'application/pdf') {
+            // For PDF files, we'll try to extract basic text
             const arrayBuffer = e.target?.result as ArrayBuffer;
             const uint8Array = new Uint8Array(arrayBuffer);
             
-            // Extract text from PDF
+            // Simple PDF text extraction (basic approach)
             let pdfText = '';
-            for (let i = 0; i < uint8Array.length; i++) {
+            let inTextObject = false;
+            let currentText = '';
+            
+            for (let i = 0; i < uint8Array.length - 1; i++) {
               const char = String.fromCharCode(uint8Array[i]);
-              if (char.match(/[a-zA-Z0-9\s@\.\-\(\)]/)) {
-                pdfText += char;
-              } else if (char.match(/[\n\r]/)) {
-                pdfText += ' ';
+              const nextChar = String.fromCharCode(uint8Array[i + 1]);
+              
+              // Look for text objects in PDF
+              if (char === 'B' && nextChar === 'T') {
+                inTextObject = true;
+                continue;
+              }
+              if (char === 'E' && nextChar === 'T') {
+                inTextObject = false;
+                if (currentText.trim()) {
+                  pdfText += currentText.trim() + ' ';
+                  currentText = '';
+                }
+                continue;
+              }
+              
+              if (inTextObject && char.match(/[a-zA-Z0-9\s@\.\-\(\)]/)) {
+                currentText += char;
               }
             }
+            
             text = pdfText.replace(/\s+/g, ' ').trim();
           } else {
-            // For Word documents
+            // For Word documents and other formats, try to extract readable text
             const arrayBuffer = e.target?.result as ArrayBuffer;
             const uint8Array = new Uint8Array(arrayBuffer);
+            
+            // Convert to string and try to extract readable content
             let docText = '';
+            let buffer = '';
             
             for (let i = 0; i < uint8Array.length; i++) {
-              const char = String.fromCharCode(uint8Array[i]);
-              if (char.match(/[a-zA-Z0-9\s@\.\-\(\)]/)) {
-                docText += char;
+              const byte = uint8Array[i];
+              
+              // Skip null bytes and control characters
+              if (byte === 0 || byte < 32) {
+                if (buffer.trim().length > 2) {
+                  docText += buffer.trim() + ' ';
+                }
+                buffer = '';
+                continue;
+              }
+              
+              const char = String.fromCharCode(byte);
+              
+              // Only include printable ASCII characters and common symbols
+              if (char.match(/[a-zA-Z0-9\s@\.\-\(\)\+\=\&\%\$\#\!\?\,\;\:\'\"]/) || 
+                  char.charCodeAt(0) > 127) { // Allow unicode characters
+                buffer += char;
+              } else {
+                if (buffer.trim().length > 2) {
+                  docText += buffer.trim() + ' ';
+                }
+                buffer = '';
               }
             }
-            text = docText.replace(/\s+/g, ' ').trim();
+            
+            // Add any remaining buffer
+            if (buffer.trim().length > 2) {
+              docText += buffer.trim();
+            }
+            
+            // Clean up the extracted text
+            text = docText
+              .replace(/\s+/g, ' ')
+              .replace(/[^\w\s@\.\-\(\)\+\=\&\%\$\#\!\?\,\;\:\'\"]/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
           }
           
           resolve(text);
@@ -78,26 +131,28 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
   };
 
   const parseExtractedText = (text: string) => {
-    const lines = text.split(/[\n\r]/).map(line => line.trim()).filter(line => line.length > 0);
+    const lines = text.split(/[\.\n\r]/).map(line => line.trim()).filter(line => line.length > 3);
     
     // Extract personal information
     const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
-    const phoneMatch = text.match(/[\(]?\d{3}[\)]?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/);
+    const phoneMatch = text.match(/[\(]?\+?[\d\s\-\(\)]{10,}/);
     
-    // Find name (usually in first few lines)
+    // Find name (usually one of the first few meaningful lines)
     let fullName = '';
-    for (let i = 0; i < Math.min(5, lines.length); i++) {
+    for (let i = 0; i < Math.min(10, lines.length); i++) {
       const line = lines[i];
       if (line.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+/) && 
           !line.includes('@') && 
           !line.match(/\d{3}/) && 
-          line.length < 50) {
+          line.length < 50 &&
+          line.split(' ').length >= 2 &&
+          line.split(' ').length <= 4) {
         fullName = line;
         break;
       }
     }
 
-    // Extract sections by looking for keywords
+    // Extract sections by looking for keywords and patterns
     const sections = {
       experience: [],
       education: [],
@@ -108,73 +163,90 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     let currentSection = '';
     let currentItem: any = {};
     
+    // Look for section headers and content
+    const sectionKeywords = {
+      experience: ['experience', 'work', 'employment', 'career', 'professional'],
+      education: ['education', 'qualification', 'degree', 'university', 'college', 'school'],
+      skills: ['skill', 'technical', 'competenc', 'expertise', 'proficient'],
+      summary: ['summary', 'objective', 'profile', 'about']
+    };
+    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const lowerLine = line.toLowerCase();
       
       // Detect section headers
-      if (lowerLine.includes('experience') || lowerLine.includes('work')) {
-        currentSection = 'experience';
-        continue;
-      } else if (lowerLine.includes('education')) {
-        currentSection = 'education';
-        continue;
-      } else if (lowerLine.includes('skill')) {
-        currentSection = 'skills';
-        continue;
-      } else if (lowerLine.includes('summary') || lowerLine.includes('objective')) {
-        currentSection = 'summary';
+      let foundSection = '';
+      for (const [section, keywords] of Object.entries(sectionKeywords)) {
+        if (keywords.some(keyword => lowerLine.includes(keyword))) {
+          foundSection = section;
+          break;
+        }
+      }
+      
+      if (foundSection) {
+        currentSection = foundSection;
         continue;
       }
 
       // Process content based on current section
-      if (currentSection === 'experience' && line.length > 10) {
-        if (line.match(/\d{4}/) && (line.includes('-') || line.includes('to'))) {
-          // Date line - save current item and start new one
+      if (currentSection === 'experience' && line.length > 5) {
+        if (line.match(/\d{4}/) || line.includes('-') || line.includes('to')) {
+          // Potential date or duration
           if (currentItem.position) {
-            sections.experience.push({ ...currentItem, id: Date.now() + Math.random() });
+            sections.experience.push({ 
+              ...currentItem, 
+              id: Date.now() + Math.random(),
+              startDate: '',
+              endDate: '',
+              location: ''
+            });
             currentItem = {};
           }
-        } else if (!line.includes('•') && !line.startsWith('-')) {
-          // Title or company line
-          if (!currentItem.position) {
-            currentItem.position = line;
-          } else if (!currentItem.company) {
-            currentItem.company = line;
-          }
-        } else {
-          // Description
-          if (!currentItem.description) {
-            currentItem.description = line;
-          } else {
-            currentItem.description += '\n' + line;
-          }
+        } else if (!currentItem.position && line.length > 5 && line.length < 100) {
+          currentItem.position = line;
+        } else if (!currentItem.company && line.length > 2 && line.length < 80) {
+          currentItem.company = line;
+        } else if (line.length > 10) {
+          currentItem.description = (currentItem.description || '') + line + '\n';
         }
-      } else if (currentSection === 'education' && line.length > 5) {
-        if (line.match(/\d{4}/)) {
-          if (currentItem.degree) {
-            sections.education.push({ ...currentItem, id: Date.now() + Math.random() });
-            currentItem = {};
-          }
-        } else if (!currentItem.degree) {
+      } else if (currentSection === 'education' && line.length > 3) {
+        if (!currentItem.degree && line.length > 5 && line.length < 100) {
           currentItem.degree = line;
-        } else if (!currentItem.school) {
+        } else if (!currentItem.school && line.length > 3 && line.length < 80) {
           currentItem.school = line;
         }
+        
+        if (currentItem.degree && currentItem.school) {
+          sections.education.push({ 
+            ...currentItem, 
+            id: Date.now() + Math.random(),
+            startDate: '',
+            endDate: '',
+            location: '',
+            gpa: ''
+          });
+          currentItem = {};
+        }
       } else if (currentSection === 'skills' && line.length > 2) {
-        const skills = line.split(/[,•\-]/).map(s => s.trim()).filter(s => s.length > 1);
+        const skills = line.split(/[,•\-\n]/)
+          .map(s => s.trim())
+          .filter(s => s.length > 1 && s.length < 30);
         sections.skills.push(...skills);
-      } else if (currentSection === 'summary' && line.length > 20) {
+      } else if (currentSection === 'summary' && line.length > 15) {
         sections.summary += line + ' ';
       }
     }
 
     // Add any remaining items
     if (currentItem.position) {
-      sections.experience.push({ ...currentItem, id: Date.now() + Math.random() });
-    }
-    if (currentItem.degree) {
-      sections.education.push({ ...currentItem, id: Date.now() + Math.random() });
+      sections.experience.push({ 
+        ...currentItem, 
+        id: Date.now() + Math.random(),
+        startDate: '',
+        endDate: '',
+        location: ''
+      });
     }
 
     return {
@@ -188,7 +260,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       },
       experience: sections.experience,
       education: sections.education,
-      skills: sections.skills.slice(0, 20),
+      skills: [...new Set(sections.skills)].slice(0, 20), // Remove duplicates and limit
       projects: [],
       certifications: [],
       languages: [],
@@ -206,26 +278,44 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
 
   const processFile = async (file: File) => {
     setProcessing(true);
+    setCurrentStep('upload');
+    
     try {
       const text = await extractTextFromFile(file);
       
-      if (!text || text.length < 20) {
-        throw new Error('Could not extract readable text from the file');
+      if (!text || text.length < 10) {
+        throw new Error('Could not extract readable text from the file. Please try a different format or check if the file is not corrupted.');
       }
 
-      const parsedData = parseExtractedText(text);
-      setExtractedData(parsedData);
-      toast.success('CV data extracted successfully!');
+      setExtractedText(text);
+      setCurrentStep('view');
+      toast.success('Document content extracted successfully!');
     } catch (error: any) {
       console.error('Error processing file:', error);
-      toast.error('Failed to extract data from CV. Please try a different file.');
+      toast.error(error.message || 'Failed to extract data from document. Please try a different file.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const parseData = () => {
+    if (!extractedText) return;
+    
+    setProcessing(true);
+    try {
+      const parsed = parseExtractedText(extractedText);
+      setParsedData(parsed);
+      setCurrentStep('parsed');
+      toast.success('Data parsed successfully!');
+    } catch (error) {
+      toast.error('Failed to parse document data');
     } finally {
       setProcessing(false);
     }
   };
 
   const enhanceWithAI = async () => {
-    if (!extractedData) return;
+    if (!parsedData) return;
     
     setEnhancing(true);
     try {
@@ -233,21 +323,21 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const enhanced = {
-        ...extractedData,
+        ...parsedData,
         personal: {
-          ...extractedData.personal,
-          summary: extractedData.personal.summary || "Results-driven professional with proven expertise in delivering innovative solutions. Strong track record of collaborating with cross-functional teams to achieve strategic objectives and drive operational excellence."
+          ...parsedData.personal,
+          summary: parsedData.personal.summary || "Results-driven professional with proven expertise in delivering innovative solutions and achieving strategic objectives."
         },
-        experience: extractedData.experience.map((exp: any) => ({
+        experience: parsedData.experience.map((exp: any) => ({
           ...exp,
           description: exp.description || "• Delivered high-impact solutions that improved operational efficiency\n• Collaborated with cross-functional teams to achieve strategic objectives\n• Demonstrated strong problem-solving skills and attention to detail"
         }))
       };
       
-      setExtractedData(enhanced);
-      toast.success('CV data enhanced with AI!');
+      setParsedData(enhanced);
+      toast.success('Data enhanced with AI!');
     } catch (error) {
-      toast.error('Failed to enhance CV data');
+      toast.error('Failed to enhance data');
     } finally {
       setEnhancing(false);
     }
@@ -266,29 +356,63 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
   });
 
   const handleUseData = () => {
-    if (extractedData) {
-      onDataExtracted(extractedData);
+    if (parsedData) {
+      onDataExtracted(parsedData);
       onClose();
     }
   };
 
+  const resetProcess = () => {
+    setUploadedFile(null);
+    setExtractedText('');
+    setParsedData(null);
+    setCurrentStep('upload');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800">
+      <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            CV Data Extractor
+            CV Document Reader
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Upload your CV to extract and view all the data, then enhance it with AI
+            First view your document content, then extract and structure the data
           </p>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {!extractedData ? (
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              currentStep === 'upload' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
+              extractedText ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
+              'bg-gray-100 dark:bg-gray-800 text-gray-500'
+            }`}>
+              <Upload className="w-4 h-4" />
+              <span className="text-sm font-medium">1. Upload</span>
+            </div>
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              currentStep === 'view' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
+              currentStep === 'parsed' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
+              'bg-gray-100 dark:bg-gray-800 text-gray-500'
+            }`}>
+              <Eye className="w-4 h-4" />
+              <span className="text-sm font-medium">2. View Content</span>
+            </div>
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              currentStep === 'parsed' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 
+              'bg-gray-100 dark:bg-gray-800 text-gray-500'
+            }`}>
+              <Edit3 className="w-4 h-4" />
+              <span className="text-sm font-medium">3. Extract Data</span>
+            </div>
+          </div>
+
+          {currentStep === 'upload' && (
             <>
               {/* Upload Area */}
               <div
@@ -311,10 +435,10 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                   
                   <div>
                     <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
-                      {processing ? 'Extracting data from your CV...' : 'Upload your CV document'}
+                      {processing ? 'Reading your document...' : 'Upload your CV document'}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {processing ? 'Please wait while we read your document' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
+                      {processing ? 'Please wait while we extract the content' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
                     </p>
                   </div>
                 </div>
@@ -327,7 +451,56 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                 </div>
               )}
             </>
-          ) : (
+          )}
+
+          {currentStep === 'view' && extractedText && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Document Content</h3>
+                <div className="flex gap-2">
+                  <Button onClick={resetProcess} variant="outline" size="sm">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Upload Different File
+                  </Button>
+                  <Button onClick={parseData} disabled={processing}>
+                    {processing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Extracting Data...
+                      </>
+                    ) : (
+                      <>
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        Extract Structured Data
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Card className="bg-gray-50 dark:bg-gray-800">
+                <CardHeader>
+                  <CardTitle className="text-base text-gray-900 dark:text-white">Raw Document Text</CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    This is exactly what was extracted from your document. Review it to ensure all important information is captured.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={extractedText}
+                    readOnly
+                    className="min-h-[400px] font-mono text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                    placeholder="Document content will appear here..."
+                  />
+                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {extractedText.length} characters extracted
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {currentStep === 'parsed' && parsedData && (
             <div className="space-y-6">
               {/* Success Message */}
               <div className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
@@ -335,60 +508,60 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                 <div>
                   <span className="font-medium">Data extracted successfully!</span>
                   <p className="text-sm text-green-700 dark:text-green-300">
-                    Found {extractedData.experience?.length || 0} work experiences, {extractedData.education?.length || 0} education entries, and {extractedData.skills?.length || 0} skills.
+                    Found {parsedData.experience?.length || 0} work experiences, {parsedData.education?.length || 0} education entries, and {parsedData.skills?.length || 0} skills.
                   </p>
                 </div>
               </div>
 
               {/* Data Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {extractedData.personal?.fullName ? '✓' : '—'}
+                    {parsedData.personal?.fullName ? '✓' : '—'}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Personal Info</div>
                 </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {extractedData.experience?.length || 0}
+                    {parsedData.experience?.length || 0}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Experience</div>
                 </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {extractedData.education?.length || 0}
+                    {parsedData.education?.length || 0}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Education</div>
                 </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    {extractedData.skills?.length || 0}
+                    {parsedData.skills?.length || 0}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Skills</div>
                 </div>
               </div>
 
               {/* Personal Information Preview */}
-              {extractedData.personal && (
-                <Card className="bg-gray-50 dark:bg-gray-700">
+              {parsedData.personal && (
+                <Card className="bg-gray-50 dark:bg-gray-800">
                   <CardHeader>
                     <CardTitle className="text-lg text-gray-900 dark:text-white">Personal Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    {extractedData.personal.fullName && (
-                      <div><strong>Name:</strong> {extractedData.personal.fullName}</div>
+                  <CardContent className="space-y-2 text-gray-700 dark:text-gray-300">
+                    {parsedData.personal.fullName && (
+                      <div><strong>Name:</strong> {parsedData.personal.fullName}</div>
                     )}
-                    {extractedData.personal.email && (
-                      <div><strong>Email:</strong> {extractedData.personal.email}</div>
+                    {parsedData.personal.email && (
+                      <div><strong>Email:</strong> {parsedData.personal.email}</div>
                     )}
-                    {extractedData.personal.phone && (
-                      <div><strong>Phone:</strong> {extractedData.personal.phone}</div>
+                    {parsedData.personal.phone && (
+                      <div><strong>Phone:</strong> {parsedData.personal.phone}</div>
                     )}
-                    {extractedData.personal.summary && (
+                    {parsedData.personal.summary && (
                       <div>
                         <strong>Summary:</strong>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {extractedData.personal.summary.substring(0, 200)}...
+                          {parsedData.personal.summary}
                         </p>
                       </div>
                     )}
@@ -397,21 +570,21 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
               )}
 
               {/* Skills Preview */}
-              {extractedData.skills?.length > 0 && (
-                <Card className="bg-gray-50 dark:bg-gray-700">
+              {parsedData.skills?.length > 0 && (
+                <Card className="bg-gray-50 dark:bg-gray-800">
                   <CardHeader>
                     <CardTitle className="text-lg text-gray-900 dark:text-white">Skills Found</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {extractedData.skills.slice(0, 15).map((skill: string, index: number) => (
+                      {parsedData.skills.slice(0, 15).map((skill: string, index: number) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {skill}
                         </Badge>
                       ))}
-                      {extractedData.skills.length > 15 && (
+                      {parsedData.skills.length > 15 && (
                         <Badge variant="outline" className="text-xs">
-                          +{extractedData.skills.length - 15} more
+                          +{parsedData.skills.length - 15} more
                         </Badge>
                       )}
                     </div>
@@ -419,41 +592,22 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                 </Card>
               )}
 
-              {/* Raw Text View */}
-              <Card className="bg-gray-50 dark:bg-gray-700">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg text-gray-900 dark:text-white">Raw Document Text</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowRawData(!showRawData)}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    {showRawData ? 'Hide' : 'View'} Raw Text
-                  </Button>
-                </CardHeader>
-                {showRawData && (
-                  <CardContent>
-                    <Textarea
-                      value={extractedData.rawText}
-                      readOnly
-                      className="min-h-[200px] font-mono text-xs bg-white dark:bg-gray-800"
-                    />
-                  </CardContent>
-                )}
-              </Card>
-
               {/* Action Buttons */}
               <div className="flex gap-3">
+                <Button onClick={resetProcess} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Start Over
+                </Button>
+                
                 <Button
                   onClick={enhanceWithAI}
                   disabled={enhancing}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  variant="outline"
                 >
                   {enhancing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Enhancing with AI...
+                      Enhancing...
                     </>
                   ) : (
                     <>
@@ -463,17 +617,20 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                   )}
                 </Button>
                 
-                <Button onClick={handleUseData} variant="outline" className="flex-1">
+                <Button onClick={handleUseData} className="flex-1">
                   <Edit3 className="w-4 h-4 mr-2" />
                   Use This Data
-                </Button>
-                
-                <Button variant="outline" onClick={onClose}>
-                  Cancel
                 </Button>
               </div>
             </div>
           )}
+
+          {/* Cancel Button */}
+          <div className="flex justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
