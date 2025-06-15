@@ -2,11 +2,10 @@
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useAPIKey } from '@/hooks/useAPIKey';
 
 interface CVReaderEnhancedProps {
   onDataExtracted: (data: any) => void;
@@ -14,7 +13,6 @@ interface CVReaderEnhancedProps {
 }
 
 const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, onClose }) => {
-  const { apiKey } = useAPIKey();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -44,11 +42,6 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
       return;
     }
 
-    if (!apiKey) {
-      toast.error('Please set your Gemini API key in Settings');
-      return;
-    }
-
     setProcessing(true);
     try {
       // Convert file to base64
@@ -58,20 +51,24 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
           const base64Data = fileReader.result as string;
           const base64Content = base64Data.split(',')[1];
 
-          const { data: result, error } = await supabase.functions.invoke('cv-reader-ai', {
+          console.log('Calling resume parser API...');
+          const { data: result, error } = await supabase.functions.invoke('resume-parser-api', {
             body: { 
               fileContent: base64Content,
               fileName: uploadedFile.name,
-              fileType: uploadedFile.type,
-              apiKey 
+              fileType: uploadedFile.type
             }
           });
 
-          if (error) throw error;
+          if (error) {
+            console.error('Resume parser error:', error);
+            throw error;
+          }
 
           if (result?.extractedData) {
+            console.log('Extracted data:', result.extractedData);
             onDataExtracted(result.extractedData);
-            toast.success('CV data extracted and applied successfully!');
+            toast.success('CV data extracted successfully with AI!');
             onClose();
           } else {
             toast.error('No data could be extracted from the CV');
@@ -164,7 +161,7 @@ const CVReaderEnhanced: React.FC<CVReaderEnhancedProps> = ({ onDataExtracted, on
                 </>
               ) : (
                 <>
-                  <FileText className="w-4 h-4 mr-2" />
+                  <Zap className="w-4 h-4 mr-2" />
                   Extract Data with AI
                 </>
               )}

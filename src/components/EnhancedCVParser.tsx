@@ -27,7 +27,7 @@ interface EnhancedCVParserProps {
   onClose: () => void;
 }
 
-type ExtractionMode = 'manual' | 'ai';
+type ExtractionMode = 'manual' | 'ai' | 'rapidapi';
 
 const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, onClose }) => {
   const { apiKey } = useAPIKey();
@@ -35,8 +35,63 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
   const [progress, setProgress] = useState(0);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [extractionStats, setExtractionStats] = useState<any>(null);
-  const [mode, setMode] = useState<ExtractionMode>('ai');
+  const [mode, setMode] = useState<ExtractionMode>('rapidapi');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  // --- RapidAPI Resume Parser extraction ---
+  const extractWithRapidAPI = async (file: File) => {
+    setIsProcessing(true);
+    setProgress(10);
+    try {
+      const fileReader = new FileReader();
+      fileReader.onload = async () => {
+        try {
+          setProgress(30);
+          const base64Data = fileReader.result as string;
+          const base64Content = base64Data.split(',')[1];
+          setProgress(45);
+
+          const { data: result, error } = await supabase.functions.invoke('resume-parser-api', {
+            body: { 
+              fileContent: base64Content,
+              fileName: file.name,
+              fileType: file.type
+            }
+          });
+
+          setProgress(75);
+          if (error) throw error;
+
+          if (result?.extractedData) {
+            setExtractedData(result.extractedData);
+
+            // Collect stats for better preview
+            setExtractionStats({
+              experienceEntries: result.extractedData?.experience?.length ?? 0,
+              educationEntries: result.extractedData?.education?.length ?? 0,
+              skillsFound: result.extractedData?.skills?.length ?? 0,
+              projectsFound: result.extractedData?.projects?.length ?? 0,
+              certificationsFound: result.extractedData?.certifications?.length ?? 0,
+              languagesFound: result.extractedData?.languages?.length ?? 0,
+            });
+
+            setProgress(100);
+            toast.success('CV extracted successfully with RapidAPI!');
+          } else {
+            throw new Error('No data could be extracted from your CV with RapidAPI.');
+          }
+        } catch (err: any) {
+          toast.error(err.message || 'RapidAPI extraction failed!');
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      fileReader.readAsDataURL(file);
+    } catch (err: any) {
+      setIsProcessing(false);
+      toast.error('Failed to read file for RapidAPI extraction');
+    }
+  };
 
   // --- AI-powered extraction ---
   const extractWithAI = async (file: File) => {
@@ -549,8 +604,10 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
     if (file) {
       setUploadedFile(file);
 
-      // In AI mode, trigger AI extract; else, use manual mode
-      if (mode === 'ai') {
+      // Choose extraction method based on mode
+      if (mode === 'rapidapi') {
+        extractWithRapidAPI(file);
+      } else if (mode === 'ai') {
         extractWithAI(file);
       } else {
         processFile(file);
@@ -584,9 +641,9 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
             Enhanced CV Parser
-            <Badge variant={mode === 'ai' ? "secondary" : "outline"} className="ml-2">
+            <Badge variant={mode === 'rapidapi' ? "default" : mode === 'ai' ? "secondary" : "outline"} className="ml-2">
               <Zap className="w-3 h-3 mr-1" />
-              {mode === 'ai' ? "AI Extraction" : "Manual Extraction"}
+              {mode === 'rapidapi' ? "RapidAPI Parser" : mode === 'ai' ? "AI Extraction" : "Manual Extraction"}
             </Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -600,11 +657,18 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
             <label className="text-sm font-medium">Extraction Method:</label>
             <div className="flex flex-row gap-2">
               <Button
+                variant={mode === 'rapidapi' ? 'default' : 'outline'}
+                onClick={() => setMode('rapidapi')}
+                className={mode === 'rapidapi' ? 'bg-gradient-to-r from-purple-500 to-pink-700' : ''}
+              >
+                RapidAPI Parser (Recommended)
+              </Button>
+              <Button
                 variant={mode === 'ai' ? 'default' : 'outline'}
                 onClick={() => setMode('ai')}
                 className={mode === 'ai' ? 'bg-gradient-to-r from-blue-500 to-purple-700' : ''}
               >
-                AI Extraction (Recommended)
+                AI Extraction
               </Button>
               <Button
                 variant={mode === 'manual' ? 'default' : 'outline'}
@@ -635,7 +699,9 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
                 <div>
                   <p className="text-lg font-medium">
                     {isProcessing
-                      ? (mode === 'ai'
+                      ? (mode === 'rapidapi'
+                          ? 'RapidAPI is analyzing your CV...'
+                          : mode === 'ai'
                           ? 'AI is analyzing your CV...'
                           : 'Processing your CV...')
                       : 'Upload your CV'}
@@ -644,119 +710,70 @@ const EnhancedCVParser: React.FC<EnhancedCVParserProps> = ({ onDataExtracted, on
                     PDF, DOC, DOCX, or TXT, max 10MB.
                   </p>
                 </div>
-                {isProcessing && (
-                  <div className="w-full max-w-xs">
-                    <Progress value={progress} className="w-full" />
-                    <p className="text-xs text-center mt-1">{progress}% complete</p>
-                  </div>
-                )}
               </div>
+              
+              {isProcessing && (
+                <div className="mt-4">
+                  <Progress value={progress} className="w-full" />
+                  <p className="text-sm text-gray-600 mt-2">{progress}% complete</p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Preview of Extraction */}
-          {extractedData && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">CV extraction complete! Preview below.</span>
+          {/* Extraction Results */}
+          {extractedData && extractionStats && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  Extraction Complete
+                </h3>
+                <Button onClick={handleUseData} className="bg-green-600 hover:bg-green-700">
+                  Use This Data
+                </Button>
               </div>
-
+              
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-blue-50 dark:bg-blue-900/50 p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-blue-900 dark:text-blue-100">Personal</span>
-                  </div>
-                  <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                    {extractionStats?.personalInfoComplete ?? Object.values(extractedData.personal).filter(Boolean).length}/7 fields found
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
+                  <User className="w-6 h-6 mx-auto mb-1 text-blue-600" />
+                  <p className="text-sm font-medium">Personal Info</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {extractedData.personal?.fullName ? '✓' : '✗'} Complete
                   </p>
                 </div>
-                <div className="bg-green-50 dark:bg-green-900/40 p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-green-900 dark:text-green-100">Experience</span>
-                  </div>
-                  <p className="text-sm text-green-700 dark:text-green-200 mt-1">
-                    {extractionStats?.experienceEntries ?? extractedData.experience?.length ?? 0} positions
+                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
+                  <Briefcase className="w-6 h-6 mx-auto mb-1 text-green-600" />
+                  <p className="text-sm font-medium">Experience</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {extractionStats.experienceEntries} entries
                   </p>
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-900/40 p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-purple-600" />
-                    <span className="font-medium text-purple-900 dark:text-purple-100">Education</span>
-                  </div>
-                  <p className="text-sm text-purple-700 dark:text-purple-200 mt-1">
-                    {extractionStats?.educationEntries ?? extractedData.education?.length ?? 0} entries
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-center">
+                  <GraduationCap className="w-6 h-6 mx-auto mb-1 text-purple-600" />
+                  <p className="text-sm font-medium">Education</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {extractionStats.educationEntries} entries
                   </p>
                 </div>
-                <div className="bg-orange-50 dark:bg-orange-900/40 p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-orange-600" />
-                    <span className="font-medium text-orange-900 dark:text-orange-100">Skills</span>
-                  </div>
-                  <p className="text-sm text-orange-700 dark:text-orange-200 mt-1">
-                    {extractionStats?.skillsFound ?? extractedData.skills?.length ?? 0} identified
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg text-center">
+                  <Award className="w-6 h-6 mx-auto mb-1 text-orange-600" />
+                  <p className="text-sm font-medium">Skills</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {extractionStats.skillsFound} found
                   </p>
                 </div>
               </div>
 
-              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
-                <h3 className="font-bold mb-3">Personal Information Preview</h3>
-                <div className="space-y-1 text-sm text-gray-800 dark:text-gray-100">
-                  <p><b>Name:</b> {extractedData.personal.fullName || <span className="italic text-gray-400">N/A</span>}</p>
-                  <p><b>Email:</b> {extractedData.personal.email || <span className="italic text-gray-400">N/A</span>}</p>
-                  <p><b>Phone:</b> {extractedData.personal.phone || <span className="italic text-gray-400">N/A</span>}</p>
-                  <p><b>Location:</b> {extractedData.personal.location || <span className="italic text-gray-400">N/A</span>}</p>
+              {/* Preview of extracted data */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <h4 className="font-medium mb-3">Extracted Data Preview:</h4>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Name:</strong> {extractedData.personal?.fullName || 'Not found'}</p>
+                  <p><strong>Email:</strong> {extractedData.personal?.email || 'Not found'}</p>
+                  <p><strong>Phone:</strong> {extractedData.personal?.phone || 'Not found'}</p>
+                  <p><strong>Skills:</strong> {extractedData.skills?.slice(0, 5).join(', ') || 'None found'}</p>
                 </div>
-              </div>
-              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
-                <h3 className="font-bold mb-3">Experience ({extractedData.experience?.length ?? 0})</h3>
-                {Array.isArray(extractedData.experience) && extractedData.experience.length > 0 ? (
-                  <ul className="text-sm text-gray-800 dark:text-gray-100 space-y-2">
-                    {extractedData.experience.slice(0, 5).map((exp: any, idx: number) => (
-                      <li key={exp.id || idx}>
-                        <strong>{exp.position}</strong> at <span className="text-blue-800 dark:text-blue-300">{exp.company}</span>{' '}
-                        <span className="opacity-70">{exp.startDate ? `(${exp.startDate} - ${exp.endDate})` : ''}</span>
-                        <div className="text-xs mt-1">{exp.description}</div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="text-xs text-gray-400">No positions found.</div>
-                )}
-              </div>
-              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
-                <h3 className="font-bold mb-3">Skills Detected ({extractedData.skills?.length ?? 0})</h3>
-                {Array.isArray(extractedData.skills) && extractedData.skills.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {extractedData.skills.slice(0, 20).map((skill: string, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {extractedData.skills.length > 20 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{extractedData.skills.length - 20} more
-                      </Badge>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-xs text-gray-400">No skills detected.</div>
-                )}
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button onClick={handleUseData} className="flex-1">
-                  Use Extracted Data
-                </Button>
-                <Button variant="outline" onClick={() => {
-                  setExtractedData(null);
-                  setExtractionStats(null);
-                  setUploadedFile(null);
-                  setProgress(0);
-                }}>
-                  Upload Different File
-                </Button>
               </div>
             </div>
           )}
