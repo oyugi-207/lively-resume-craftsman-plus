@@ -101,39 +101,46 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
     return (skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name);
   };
 
+  // Responsive scale calculation
+  const responsiveScale = typeof window !== 'undefined' ? 
+    window.innerWidth < 640 ? 0.15 : // mobile
+    window.innerWidth < 1024 ? 0.2 : // tablet
+    scale : scale; // desktop
+
   return (
     <div 
-      className="bg-white text-black p-8 font-sans leading-relaxed shadow-lg"
+      className="bg-white text-black font-sans leading-relaxed shadow-lg w-full"
       style={{ 
-        transform: `scale(${scale})`, 
+        transform: `scale(${responsiveScale})`, 
         transformOrigin: 'top left',
-        width: `${100 / scale}%`,
-        height: `${100 / scale}%`,
+        width: `${100 / responsiveScale}%`,
+        height: `${100 / responsiveScale}%`,
         minHeight: '1056px', // A4 height
-        maxWidth: '816px' // A4 width
+        maxWidth: '816px', // A4 width
+        padding: window?.innerWidth < 640 ? '16px' : '32px'
       }}
     >
       {/* Header Section */}
-      <div className="text-center mb-8 pb-6 border-b-2 border-blue-600">
-        <h1 className="text-4xl font-bold text-blue-800 mb-3">
+      <div className="text-center mb-6 sm:mb-8 pb-4 sm:pb-6 border-b-2 border-blue-600">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-800 mb-2 sm:mb-3">
           {data.personal.fullName || 'Your Name'}
         </h1>
-        <div className="flex justify-center items-center gap-6 text-gray-700 text-sm">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-6 text-gray-700 text-xs sm:text-sm">
           {data.personal.email && (
             <div className="flex items-center gap-1">
-              <Mail className="w-4 h-4" />
-              {data.personal.email}
+              <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="break-all">{data.personal.email}</span>
             </div>
           )}
           {data.personal.phone && (
             <div className="flex items-center gap-1">
-              <Phone className="w-4 h-4" />
+              <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
               {data.personal.phone}
             </div>
           )}
           {data.personal.location && (
             <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
               {data.personal.location}
             </div>
           )}
@@ -142,11 +149,11 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Professional Summary */}
       {data.personal.summary && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-2 sm:mb-3 border-b border-gray-300 pb-1">
             PROFESSIONAL SUMMARY
           </h2>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
             {data.personal.summary}
           </p>
         </div>
@@ -154,18 +161,18 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Professional Experience */}
       {data.experience && data.experience.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-3 sm:mb-4 border-b border-gray-300 pb-1">
             PROFESSIONAL EXPERIENCE
           </h2>
           {data.experience.map((exp) => (
-            <div key={exp.id} className="mb-6">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{exp.position}</h3>
-                  <div className="text-blue-600 font-medium">{exp.company}</div>
+            <div key={exp.id} className="mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-1 sm:gap-0">
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">{exp.position}</h3>
+                  <div className="text-blue-600 font-medium text-sm sm:text-base">{exp.company}</div>
                 </div>
-                <div className="text-right text-sm text-gray-600">
+                <div className="text-xs sm:text-sm text-gray-600 sm:text-right">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     {formatDateRange(exp.startDate, exp.endDate)}
@@ -179,7 +186,7 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
                 </div>
               </div>
               {exp.description && (
-                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-2 sm:ml-4 text-sm sm:text-base">
                   {formatBulletPoints(exp.description).map((point, index) => (
                     <li key={index}>{point}</li>
                   ))}
@@ -192,21 +199,21 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Education */}
       {data.education && data.education.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-3 sm:mb-4 border-b border-gray-300 pb-1">
             EDUCATION
           </h2>
           {data.education.map((edu) => (
-            <div key={edu.id} className="mb-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{edu.degree}</h3>
-                  <div className="text-blue-600 font-medium">{edu.school}</div>
+            <div key={edu.id} className="mb-3 sm:mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">{edu.degree}</h3>
+                  <div className="text-blue-600 font-medium text-sm sm:text-base">{edu.school}</div>
                   {edu.gpa && (
-                    <div className="text-sm text-gray-600">GPA: {edu.gpa}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">GPA: {edu.gpa}</div>
                   )}
                 </div>
-                <div className="text-right text-sm text-gray-600">
+                <div className="text-xs sm:text-sm text-gray-600 sm:text-right">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     {formatDateRange(edu.startDate, edu.endDate)}
@@ -226,22 +233,22 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Key Projects - Only show if projects exist */}
       {data.projects && data.projects.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-3 sm:mb-4 border-b border-gray-300 pb-1">
             KEY PROJECTS
           </h2>
           {data.projects.map((project) => (
-            <div key={project.id} className="mb-6">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{project.name}</h3>
+            <div key={project.id} className="mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-1 sm:gap-0">
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">{project.name}</h3>
                   {project.technologies && (
-                    <div className="text-sm text-blue-600 font-medium">
+                    <div className="text-xs sm:text-sm text-blue-600 font-medium">
                       Technologies: {project.technologies}
                     </div>
                   )}
                 </div>
-                <div className="text-right text-sm text-gray-600">
+                <div className="text-xs sm:text-sm text-gray-600 sm:text-right">
                   {(project.startDate || project.endDate) && (
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
@@ -251,13 +258,13 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
                   {project.link && (
                     <div className="flex items-center gap-1 mt-1">
                       <ExternalLink className="w-3 h-3" />
-                      <span className="text-blue-600">Link: {project.link}</span>
+                      <span className="text-blue-600 break-all">Link: {project.link}</span>
                     </div>
                   )}
                 </div>
               </div>
               {project.description && (
-                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-2 sm:ml-4 text-sm sm:text-base">
                   {formatBulletPoints(project.description).map((point, index) => (
                     <li key={index}>{point}</li>
                   ))}
@@ -270,13 +277,13 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Skills */}
       {data.skills && data.skills.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-2 sm:mb-3 border-b border-gray-300 pb-1">
             TECHNICAL SKILLS
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {getSkillNames(data.skills).map((skillName, index) => (
-              <Badge key={index} variant="outline" className="text-gray-700 border-gray-400">
+              <Badge key={index} variant="outline" className="text-gray-700 border-gray-400 text-xs sm:text-sm">
                 {skillName}
               </Badge>
             ))}
@@ -286,21 +293,21 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Certifications */}
       {data.certifications && data.certifications.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-3 sm:mb-4 border-b border-gray-300 pb-1">
             CERTIFICATIONS
           </h2>
           {data.certifications.map((cert) => (
-            <div key={cert.id} className="mb-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-gray-800">{cert.name}</h3>
-                  <div className="text-blue-600">{cert.issuer}</div>
+            <div key={cert.id} className="mb-2 sm:mb-3">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{cert.name}</h3>
+                  <div className="text-blue-600 text-xs sm:text-sm">{cert.issuer}</div>
                   {cert.credentialId && (
-                    <div className="text-sm text-gray-600">ID: {cert.credentialId}</div>
+                    <div className="text-xs text-gray-600">ID: {cert.credentialId}</div>
                   )}
                 </div>
-                <div className="text-sm text-gray-600">{cert.date}</div>
+                <div className="text-xs sm:text-sm text-gray-600">{cert.date}</div>
               </div>
             </div>
           ))}
@@ -309,13 +316,13 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Languages */}
       {data.languages && data.languages.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-2 sm:mb-3 border-b border-gray-300 pb-1">
             LANGUAGES
           </h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
             {data.languages.map((lang) => (
-              <div key={lang.id} className="flex justify-between">
+              <div key={lang.id} className="flex justify-between text-xs sm:text-sm">
                 <span className="text-gray-800">{lang.language}</span>
                 <span className="text-gray-600">{lang.proficiency}</span>
               </div>
@@ -326,13 +333,13 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
 
       {/* Interests */}
       {data.interests && data.interests.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-blue-800 mb-3 border-b border-gray-300 pb-1">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 mb-2 sm:mb-3 border-b border-gray-300 pb-1">
             INTERESTS
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {data.interests.map((interest, index) => (
-              <Badge key={index} variant="outline" className="text-gray-700 border-gray-400">
+              <Badge key={index} variant="outline" className="text-gray-700 border-gray-400 text-xs sm:text-sm">
                 {interest}
               </Badge>
             ))}
