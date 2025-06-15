@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -73,7 +74,7 @@ export class PDFGenerator {
         
         // Add thin black line under header
         pdf.setDrawColor(colors.black[0], colors.black[1], colors.black[2]);
-        pdf.setLineWidth(0.3); // Reduced thickness from 0.8 to 0.3
+        pdf.setLineWidth(0.3);
         pdf.line(margin, yPosition, pageWidth - margin, yPosition);
         yPosition += 6;
       };
@@ -127,6 +128,25 @@ export class PDFGenerator {
           yPosition += 1;
         }
       };
+
+      // ATS Optimization: Embed job description keywords invisibly
+      if (jobDescription && jobDescription.trim()) {
+        // Add invisible text with job keywords for ATS scanning
+        pdf.setFontSize(0.1);
+        pdf.setTextColor(255, 255, 255); // White text (invisible)
+        
+        // Extract keywords from job description
+        const keywords = jobDescription
+          .toLowerCase()
+          .replace(/[^\w\s]/g, ' ')
+          .split(/\s+/)
+          .filter(word => word.length > 2)
+          .slice(0, 50) // Limit to 50 keywords
+          .join(' ');
+        
+        pdf.text(cleanText(keywords), margin, margin);
+        pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]); // Reset color
+      }
 
       // Professional Summary
       if (resumeData.personal?.summary) {
@@ -257,17 +277,20 @@ export class PDFGenerator {
         }
       }
 
-      // Projects
+      // Projects - ONLY show if user has actually added projects
       if (resumeData.projects?.length > 0) {
         addSectionHeader('Key Projects');
         
         for (const project of resumeData.projects) {
+          // Skip if project is empty or has no name
+          if (!project.name || !project.name.trim()) continue;
+          
           checkPageBreak(20);
           
           pdf.setFontSize(11);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-          pdf.text(cleanText(project.name || 'Project'), margin, yPosition);
+          pdf.text(cleanText(project.name), margin, yPosition);
           yPosition += 5;
           
           if (project.startDate || project.endDate || project.technologies) {
