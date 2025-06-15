@@ -14,9 +14,14 @@ import {
   Sparkles,
   Zap,
   Eye,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAPIKey } from '@/hooks/useAPIKey';
+import { useAuth } from '@/contexts/AuthContext';
 import EditableCVTemplate from './EditableCVTemplate';
 
 interface AutoCVProcessorProps {
@@ -79,12 +84,16 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
   onDataExtracted, 
   onClose 
 }) => {
+  const { user } = useAuth();
+  const { apiKey } = useAPIKey();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<CVData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [progress, setProgress] = useState(0);
   const [showTemplate, setShowTemplate] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [resumeId, setResumeId] = useState<string | null>(null);
 
   const createEmptyData = (): CVData => ({
     personal: { fullName: '', email: '', phone: '', location: '', summary: '' },
@@ -96,6 +105,45 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
     interests: [],
     projects: []
   });
+
+  // Enhanced AI-powered data validation and enhancement
+  const enhanceDataWithAI = async (rawData: CVData, extractedText: string): Promise<CVData> => {
+    if (!apiKey) {
+      console.log('No API key available for AI enhancement');
+      return rawData;
+    }
+
+    try {
+      setProcessingStep('AI analyzing and enhancing extracted data...');
+      
+      const { data: result, error } = await supabase.functions.invoke('cv-reader-ai', {
+        body: { 
+          extractedText,
+          rawData,
+          apiKey,
+          enhanceMode: true
+        }
+      });
+
+      if (error) throw error;
+
+      if (result?.enhancedData) {
+        return {
+          ...rawData,
+          ...result.enhancedData,
+          personal: {
+            ...rawData.personal,
+            ...result.enhancedData.personal
+          }
+        };
+      }
+    } catch (error) {
+      console.error('AI enhancement failed:', error);
+      toast.error('AI enhancement failed, using basic extraction');
+    }
+
+    return rawData;
+  };
 
   // Load PDF.js library dynamically
   const loadPDFJS = async () => {
@@ -187,22 +235,25 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
     return paragraphs.join('\n');
   };
 
-  // Intelligent parsing of extracted text into structured CV data
-  const parseTextToCV = (text: string): CVData => {
+  // Improved parsing with AI enhancement
+  const parseTextToCV = async (text: string): Promise<CVData> => {
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     const data = createEmptyData();
     
-    // Extract personal information
+    // Extract personal information with improved regex
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
     const phoneRegex = /[\(]?\+?[\d\s\-\(\)]{10,}/;
+    const linkedinRegex = /linkedin\.com\/in\/[\w-]+/i;
+    
     const emailMatch = text.match(emailRegex);
     const phoneMatch = text.match(phoneRegex);
+    const linkedinMatch = text.match(linkedinRegex);
     
     if (emailMatch) data.personal.email = emailMatch[0];
     if (phoneMatch) data.personal.phone = phoneMatch[0];
     
-    // Find name (usually one of the first few lines)
-    for (let i = 0; i < Math.min(5, lines.length); i++) {
+    // Enhanced name detection
+    for (let i = 0; i < Math.min(10, lines.length); i++) {
       const line = lines[i];
       if (line.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+/) && 
           !line.includes('@') && 
@@ -215,12 +266,12 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
       }
     }
     
-    // Parse sections
+    // Enhanced section parsing
     let currentSection = '';
     let currentItem: any = {};
     
     const sectionKeywords = {
-      experience: ['experience', 'work', 'employment', 'career', 'professional'],
+      experience: ['experience', 'work', 'employment', 'career', 'professional', 'job'],
       education: ['education', 'qualification', 'degree', 'university', 'college', 'school'],
       skills: ['skill', 'technical', 'competenc', 'expertise', 'proficient', 'technologies'],
       summary: ['summary', 'objective', 'profile', 'about', 'overview'],
@@ -336,14 +387,187 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
     data.skills = [...new Set(data.skills.filter(skill => skill.length > 1))];
     data.personal.summary = data.personal.summary.trim();
     
-    return data;
+    // Apply AI enhancement if API key is available
+    return await enhanceDataWithAI(data, text);
+  };
+
+  // Save resume data to database
+  const saveResumeData = async (data: CVData) => {
+    if (!user) {
+      toast.error('Please sign in to save your resume');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const resumePayload = {
+        user_id: user.id,
+        title: data.personal.fullName ? `${data.personal.fullName}'s Resume` : 'Untitled Resume',
+        template_id: 0,
+        personal_info: data.personal,
+        experience: data.experience,
+        education: data.education,
+        skills: data.skills,
+        certifications: data.certifications,
+        languages: data.languages,
+        interests: data.interests,
+        projects: data.projects,
+        updated_at: new Date().toISOString()
+      };
+
+      if (resumeId) {
+        const { error } = await supabase
+          .from('resumes')
+          .update(resumePayload)
+          .eq('id', resumeId)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+      } else {
+        const { data: newResume, error } = await supabase
+          .from('resumes')
+          .insert([resumePayload])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        setResumeId(newResume.id);
+      }
+
+      toast.success('Resume saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving resume:', error);
+      toast.error('Failed to save resume');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Download resume as PDF
+  const downloadResume = async () => {
+    if (!extractedData) {
+      toast.error('No resume data to download');
+      return;
+    }
+
+    try {
+      toast.info('Generating PDF... This may take a moment.');
+      
+      // Dynamic import of jsPDF
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      // Add resume content to PDF
+      let yPosition = 20;
+      const lineHeight = 10;
+      const margin = 20;
+      
+      // Personal Information
+      if (extractedData.personal.fullName) {
+        doc.setFontSize(20);
+        doc.text(extractedData.personal.fullName, margin, yPosition);
+        yPosition += lineHeight * 1.5;
+      }
+      
+      doc.setFontSize(12);
+      if (extractedData.personal.email) {
+        doc.text(`Email: ${extractedData.personal.email}`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      
+      if (extractedData.personal.phone) {
+        doc.text(`Phone: ${extractedData.personal.phone}`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      
+      if (extractedData.personal.location) {
+        doc.text(`Location: ${extractedData.personal.location}`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      
+      // Summary
+      if (extractedData.personal.summary) {
+        yPosition += lineHeight;
+        doc.setFontSize(14);
+        doc.text('Summary', margin, yPosition);
+        yPosition += lineHeight;
+        doc.setFontSize(10);
+        const summaryLines = doc.splitTextToSize(extractedData.personal.summary, 170);
+        doc.text(summaryLines, margin, yPosition);
+        yPosition += summaryLines.length * lineHeight;
+      }
+      
+      // Experience
+      if (extractedData.experience.length > 0) {
+        yPosition += lineHeight;
+        doc.setFontSize(14);
+        doc.text('Experience', margin, yPosition);
+        yPosition += lineHeight;
+        
+        extractedData.experience.forEach(exp => {
+          doc.setFontSize(12);
+          doc.text(`${exp.position} at ${exp.company}`, margin, yPosition);
+          yPosition += lineHeight;
+          
+          if (exp.startDate || exp.endDate) {
+            doc.setFontSize(10);
+            doc.text(`${exp.startDate} - ${exp.endDate}`, margin, yPosition);
+            yPosition += lineHeight;
+          }
+          
+          if (exp.description) {
+            const descLines = doc.splitTextToSize(exp.description, 170);
+            doc.text(descLines, margin, yPosition);
+            yPosition += descLines.length * lineHeight;
+          }
+          yPosition += lineHeight * 0.5;
+        });
+      }
+      
+      // Skills
+      if (extractedData.skills.length > 0) {
+        yPosition += lineHeight;
+        doc.setFontSize(14);
+        doc.text('Skills', margin, yPosition);
+        yPosition += lineHeight;
+        doc.setFontSize(10);
+        const skillsText = extractedData.skills.join(', ');
+        const skillsLines = doc.splitTextToSize(skillsText, 170);
+        doc.text(skillsLines, margin, yPosition);
+        yPosition += skillsLines.length * lineHeight;
+      }
+      
+      // Education
+      if (extractedData.education.length > 0) {
+        yPosition += lineHeight;
+        doc.setFontSize(14);
+        doc.text('Education', margin, yPosition);
+        yPosition += lineHeight;
+        
+        extractedData.education.forEach(edu => {
+          doc.setFontSize(12);
+          doc.text(`${edu.degree} - ${edu.school}`, margin, yPosition);
+          yPosition += lineHeight;
+        });
+      }
+      
+      const filename = extractedData.personal.fullName 
+        ? `${extractedData.personal.fullName.replace(/[^a-z0-9]/gi, '_')}_Resume.pdf`
+        : 'Resume.pdf';
+      
+      doc.save(filename);
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to download PDF. Please try again.');
+    }
   };
 
   // Main processing function
   const processFileWithAdvancedExtraction = async (file: File) => {
     setIsProcessing(true);
     setProgress(0);
-    setProcessingStep('Initializing PDF processor...');
+    setProcessingStep('Initializing document processor...');
     
     try {
       // Step 1: Text extraction
@@ -368,17 +592,17 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
         throw new Error('Could not extract readable text from the file.');
       }
       
-      // Step 2: Intelligent parsing
+      // Step 2: Intelligent parsing with AI enhancement
       setProgress(60);
-      setProcessingStep('Analyzing and structuring data...');
+      setProcessingStep('AI analyzing and structuring data...');
       
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      const parsedData = parseTextToCV(text);
+      const parsedData = await parseTextToCV(text);
       
       // Step 3: Data validation and enhancement
       setProgress(85);
-      setProcessingStep('Validating and enhancing data...');
+      setProcessingStep('Finalizing and validating data...');
       
       await new Promise(resolve => setTimeout(resolve, 500));
       
@@ -433,14 +657,48 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
 
   if (showTemplate && extractedData) {
     return (
-      <EditableCVTemplate 
-        data={extractedData}
-        onDataChange={setExtractedData}
-        onClose={() => {
-          setShowTemplate(false);
-          if (onClose) onClose();
-        }}
-      />
+      <div className="space-y-4">
+        {/* Action buttons */}
+        <div className="flex justify-between items-center bg-white/90 dark:bg-gray-800/90 p-4 rounded-lg shadow-lg">
+          <h3 className="text-lg font-semibold">Resume Editor</h3>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => saveResumeData(extractedData)}
+              disabled={saving}
+              className="flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? 'Saving...' : 'Save Resume'}
+            </Button>
+            <Button
+              onClick={downloadResume}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download PDF
+            </Button>
+            <Button
+              onClick={() => {
+                setShowTemplate(false);
+                if (onClose) onClose();
+              }}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+        
+        <EditableCVTemplate 
+          data={extractedData}
+          onDataChange={setExtractedData}
+          onClose={() => {
+            setShowTemplate(false);
+            if (onClose) onClose();
+          }}
+        />
+      </div>
     );
   }
 
@@ -524,6 +782,10 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
                       <Zap className="w-4 h-4" />
                       Auto-Extract
                     </span>
+                    <span className="flex items-center gap-1">
+                      <Brain className="w-4 h-4" />
+                      AI-Enhanced
+                    </span>
                   </div>
                 </div>
               )}
@@ -551,7 +813,7 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
                 </div>
                 <div className={`flex items-center gap-1 ${progress >= 60 ? 'text-green-600' : ''}`}>
                   <div className={`w-2 h-2 rounded-full ${progress >= 60 ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  Data Analysis
+                  AI Analysis
                 </div>
                 <div className={`flex items-center gap-1 ${progress >= 85 ? 'text-green-600' : ''}`}>
                   <div className={`w-2 h-2 rounded-full ${progress >= 85 ? 'bg-green-500' : 'bg-gray-300'}`} />
@@ -586,8 +848,8 @@ const AutoCVProcessor: React.FC<AutoCVProcessorProps> = ({
         <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/20">
           <CardContent className="p-4 text-center">
             <Brain className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-            <h4 className="font-semibold text-purple-900 dark:text-purple-300">Smart Extraction</h4>
-            <p className="text-sm text-purple-700 dark:text-purple-400">Advanced PDF parsing technology</p>
+            <h4 className="font-semibold text-purple-900 dark:text-purple-300">AI-Enhanced Extraction</h4>
+            <p className="text-sm text-purple-700 dark:text-purple-400">Advanced AI validates and improves data accuracy</p>
           </CardContent>
         </Card>
         <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
