@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Brain, Sparkles, Target, Code2, Upload, ScanLine, Wand2 } from 'lucide-react';
+import { FileText, Brain, Sparkles, Target, Code2, Upload, ScanLine, Wand2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BuilderHeaderProps {
@@ -30,6 +31,7 @@ const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   onDownloadPDF,
   onSave
 }) => {
+  const navigate = useNavigate();
   const [showAdvancedAI, setShowAdvancedAI] = useState(false);
 
   const handleAdvancedAIOptimize = () => {
@@ -44,6 +46,18 @@ const BuilderHeader: React.FC<BuilderHeaderProps> = ({
       {/* Enhanced Header with AI Badge */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50">
         <div className="flex items-center gap-3">
+          {/* Back to Dashboard Button */}
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-1 sm:gap-2 hover:bg-blue-50 border-blue-200 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+            size="sm"
+          >
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+            <span className="sm:hidden">Back</span>
+          </Button>
+
           <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
             <FileText className="w-5 h-5 text-white" />
           </div>
