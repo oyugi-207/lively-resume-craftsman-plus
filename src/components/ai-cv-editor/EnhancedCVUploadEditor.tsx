@@ -46,6 +46,8 @@ interface ResumeData {
     summary: string;
     website?: string;
     linkedin?: string;
+    github?: string;
+    portfolio?: string;
   };
   experience: Array<{
     id: number;
@@ -64,6 +66,7 @@ interface ResumeData {
     startDate: string;
     endDate: string;
     gpa: string;
+    description?: string;
   }>;
   skills: string[];
   certifications: Array<{
@@ -88,6 +91,43 @@ interface ResumeData {
     startDate: string;
     endDate: string;
   }>;
+  references: Array<{
+    id: number;
+    name: string;
+    title: string;
+    company: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  }>;
+  internships: Array<{
+    id: number;
+    company: string;
+    position: string;
+    location: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+    supervisor: string;
+  }>;
+  volunteering: Array<{
+    id: number;
+    organization: string;
+    role: string;
+    location: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }>;
+  publications: Array<{
+    id: number;
+    title: string;
+    authors: string;
+    journal: string;
+    date: string;
+    doi: string;
+    description: string;
+  }>;
 }
 
 const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose }) => {
@@ -100,6 +140,32 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [extractionProgress, setExtractionProgress] = useState<number>(0);
   const [aiEnhancements, setAiEnhancements] = useState<any>(null);
+
+  // Create a properly initialized empty resume data structure
+  const createEmptyResumeData = (): ResumeData => ({
+    personal: { 
+      fullName: '', 
+      email: '', 
+      phone: '', 
+      location: '', 
+      summary: '',
+      website: '',
+      linkedin: '',
+      github: '',
+      portfolio: ''
+    },
+    experience: [],
+    education: [],
+    skills: [],
+    certifications: [],
+    languages: [],
+    interests: [],
+    projects: [],
+    references: [],
+    internships: [],
+    volunteering: [],
+    publications: []
+  });
 
   // AI-powered extraction with progress tracking
   const extractWithAI = async (file: File) => {
@@ -140,12 +206,22 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
           if (error) throw error;
 
           if (result?.extractedData) {
-            setExtractedData(result.extractedData);
+            // Ensure all required properties exist with proper defaults
+            const safeExtractedData: ResumeData = {
+              ...createEmptyResumeData(),
+              ...result.extractedData,
+              personal: {
+                ...createEmptyResumeData().personal,
+                ...result.extractedData.personal
+              }
+            };
+            
+            setExtractedData(safeExtractedData);
             setActiveTab('edit');
             toast.success('🎉 CV data extracted successfully with Gemini AI!');
             
             // Auto-generate AI enhancements
-            await generateAIEnhancements(result.extractedData);
+            await generateAIEnhancements(safeExtractedData);
           } else {
             throw new Error('No data could be extracted from your CV.');
           }
@@ -229,13 +305,13 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-7xl max-h-[95vh] overflow-y-auto bg-white dark:bg-gray-800">
-        <CardHeader className="flex flex-row items-center justify-between border-b bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
+        <CardHeader className="flex flex-row items-center justify-between border-b bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <CardTitle className="text-2xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 AI-Powered CV Editor
               </CardTitle>
               <p className="text-gray-600 dark:text-gray-400">
@@ -254,7 +330,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
             <div className="xl:col-span-2">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-100 dark:bg-gray-800">
-                  <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white">
                     <Upload className="w-4 h-4" />
                     Upload
                   </TabsTrigger>
@@ -273,7 +349,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                 </TabsList>
 
                 <TabsContent value="upload" className="space-y-6">
-                  <Card className="border-2 border-dashed border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20">
+                  <Card className="border-2 border-dashed border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-950/20 dark:to-blue-950/20">
                     <CardContent className="p-8">
                       <div
                         {...getRootProps()}
@@ -286,7 +362,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                         <input {...getInputProps()} />
                         <div className="flex flex-col items-center gap-6">
                           <div className="relative">
-                            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
                               <Upload className="w-10 h-10 text-white" />
                             </div>
                             <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -303,7 +379,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                                     {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                                   </Badge>
-                                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">
                                     Ready for AI
                                   </Badge>
                                 </div>
@@ -325,17 +401,17 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                   </Card>
 
                   {isExtracting && (
-                    <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+                    <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/20">
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <div className="flex items-center gap-3">
-                            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                            <span className="font-medium text-blue-900 dark:text-blue-300">
+                            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+                            <span className="font-medium text-purple-900 dark:text-purple-300">
                               Gemini AI is analyzing your CV...
                             </span>
                           </div>
                           <Progress value={extractionProgress} className="w-full h-3" />
-                          <p className="text-sm text-blue-700 dark:text-blue-400">
+                          <p className="text-sm text-purple-700 dark:text-purple-400">
                             {extractionProgress < 30 && "Reading document structure..."}
                             {extractionProgress >= 30 && extractionProgress < 60 && "Extracting personal information..."}
                             {extractionProgress >= 60 && extractionProgress < 90 && "Processing experience and skills..."}
@@ -350,7 +426,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                     {uploadedFile && !isExtracting && (
                       <Button
                         onClick={() => extractWithAI(uploadedFile)}
-                        className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white px-8 py-3 text-lg shadow-lg"
+                        className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-lg shadow-lg"
                         size="lg"
                       >
                         <Brain className="w-5 h-5 mr-2" />
@@ -360,13 +436,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                     
                     <Button
                       onClick={() => {
-                        // Create empty structure for manual entry
-                        setExtractedData({
-                          personal: { fullName: '', email: '', phone: '', location: '', summary: '' },
-                          experience: [{ id: 1, company: '', position: '', location: '', startDate: '', endDate: '', description: '' }],
-                          education: [{ id: 1, school: '', degree: '', location: '', startDate: '', endDate: '', gpa: '' }],
-                          skills: [], certifications: [], languages: [], interests: [], projects: []
-                        });
+                        setExtractedData(createEmptyResumeData());
                         setActiveTab('edit');
                         toast.success('📝 Manual entry form ready!');
                       }}
@@ -381,18 +451,18 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
 
                   {/* AI Features Showcase */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
-                      <CardContent className="p-4 text-center">
-                        <Cpu className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                        <h4 className="font-semibold text-blue-900 dark:text-blue-300">Smart Extraction</h4>
-                        <p className="text-sm text-blue-700 dark:text-blue-400">AI understands complex CV layouts</p>
-                      </CardContent>
-                    </Card>
                     <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/20">
                       <CardContent className="p-4 text-center">
-                        <Stars className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                        <h4 className="font-semibold text-purple-900 dark:text-purple-300">Auto Enhancement</h4>
-                        <p className="text-sm text-purple-700 dark:text-purple-400">Improves content quality automatically</p>
+                        <Cpu className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                        <h4 className="font-semibold text-purple-900 dark:text-purple-300">Smart Extraction</h4>
+                        <p className="text-sm text-purple-700 dark:text-purple-400">AI understands complex CV layouts</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+                      <CardContent className="p-4 text-center">
+                        <Stars className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-300">Auto Enhancement</h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-400">Improves content quality automatically</p>
                       </CardContent>
                     </Card>
                     <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
@@ -480,13 +550,13 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
             {/* Enhanced Preview Section */}
             <div className="xl:col-span-1">
               <Card className="sticky top-6 border-2 border-gray-200 dark:border-gray-700 shadow-xl">
-                <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-950/20">
+                <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-purple-950/20">
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Eye className="w-5 h-5 text-blue-600" />
+                      <Eye className="w-5 h-5 text-purple-600" />
                       <span className="text-gray-900 dark:text-white">Live Preview</span>
                     </div>
-                    <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                    <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white">
                       Template {selectedTemplate + 1}
                     </Badge>
                   </CardTitle>
@@ -503,8 +573,8 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                       </div>
                     ) : (
                       <div className="bg-white dark:bg-gray-700 rounded-lg p-8 text-center space-y-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto">
-                          <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                        <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mx-auto">
+                          <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white mb-2">AI Preview Ready</h3>
