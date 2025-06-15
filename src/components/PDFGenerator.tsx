@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 export class PDFGenerator {
@@ -36,6 +35,36 @@ export class PDFGenerator {
         }
         return false;
       };
+
+      // ATS Optimization: Embed COMPLETE job description invisibly
+      if (jobDescription && jobDescription.trim()) {
+        // Add invisible text with FULL job description for comprehensive ATS scanning
+        pdf.setFontSize(0.1);
+        pdf.setTextColor(255, 255, 255); // White text (invisible)
+        
+        // Clean and prepare the complete job description
+        const fullJobDescription = cleanText(jobDescription);
+        
+        // Split into chunks to fit PDF constraints (each text call has limits)
+        const maxChunkLength = 500;
+        const chunks = [];
+        for (let i = 0; i < fullJobDescription.length; i += maxChunkLength) {
+          chunks.push(fullJobDescription.substring(i, i + maxChunkLength));
+        }
+        
+        // Embed all chunks invisibly across the document
+        let embedYPosition = margin + 5;
+        chunks.forEach((chunk, index) => {
+          // Distribute chunks across different positions for better ATS coverage
+          const xOffset = margin + (index % 3) * 50;
+          pdf.text(chunk, xOffset, embedYPosition + (index * 2));
+        });
+        
+        // Reset color for visible content
+        pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+        
+        console.log(`ATS Optimization: Embedded complete job description (${fullJobDescription.length} characters) invisibly for maximum keyword matching`);
+      }
 
       // Header section
       if (resumeData.personal?.fullName) {
@@ -128,25 +157,6 @@ export class PDFGenerator {
           yPosition += 1;
         }
       };
-
-      // ATS Optimization: Embed job description keywords invisibly
-      if (jobDescription && jobDescription.trim()) {
-        // Add invisible text with job keywords for ATS scanning
-        pdf.setFontSize(0.1);
-        pdf.setTextColor(255, 255, 255); // White text (invisible)
-        
-        // Extract keywords from job description
-        const keywords = jobDescription
-          .toLowerCase()
-          .replace(/[^\w\s]/g, ' ')
-          .split(/\s+/)
-          .filter(word => word.length > 2)
-          .slice(0, 50) // Limit to 50 keywords
-          .join(' ');
-        
-        pdf.text(cleanText(keywords), margin, margin);
-        pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]); // Reset color
-      }
 
       // Professional Summary
       if (resumeData.personal?.summary) {
