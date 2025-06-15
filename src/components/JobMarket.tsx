@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,8 @@ import {
   Globe,
   Database,
   AlertCircle,
-  Bookmark
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
 
 interface Job {
@@ -60,6 +60,15 @@ const JobMarket: React.FC = () => {
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [totalJobs, setTotalJobs] = useState(0);
   const [dataSources, setDataSources] = useState<string[]>([]);
+  const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
+
+  // Load saved jobs from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('savedJobs');
+    if (saved) {
+      setSavedJobs(new Set(JSON.parse(saved)));
+    }
+  }, []);
 
   const searchJobs = async () => {
     if (!searchQuery.trim()) {
@@ -114,6 +123,25 @@ const JobMarket: React.FC = () => {
     }
   };
 
+  const saveJob = (job: Job) => {
+    const newSavedJobs = new Set(savedJobs);
+    
+    if (savedJobs.has(job.id)) {
+      newSavedJobs.delete(job.id);
+      toast.success('Job removed from saved jobs');
+    } else {
+      newSavedJobs.add(job.id);
+      // Save job details to localStorage
+      const savedJobsData = JSON.parse(localStorage.getItem('savedJobsData') || '{}');
+      savedJobsData[job.id] = job;
+      localStorage.setItem('savedJobsData', JSON.stringify(savedJobsData));
+      toast.success('Job saved successfully!');
+    }
+    
+    setSavedJobs(newSavedJobs);
+    localStorage.setItem('savedJobs', JSON.stringify(Array.from(newSavedJobs)));
+  };
+
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -134,12 +162,12 @@ const JobMarket: React.FC = () => {
 
   const getDataSourceIcon = () => {
     if (dataSources.includes('JSearch') || dataSources.includes('RemoteOK') || dataSources.includes('Adzuna')) {
-      return <Globe className="w-4 h-4 text-green-600" />;
+      return <Globe className="w-4 h-4 text-green-600 dark:text-green-400" />;
     }
     if (dataSources.includes('Mock')) {
-      return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      return <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
     }
-    return <Database className="w-4 h-4 text-gray-600" />;
+    return <Database className="w-4 h-4 text-gray-600 dark:text-gray-400" />;
   };
 
   const getDataSourceText = () => {
@@ -156,15 +184,15 @@ const JobMarket: React.FC = () => {
   const getSourceBadgeColor = (source: string) => {
     switch (source) {
       case 'JSearch (Indeed/LinkedIn)':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700';
       case 'RemoteOK':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
       case 'Adzuna':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700';
       case 'Mock':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600';
     }
   };
 
@@ -196,13 +224,13 @@ const JobMarket: React.FC = () => {
 
       {/* API Configuration Notice */}
       {dataSources.includes('Mock') && totalJobs > 0 && (
-        <Card className="border-yellow-200 bg-yellow-50 shadow-md">
+        <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-900/20 shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
               <div>
-                <h4 className="font-medium text-yellow-800 mb-1">Using Sample Data</h4>
-                <p className="text-sm text-yellow-700">
+                <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">Using Sample Data</h4>
+                <p className="text-sm text-yellow-700 dark:text-yellow-400">
                   Configure API keys in Settings to access live job listings from multiple job boards including LinkedIn, Indeed, and specialized remote job sites.
                 </p>
               </div>
@@ -212,13 +240,13 @@ const JobMarket: React.FC = () => {
       )}
 
       {/* Search Section */}
-      <Card className="shadow-lg border-0 bg-white">
+      <Card className="shadow-lg border-0 bg-white dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Search className="w-6 h-6 text-blue-600" />
+          <CardTitle className="flex items-center gap-2 text-xl text-gray-900 dark:text-white">
+            <Search className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             Search Jobs
           </CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardDescription className="text-gray-600 dark:text-gray-400">
             Search across multiple job boards including LinkedIn, Indeed, RemoteOK, and more
           </CardDescription>
         </CardHeader>
@@ -226,37 +254,37 @@ const JobMarket: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <Label htmlFor="job-search" className="text-sm font-medium text-gray-700">Job Title or Keywords</Label>
+                <Label htmlFor="job-search" className="text-sm font-medium text-gray-700 dark:text-gray-300">Job Title or Keywords</Label>
                 <Input
                   id="job-search"
                   placeholder="e.g. Software Engineer, Product Manager, Designer"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="mt-2 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-2 h-11 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 />
               </div>
               <div>
-                <Label htmlFor="location-search" className="text-sm font-medium text-gray-700">Location</Label>
+                <Label htmlFor="location-search" className="text-sm font-medium text-gray-700 dark:text-gray-300">Location</Label>
                 <Input
                   id="location-search"
                   placeholder="e.g. New York, San Francisco, or leave empty"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="mt-2 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-2 h-11 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 />
               </div>
             </div>
             
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-3">
                 <Switch
                   id="remote-only"
                   checked={remoteOnly}
                   onCheckedChange={setRemoteOnly}
                 />
-                <Label htmlFor="remote-only" className="text-sm font-medium text-gray-700">Remote jobs only</Label>
+                <Label htmlFor="remote-only" className="text-sm font-medium text-gray-700 dark:text-gray-300">Remote jobs only</Label>
               </div>
               
               <Button 
@@ -279,34 +307,34 @@ const JobMarket: React.FC = () => {
 
       {/* Results */}
       {totalJobs > 0 && (
-        <Card className="shadow-lg border-0">
-          <CardHeader className="border-b border-gray-100">
+        <Card className="shadow-lg border-0 bg-white dark:bg-gray-800 dark:border-gray-700">
+          <CardHeader className="border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+              <CardTitle className="flex items-center gap-2 text-xl text-gray-900 dark:text-white">
+                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
                 Job Results
-                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                   {totalJobs} found
                 </Badge>
               </CardTitle>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   {getDataSourceIcon()}
                   {getDataSourceText()}
                 </div>
               </div>
             </div>
             {dataSources.length > 1 && (
-              <CardDescription>
+              <CardDescription className="dark:text-gray-400">
                 Results from: {dataSources.filter(s => s !== 'Mock').join(', ')}
               </CardDescription>
             )}
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[700px]">
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {jobs.map((job, index) => (
-                  <div key={job.id} className="p-6 hover:bg-gray-50 transition-all duration-200 group">
+                  <div key={job.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 group">
                     <div className="flex items-start justify-between gap-6">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-4">
@@ -318,7 +346,7 @@ const JobMarket: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             {/* Job Title and Source */}
                             <div className="flex items-start justify-between mb-2">
-                              <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                              <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                 {job.title}
                               </h3>
                               {(job as any).source && (
@@ -332,36 +360,36 @@ const JobMarket: React.FC = () => {
                             </div>
                             
                             {/* Company and Location */}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
                               <div className="flex items-center gap-1.5">
-                                <Building className="w-4 h-4 text-gray-500" />
+                                <Building className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                 <span className="font-medium">{job.company}</span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                <MapPin className="w-4 h-4 text-gray-500" />
+                                <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                 <span>{job.location}</span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                <Clock className="w-4 h-4 text-gray-500" />
+                                <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                 <span>{getTimeAgo(job.posted)}</span>
                               </div>
                               {job.salary && job.salary !== 'Salary not specified' && (
                                 <div className="flex items-center gap-1.5">
-                                  <DollarSign className="w-4 h-4 text-green-600" />
-                                  <span className="font-medium text-green-700">{job.salary}</span>
+                                  <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                  <span className="font-medium text-green-700 dark:text-green-400">{job.salary}</span>
                                 </div>
                               )}
                             </div>
                             
                             {/* Description */}
-                            <p className="text-gray-700 mb-4 leading-relaxed line-clamp-3">
+                            <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed line-clamp-3">
                               {cleanDescription(job.description)}
                             </p>
                             
                             {/* Requirements/Skills */}
                             <div className="flex flex-wrap gap-2 mb-4">
                               {job.remote && (
-                                <Badge className="bg-green-100 text-green-800 border-green-200 font-medium">
+                                <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 font-medium">
                                   <Globe className="w-3 h-3 mr-1" />
                                   Remote
                                 </Badge>
@@ -370,13 +398,13 @@ const JobMarket: React.FC = () => {
                                 <Badge 
                                   key={reqIndex} 
                                   variant="outline" 
-                                  className="bg-gray-50 hover:bg-gray-100 transition-colors"
+                                  className="bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 dark:border-gray-600 transition-colors"
                                 >
                                   {req}
                                 </Badge>
                               ))}
                               {job.requirements.length > 5 && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
                                   +{job.requirements.length - 5} more
                                 </Badge>
                               )}
@@ -398,10 +426,15 @@ const JobMarket: React.FC = () => {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex items-center gap-2 border-gray-300 hover:bg-gray-50"
+                          className="flex items-center gap-2 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-300"
+                          onClick={() => saveJob(job)}
                         >
-                          <Bookmark className="w-4 h-4" />
-                          Save Job
+                          {savedJobs.has(job.id) ? (
+                            <BookmarkCheck className="w-4 h-4" />
+                          ) : (
+                            <Bookmark className="w-4 h-4" />
+                          )}
+                          {savedJobs.has(job.id) ? 'Saved' : 'Save Job'}
                         </Button>
                       </div>
                     </div>
@@ -414,13 +447,13 @@ const JobMarket: React.FC = () => {
       )}
 
       {/* Featured Jobs */}
-      <Card className="shadow-lg border-0">
+      <Card className="shadow-lg border-0 bg-white dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Zap className="w-6 h-6 text-yellow-500" />
+          <CardTitle className="flex items-center gap-2 text-xl text-gray-900 dark:text-white">
+            <Zap className="w-6 h-6 text-yellow-500 dark:text-yellow-400" />
             Featured Remote Opportunities
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="dark:text-gray-400">
             Hand-picked remote and hybrid positions from top companies
           </CardDescription>
         </CardHeader>
@@ -449,22 +482,22 @@ const JobMarket: React.FC = () => {
                 remote: true
               }
             ].map((job, index) => (
-              <Card key={index} className="border-2 hover:border-blue-300 transition-all duration-200 cursor-pointer hover:shadow-lg bg-gradient-to-br from-white to-blue-50">
+              <Card key={index} className="border-2 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer hover:shadow-lg bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-blue-900/20 dark:border-gray-600">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold shadow-md">
                       {job.company[0]}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-2 text-lg">{job.title}</h4>
-                      <p className="text-sm text-gray-600 mb-3 font-medium">{job.company}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">{job.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 font-medium">{job.company}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
                         <Globe className="w-3 h-3" />
                         {job.location}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-green-600">{job.salary}</span>
-                        <Badge className="bg-green-100 text-green-800 text-xs border-green-200">
+                        <span className="text-sm font-semibold text-green-600 dark:text-green-400">{job.salary}</span>
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs border-green-200 dark:border-green-700">
                           <Globe className="w-3 h-3 mr-1" />
                           Remote
                         </Badge>
