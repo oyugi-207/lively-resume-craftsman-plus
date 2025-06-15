@@ -21,7 +21,7 @@ import {
   Zap,
   Crown,
   BarChart3,
-  Settings as SettingsIcon,
+  Settings,
   Upload,
   Wand2
 } from 'lucide-react';
