@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,11 +22,13 @@ import {
   Cpu,
   Stars,
   Target,
-  Lightbulb
+  Lightbulb,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAPIKey } from '@/hooks/useAPIKey';
+import { useAuth } from '@/contexts/AuthContext';
 import ImprovedResumePreview from '@/components/ImprovedResumePreview';
 import PDFGenerator from '@/components/PDFGenerator';
 import CVDataEditor from './CVDataEditor';
@@ -131,6 +132,7 @@ interface ResumeData {
 }
 
 const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose }) => {
+  const { user } = useAuth();
   const { apiKey } = useAPIKey();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ResumeData | null>(null);
@@ -138,6 +140,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
   const [selectedTemplate, setSelectedTemplate] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [extractionProgress, setExtractionProgress] = useState<number>(0);
   const [aiEnhancements, setAiEnhancements] = useState<any>(null);
 
@@ -277,7 +280,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024 // 10MB
+    maxSize: 10 * 1024 * 1024
   });
 
   const downloadOptimizedPDF = async () => {
@@ -299,6 +302,52 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
       toast.error('Failed to download PDF. Please try again.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const saveResumeData = async () => {
+    if (!user || !extractedData) {
+      toast.error('Please ensure you are logged in and have resume data to save');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const resumePayload = {
+        user_id: user.id,
+        title: extractedData.personal.fullName ? `${extractedData.personal.fullName}'s AI Enhanced Resume` : 'AI Enhanced Resume',
+        template_id: selectedTemplate,
+        personal_info: extractedData.personal,
+        experience: extractedData.experience,
+        education: extractedData.education,
+        skills: extractedData.skills,
+        certifications: extractedData.certifications,
+        languages: extractedData.languages,
+        interests: extractedData.interests,
+        projects: extractedData.projects,
+        references: extractedData.references || [],
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('resumes')
+        .insert([resumePayload])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('✅ Resume saved successfully to your dashboard!');
+      
+      // Close the editor after successful save
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error saving resume:', error);
+      toast.error('Failed to save resume. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -326,7 +375,6 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
         
         <CardContent className="p-6">
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Main Content */}
             <div className="xl:col-span-2">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-100 dark:bg-gray-800">
@@ -477,21 +525,63 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
 
                 <TabsContent value="edit" className="space-y-6">
                   {extractedData && (
-                    <CVDataEditor 
-                      data={extractedData} 
-                      onDataChange={setExtractedData}
-                    />
+                    <>
+                      <div className="flex justify-end mb-4">
+                        <Button
+                          onClick={saveResumeData}
+                          disabled={isSaving || !user}
+                          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save to Dashboard
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <CVDataEditor 
+                        data={extractedData} 
+                        onDataChange={setExtractedData}
+                      />
+                    </>
                   )}
                 </TabsContent>
 
                 <TabsContent value="enhance" className="space-y-6">
                   {extractedData && (
-                    <AIEnhancementPanel 
-                      data={extractedData}
-                      enhancements={aiEnhancements}
-                      onDataChange={setExtractedData}
-                      onRegenerateEnhancements={() => generateAIEnhancements(extractedData)}
-                    />
+                    <>
+                      <div className="flex justify-end mb-4">
+                        <Button
+                          onClick={saveResumeData}
+                          disabled={isSaving || !user}
+                          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save to Dashboard
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <AIEnhancementPanel 
+                        data={extractedData}
+                        enhancements={aiEnhancements}
+                        onDataChange={setExtractedData}
+                        onRegenerateEnhancements={() => generateAIEnhancements(extractedData)}
+                      />
+                    </>
                   )}
                 </TabsContent>
 
@@ -504,24 +594,45 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                      <Button 
-                        onClick={downloadOptimizedPDF} 
-                        disabled={!extractedData || isProcessing}
-                        className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-4 text-lg shadow-lg"
-                        size="lg"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Generating Enhanced PDF...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-5 h-5 mr-2" />
-                            Download AI-Enhanced PDF
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-4">
+                        <Button 
+                          onClick={downloadOptimizedPDF} 
+                          disabled={!extractedData || isProcessing}
+                          className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-4 text-lg shadow-lg"
+                          size="lg"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              Generating Enhanced PDF...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-5 h-5 mr-2" />
+                              Download AI-Enhanced PDF
+                            </>
+                          )}
+                        </Button>
+                        
+                        <Button
+                          onClick={saveResumeData}
+                          disabled={isSaving || !user || !extractedData}
+                          className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-4 text-lg shadow-lg"
+                          size="lg"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-5 h-5 mr-2" />
+                              Save to Dashboard
+                            </>
+                          )}
+                        </Button>
+                      </div>
                       
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
@@ -538,7 +649,7 @@ const EnhancedCVUploadEditor: React.FC<EnhancedCVUploadEditorProps> = ({ onClose
                         </div>
                         <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
                           <CheckCircle className="w-4 h-4" />
-                          Multiple Formats
+                          Dashboard Integration
                         </div>
                       </div>
                     </CardContent>

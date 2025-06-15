@@ -1,655 +1,327 @@
+
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
-  Plus, 
   FileText, 
-  Search, 
-  MoreVertical, 
-  Edit,
-  Trash2,
-  Download,
-  Eye,
+  Plus, 
+  Eye, 
+  Edit, 
+  Download, 
+  Trash2, 
   Calendar,
   User,
-  Moon,
-  Sun,
-  LogOut,
-  Mail,
-  Building,
-  Briefcase,
-  Clock,
-  Zap,
-  Target,
-  Sparkles,
-  Settings as SettingsIcon,
-  Bell,
-  BarChart3,
   Brain,
-  Upload
+  Sparkles,
+  Zap,
+  Crown,
+  BarChart3,
+  Settings,
+  Upload,
+  Wand2
 } from 'lucide-react';
-import UserProfile from '@/components/UserProfile';
-import NotificationsCenter from '@/components/NotificationsCenter';
-import SettingsComponent from '@/components/Settings';
-import JobMarket from '@/components/JobMarket';
-import ResumeTrackingDashboard from '@/components/ResumeTrackingDashboard';
-import ATSChecker from '@/pages/ATSChecker';
 import CVUploadEditor from '@/components/CVUploadEditor';
+import AnalyticsDashboard from '@/components/AnalyticsDashboard';
+import UserProfile from '@/components/UserProfile';
+import Settings from '@/components/Settings';
 
-interface Resume {
-  id: string;
-  title: string;
-  template_id: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface CoverLetter {
-  id: string;
-  title: string;
-  company_name: string;
-  position_title: string;
-  created_at: string;
-  updated_at: string;
-}
-
-const Dashboard = () => {
-  const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const [resumes, setResumes] = useState<Resume[]>([]);
-  const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
+  const [resumes, setResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('resumes');
-  const [currentView, setCurrentView] = useState('overview');
-  const [showCVUploader, setShowCVUploader] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('resumes');
+  const [showCVEditor, setShowCVEditor] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
+    if (user) {
+      loadResumes();
     }
-    loadUserData();
-  }, [user, navigate]);
+  }, [user]);
 
-  const loadUserData = async () => {
+  const loadResumes = async () => {
     try {
-      setLoading(true);
-      
-      // Load resumes
-      const { data: resumesData, error: resumesError } = await supabase
+      const { data, error } = await supabase
         .from('resumes')
-        .select('id, title, template_id, created_at, updated_at')
+        .select('*')
         .eq('user_id', user?.id)
         .order('updated_at', { ascending: false });
 
-      if (resumesError) {
-        console.error('Error loading resumes:', resumesError);
-      }
-
-      // Load cover letters - using any type to bypass TypeScript issues until types are regenerated
-      const { data: coverLettersData, error: coverLettersError } = await (supabase as any)
-        .from('cover_letters')
-        .select('id, title, company_name, position_title, created_at, updated_at')
-        .eq('user_id', user?.id)
-        .order('updated_at', { ascending: false });
-
-      if (coverLettersError) {
-        console.error('Error loading cover letters:', coverLettersError);
-      }
-
-      setResumes(resumesData || []);
-      setCoverLetters(coverLettersData || []);
-    } catch (error) {
-      console.error('Error loading user data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load your documents",
-        variant: "destructive"
-      });
+      if (error) throw error;
+      setResumes(data || []);
+    } catch (error: any) {
+      console.error('Error loading resumes:', error);
+      toast.error('Failed to load resumes');
     } finally {
       setLoading(false);
     }
   };
 
-  const createNewResume = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('resumes')
-        .insert([{
-          user_id: user?.id,
-          title: 'New Resume',
-          personal_info: {},
-          experience: [],
-          education: [],
-          skills: [],
-          certifications: [],
-          languages: [],
-          interests: [],
-          projects: []
-        }])
-        .select()
-        .single();
+  const deleteResume = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this resume?')) return;
 
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "New resume created"
-      });
-
-      navigate(`/builder?id=${data.id}`);
-    } catch (error) {
-      console.error('Error creating resume:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create resume",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const createNewCoverLetter = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('cover_letters')
-        .insert([{
-          user_id: user?.id,
-          title: 'New Cover Letter',
-          content: 'Your personalized cover letter content goes here...',
-          company_name: '',
-          position_title: ''
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "New cover letter created"
-      });
-
-      navigate(`/cover-letter-builder?id=${data.id}`);
-    } catch (error) {
-      console.error('Error creating cover letter:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create cover letter",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteResume = async (resumeId: string) => {
-    if (!user) return;
-    
     try {
       const { error } = await supabase
         .from('resumes')
         .delete()
-        .eq('id', resumeId)
-        .eq('user_id', user.id);
+        .eq('id', id)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
-
-      setResumes(prev => prev.filter(r => r.id !== resumeId));
-      toast({
-        title: "Success",
-        description: "Resume deleted successfully"
-      });
-    } catch (error) {
+      
+      setResumes(resumes.filter(resume => resume.id !== id));
+      toast.success('Resume deleted successfully');
+    } catch (error: any) {
       console.error('Error deleting resume:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete resume",
-        variant: "destructive"
-      });
+      toast.error('Failed to delete resume');
     }
   };
 
-  const handleDeleteCoverLetter = async (coverLetterId: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await (supabase as any)
-        .from('cover_letters')
-        .delete()
-        .eq('id', coverLetterId)
-        .eq('user_id', user.id);
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'resumes':
+        return (
+          <div className="space-y-6">
+            {/* AI CV Editor Section */}
+            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                      AI-Powered CV Editor
+                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-normal">
+                      Next-gen CV extraction, enhancement, and optimization with Gemini AI
+                    </p>
+                  </div>
+                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white ml-auto">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    AI Enhanced
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                    <Upload className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">Smart Upload</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">AI extracts data from any CV format</p>
+                  </div>
+                  <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                    <Wand2 className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">AI Enhancement</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Automatically improves content quality</p>
+                  </div>
+                  <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                    <Zap className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">ATS Optimized</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Optimized for job application systems</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowCVEditor(true)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+                  size="lg"
+                >
+                  <Brain className="w-5 h-5 mr-2" />
+                  Open AI CV Editor
+                </Button>
+              </CardContent>
+            </Card>
 
-      if (error) throw error;
+            {/* Resume Management Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Your Resumes
+                </CardTitle>
+                <Button
+                  onClick={() => navigate('/builder')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Resume
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <Card key={i} className="animate-pulse">
+                        <CardContent className="p-4">
+                          <div className="h-24 bg-gray-200 rounded mb-4"></div>
+                          <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded"></div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : resumes.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No resumes yet</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                      Create your first resume or use our AI-powered CV editor to get started
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button 
+                        onClick={() => navigate('/builder')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Resume
+                      </Button>
+                      <Button 
+                        onClick={() => setShowCVEditor(true)}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                      >
+                        <Brain className="w-4 h-4 mr-2" />
+                        Use AI Editor
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {resumes.map((resume) => (
+                      <Card key={resume.id} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                                {resume.title}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  Template {(resume.template_id || 0) + 1}
+                                </Badge>
+                                {resume.job_description && (
+                                  <Badge className="bg-green-100 text-green-800 text-xs">
+                                    ATS Optimized
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                            <Calendar className="w-3 h-3" />
+                            <span>Updated {new Date(resume.updated_at).toLocaleDateString()}</span>
+                          </div>
 
-      setCoverLetters(prev => prev.filter(cl => cl.id !== coverLetterId));
-      toast({
-        title: "Success",
-        description: "Cover letter deleted successfully"
-      });
-    } catch (error) {
-      console.error('Error deleting cover letter:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete cover letter",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const previewResume = (resume: Resume) => {
-    // Open preview in new tab/window
-    window.open(`/builder?id=${resume.id}&preview=true`, '_blank');
-  };
-
-  const previewCoverLetter = (coverLetter: CoverLetter) => {
-    // Open preview in new tab/window
-    window.open(`/cover-letter-builder?id=${coverLetter.id}&preview=true`, '_blank');
-  };
-
-  const filteredResumes = resumes.filter(resume =>
-    resume.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredCoverLetters = coverLetters.filter(cl =>
-    cl.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cl.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cl.position_title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'tracking':
-        return <ResumeTrackingDashboard />;
-      case 'ats':
-        return <ATSChecker />;
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/builder?id=${resume.id}`)}
+                              className="flex-1"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteResume(resume.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+      case 'analytics':
+        return <AnalyticsDashboard />;
       case 'profile':
         return <UserProfile />;
-      case 'notifications':
-        return <NotificationsCenter />;
       case 'settings':
-        return <SettingsComponent />;
-      case 'jobs':
-        return <JobMarket />;
+        return <Settings />;
       default:
-        return renderOverview();
+        return null;
     }
   };
 
-  const renderOverview = () => (
-    <>
-      {/* Quick Actions */}
-      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                Create Resume
-              </h3>
-              <p className="text-blue-700 dark:text-blue-300 text-sm">
-                Build professional resumes with AI
-              </p>
-            </div>
-            <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
-                Cover Letter
-              </h3>
-              <p className="text-green-700 dark:text-green-300 text-sm">
-                Write compelling cover letters
-              </p>
-            </div>
-            <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700">
-              <Mail className="w-4 h-4 mr-2" />
-              New
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
-                CV Upload & Editor
-              </h3>
-              <p className="text-orange-700 dark:text-orange-300 text-sm">
-                AI-powered CV extraction & editing
-              </p>
-            </div>
-            <Button onClick={() => setShowCVUploader(true)} className="bg-orange-600 hover:bg-orange-700">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
-                ATS Checker
-              </h3>
-              <p className="text-purple-700 dark:text-purple-300 text-sm">
-                AI-powered ATS analysis
-              </p>
-            </div>
-            <Button onClick={() => setCurrentView('ats')} className="bg-purple-600 hover:bg-purple-700">
-              <Brain className="w-4 h-4 mr-2" />
-              Check
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="mb-6 flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search documents..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Documents Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="resumes" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Resumes ({resumes.length})
-          </TabsTrigger>
-          <TabsTrigger value="cover-letters" className="flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            Cover Letters ({coverLetters.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="resumes">
-          {filteredResumes.length === 0 ? (
-            <Card className="p-12 text-center">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No resumes yet
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Create your first resume to get started
-              </p>
-              <Button onClick={createNewResume}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Resume
-              </Button>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredResumes.map((resume) => (
-                <Card key={resume.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-1">{resume.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2">
-                          <Calendar className="h-3 w-3" />
-                          Updated {new Date(resume.updated_at).toLocaleDateString()}
-                        </CardDescription>
-                      </div>
-                      <Badge variant="outline">Template {resume.template_id + 1}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/builder?id=${resume.id}`)}
-                        >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => previewResume(resume)}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Preview
-                        </Button>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteResume(resume.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="cover-letters">
-          {filteredCoverLetters.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No cover letters yet
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Create your first cover letter to get started
-              </p>
-              <Button onClick={createNewCoverLetter}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Cover Letter
-              </Button>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCoverLetters.map((coverLetter) => (
-                <Card key={coverLetter.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-1">{coverLetter.title}</CardTitle>
-                        <CardDescription className="space-y-1">
-                          {coverLetter.company_name && (
-                            <div className="flex items-center gap-2">
-                              <Building className="h-3 w-3" />
-                              {coverLetter.company_name}
-                            </div>
-                          )}
-                          {coverLetter.position_title && (
-                            <div className="flex items-center gap-2">
-                              <Briefcase className="h-3 w-3" />
-                              {coverLetter.position_title}
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3" />
-                            Updated {new Date(coverLetter.updated_at).toLocaleDateString()}
-                          </div>
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/cover-letter-builder?id=${coverLetter.id}`)}
-                        >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => previewCoverLetter(coverLetter)}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Preview
-                        </Button>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteCoverLetter(coverLetter.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-    </>
-  );
-
-  if (loading) {
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <Card className="p-8 text-center shadow-2xl">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your workspace...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full shadow-xl">
+          <CardTitle className="mb-4 text-2xl">Authentication Required</CardTitle>
+          <p className="text-gray-600 mb-6">Please sign in to access your dashboard.</p>
+          <Button onClick={() => navigate('/auth')} className="w-full">Sign In</Button>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Enhanced Header */}
-      <header className="bg-white/80 backdrop-blur-md dark:bg-gray-800/80 border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Header */}
+        <div className="mb-8 p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Resume Builder Pro
-                  </h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">AI-Powered Career Tools</p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Crown className="w-6 h-6 text-white" />
               </div>
-              
-              {/* Navigation */}
-              <nav className="hidden lg:flex items-center space-x-1">
-                {[
-                  { id: 'overview', label: 'Overview', icon: Briefcase },
-                  { id: 'ats', label: 'ATS Checker', icon: Brain },
-                  { id: 'tracking', label: 'Tracking', icon: BarChart3 },
-                  { id: 'jobs', label: 'Jobs', icon: Search },
-                  { id: 'profile', label: 'Profile', icon: User },
-                  { id: 'notifications', label: 'Notifications', icon: Bell },
-                  { id: 'settings', label: 'Settings', icon: SettingsIcon }
-                ].map(({ id, label, icon: Icon }) => (
-                  <Button
-                    key={id}
-                    variant={currentView === id ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setCurrentView(id)}
-                    className="flex items-center gap-2"
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </Button>
-                ))}
-              </nav>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <Badge variant="secondary" className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 border-0">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Pro
-              </Badge>
-              
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="rounded-full">
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </Button>
-              
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{user?.email}</span>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Dashboard
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Welcome back, {user.email}
+                </p>
               </div>
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => signOut()}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Mobile Navigation */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2">
-        <div className="flex space-x-1 overflow-x-auto">
-          {[
-            { id: 'overview', label: 'Overview', icon: Briefcase },
-            { id: 'ats', label: 'ATS', icon: Brain },
-            { id: 'tracking', label: 'Tracking', icon: BarChart3 },
-            { id: 'jobs', label: 'Jobs', icon: Search },
-            { id: 'profile', label: 'Profile', icon: User },
-            { id: 'notifications', label: 'Notifications', icon: Bell },
-            { id: 'settings', label: 'Settings', icon: SettingsIcon }
-          ].map(({ id, label, icon: Icon }) => (
-            <Button
-              key={id}
-              variant={currentView === id ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setCurrentView(id)}
-              className="flex items-center gap-2 whitespace-nowrap"
-            >
-              <Icon className="w-4 h-4" />
-              <span className="text-xs">{label}</span>
-            </Button>
-          ))}
+        {/* Navigation Tabs */}
+        <div className="mb-6">
+          <div className="flex space-x-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-lg p-1 border border-white/20">
+            {[
+              { id: 'resumes', label: 'Resumes', icon: FileText },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+              { id: 'profile', label: 'Profile', icon: User },
+              { id: 'settings', label: 'Settings', icon: Settings }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-white dark:bg-gray-700 shadow-md text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Main Content */}
+        {renderContent()}
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
-        {renderCurrentView()}
-      </div>
-
-      {/* CV Upload & Editor Modal */}
-      {showCVUploader && (
-        <CVUploadEditor onClose={() => setShowCVUploader(false)} />
+      {/* AI CV Editor Modal */}
+      {showCVEditor && (
+        <CVUploadEditor onClose={() => setShowCVEditor(false)} />
       )}
     </div>
   );
