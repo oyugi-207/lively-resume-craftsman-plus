@@ -3,7 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import ImprovedCVProcessor from './enhanced-forms/ImprovedCVProcessor';
+import AutoCVProcessor from './enhanced-forms/AutoCVProcessor';
 
 interface CVUploadEditorProps {
   onClose: () => void;
@@ -23,7 +23,7 @@ const CVUploadEditor: React.FC<CVUploadEditorProps> = ({ onClose }) => {
         </DialogHeader>
         
         <div className="p-6">
-          <ImprovedCVProcessor onClose={onClose} />
+          <AutoCVProcessor onClose={onClose} />
         </div>
       </DialogContent>
     </Dialog>
