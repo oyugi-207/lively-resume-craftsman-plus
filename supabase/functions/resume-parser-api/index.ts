@@ -68,13 +68,14 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Processing resume: ${fileName} (${fileType})`);
+    console.log('Using RAPIDAPI_KEY:', RAPIDAPI_KEY ? 'Key is present' : 'Key is missing');
 
-    // Call the AI Resume Parser API
+    // Call the AI Resume Parser API with proper headers
     const response = await fetch('https://ai-resume-parser-extractor.p.rapidapi.com/resume/file/base64', {
       method: 'POST',
       headers: {
-        'x-rapidapi-key': RAPIDAPI_KEY,
-        'x-rapidapi-host': 'ai-resume-parser-extractor.p.rapidapi.com',
+        'X-RapidAPI-Key': RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'ai-resume-parser-extractor.p.rapidapi.com',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -83,13 +84,16 @@ Deno.serve(async (req) => {
       })
     });
 
+    console.log('RapidAPI Response Status:', response.status, response.statusText);
+
     if (!response.ok) {
-      console.error('Resume parser API error:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('Resume parser API error:', response.status, response.statusText, errorText);
       throw new Error(`Resume parser API error: ${response.status}`);
     }
 
     const apiResult = await response.json();
-    console.log('Resume parser API response received');
+    console.log('Resume parser API response received successfully');
 
     // Transform the API response to match our expected format
     const transformedData = transformResumeData(apiResult);
