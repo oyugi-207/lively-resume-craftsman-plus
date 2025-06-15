@@ -271,6 +271,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
         }
       }
 
+      console.log('Setting extracted data and showing template');
       setExtractedData(extractedData);
       setShowTemplate(true);
       
@@ -283,7 +284,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
       toast.error(error.message || 'Failed to process the file. Please try a different file or use the manual template.');
       
       // Provide empty template as last resort
-      setExtractedData({
+      const fallbackData = {
         personal: { fullName: '', email: '', phone: '', location: '', summary: '' },
         experience: [],
         education: [],
@@ -292,7 +293,9 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
         languages: [],
         interests: [],
         projects: []
-      });
+      };
+      
+      setExtractedData(fallbackData);
       setShowTemplate(true);
     } finally {
       setIsExtracting(false);
@@ -319,20 +322,77 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     maxSize: 10 * 1024 * 1024 // 10MB
   });
 
+  // Show the template if we have extracted data
   if (showTemplate && extractedData) {
     return (
-      <EditableCVTemplate
-        data={extractedData}
-        onDataChange={setExtractedData}
-        onSave={() => {
-          onDataExtracted(extractedData);
-          toast.success('CV data saved!');
-        }}
-        onDownload={() => {
-          // This will be handled by the template component
-          toast.success('Download initiated!');
-        }}
-      />
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="w-full max-w-6xl bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-h-[90vh] overflow-hidden">
+          <EditableCVTemplate
+            data={extractedData}
+            onDataChange={setExtractedData}
+            onSave={() => {
+              onDataExtracted(extractedData);
+              toast.success('CV data saved!');
+              onClose();
+            }}
+            onDownload={() => {
+              // Create downloadable content
+              const downloadContent = `
+CV Data Export
+
+Personal Information:
+Name: ${extractedData.personal.fullName || 'N/A'}
+Email: ${extractedData.personal.email || 'N/A'}
+Phone: ${extractedData.personal.phone || 'N/A'}
+Location: ${extractedData.personal.location || 'N/A'}
+
+Professional Summary:
+${extractedData.personal.summary || 'N/A'}
+
+Experience:
+${extractedData.experience.map((exp: any, index: number) => `
+${index + 1}. ${exp.position || 'Position'} at ${exp.company || 'Company'}
+   Location: ${exp.location || 'N/A'}
+   Duration: ${exp.duration || exp.startDate + ' - ' + exp.endDate || 'N/A'}
+   Description: ${exp.description || 'N/A'}
+`).join('\n')}
+
+Education:
+${extractedData.education.map((edu: any, index: number) => `
+${index + 1}. ${edu.degree || 'Degree'} from ${edu.school || 'School'}
+   Location: ${edu.location || 'N/A'}
+   Duration: ${edu.duration || edu.startDate + ' - ' + edu.endDate || 'N/A'}
+`).join('\n')}
+
+Skills:
+${extractedData.skills.join(', ') || 'N/A'}
+              `.trim();
+
+              const blob = new Blob([downloadContent], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'cv-data-export.txt';
+              a.click();
+              URL.revokeObjectURL(url);
+              
+              toast.success('CV data downloaded!');
+            }}
+          />
+          
+          {/* Close button */}
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="bg-white dark:bg-gray-800 shadow-lg"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -405,7 +465,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             <Button
               onClick={() => {
                 // Provide empty template for manual entry
-                setExtractedData({
+                const emptyData = {
                   personal: { fullName: '', email: '', phone: '', location: '', summary: '' },
                   experience: [],
                   education: [],
@@ -414,7 +474,8 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                   languages: [],
                   interests: [],
                   projects: []
-                });
+                };
+                setExtractedData(emptyData);
                 setShowTemplate(true);
               }}
               variant="outline"
