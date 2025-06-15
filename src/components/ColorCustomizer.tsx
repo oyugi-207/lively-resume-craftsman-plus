@@ -78,30 +78,30 @@ const ColorCustomizer: React.FC<ColorCustomizerProps> = ({ onColorChange, curren
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Palette className="w-5 h-5" />
+    <Card className="bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-xl">
+      <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+        <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+          <Palette className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           Color Customization
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
         
         {/* Color Presets */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Theme Presets</Label>
+          <Label className="text-sm font-medium mb-3 block text-gray-700 dark:text-gray-300">Theme Presets</Label>
           <div className="grid grid-cols-2 gap-3">
             {presetThemes.map((theme) => (
               <Button
                 key={theme.name}
                 variant="outline"
                 onClick={() => applyPreset(theme.colors)}
-                className="h-auto p-3 flex flex-col items-start gap-2"
+                className="h-auto p-3 flex flex-col items-start gap-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <div className="flex gap-1 w-full">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: theme.colors.primary }}></div>
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: theme.colors.secondary }}></div>
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: theme.colors.accent }}></div>
+                  <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: theme.colors.primary }}></div>
+                  <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: theme.colors.secondary }}></div>
+                  <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: theme.colors.accent }}></div>
                 </div>
                 <span className="text-xs font-medium">{theme.name}</span>
               </Button>
@@ -111,57 +111,57 @@ const ColorCustomizer: React.FC<ColorCustomizerProps> = ({ onColorChange, curren
 
         {/* Custom Colors */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Custom Colors</Label>
+          <Label className="text-sm font-medium mb-3 block text-gray-700 dark:text-gray-300">Custom Colors</Label>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-gray-600">Primary Color</Label>
+              <Label className="text-xs text-gray-600 dark:text-gray-400">Primary Color</Label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="color"
                   value={colors.primary}
                   onChange={(e) => updateColor('primary', e.target.value)}
-                  className="w-8 h-8 rounded border"
+                  className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                 />
-                <span className="text-sm text-gray-600">{colors.primary}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">{colors.primary}</span>
               </div>
             </div>
             
             <div>
-              <Label className="text-xs text-gray-600">Secondary Color</Label>
+              <Label className="text-xs text-gray-600 dark:text-gray-400">Secondary Color</Label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="color"
                   value={colors.secondary}
                   onChange={(e) => updateColor('secondary', e.target.value)}
-                  className="w-8 h-8 rounded border"
+                  className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                 />
-                <span className="text-sm text-gray-600">{colors.secondary}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">{colors.secondary}</span>
               </div>
             </div>
             
             <div>
-              <Label className="text-xs text-gray-600">Accent Color</Label>
+              <Label className="text-xs text-gray-600 dark:text-gray-400">Accent Color</Label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="color"
                   value={colors.accent}
                   onChange={(e) => updateColor('accent', e.target.value)}
-                  className="w-8 h-8 rounded border"
+                  className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                 />
-                <span className="text-sm text-gray-600">{colors.accent}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">{colors.accent}</span>
               </div>
             </div>
             
             <div>
-              <Label className="text-xs text-gray-600">Text Color</Label>
+              <Label className="text-xs text-gray-600 dark:text-gray-400">Text Color</Label>
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="color"
                   value={colors.text}
                   onChange={(e) => updateColor('text', e.target.value)}
-                  className="w-8 h-8 rounded border"
+                  className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                 />
-                <span className="text-sm text-gray-600">{colors.text}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">{colors.text}</span>
               </div>
             </div>
           </div>
@@ -169,8 +169,11 @@ const ColorCustomizer: React.FC<ColorCustomizerProps> = ({ onColorChange, curren
 
         {/* Preview */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Preview</Label>
-          <div className="p-4 border rounded-lg" style={{ backgroundColor: colors.background }}>
+          <Label className="text-sm font-medium mb-3 block text-gray-700 dark:text-gray-300">Preview</Label>
+          <div 
+            className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm"
+            style={{ backgroundColor: colors.background }}
+          >
             <h3 className="font-semibold mb-2" style={{ color: colors.primary }}>
               Sample Heading
             </h3>
@@ -178,10 +181,16 @@ const ColorCustomizer: React.FC<ColorCustomizerProps> = ({ onColorChange, curren
               This is how your resume text will look with the selected colors.
             </p>
             <div className="flex gap-2">
-              <span className="px-2 py-1 rounded text-xs text-white" style={{ backgroundColor: colors.secondary }}>
+              <span 
+                className="px-2 py-1 rounded text-xs text-white shadow-sm" 
+                style={{ backgroundColor: colors.secondary }}
+              >
                 Tag Example
               </span>
-              <span className="px-2 py-1 rounded text-xs text-white" style={{ backgroundColor: colors.accent }}>
+              <span 
+                className="px-2 py-1 rounded text-xs text-white shadow-sm" 
+                style={{ backgroundColor: colors.accent }}
+              >
                 Accent Tag
               </span>
             </div>
@@ -192,7 +201,7 @@ const ColorCustomizer: React.FC<ColorCustomizerProps> = ({ onColorChange, curren
         <Button
           variant="outline"
           onClick={resetToDefault}
-          className="w-full flex items-center gap-2"
+          className="w-full flex items-center gap-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
         >
           <RotateCcw className="w-4 h-4" />
           Reset to Default

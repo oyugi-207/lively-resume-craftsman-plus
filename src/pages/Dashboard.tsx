@@ -287,70 +287,70 @@ const Dashboard = () => {
 
   const renderOverview = () => (
     <>
-      {/* Quick Actions */}
+      {/* Quick Actions with improved dark mode */}
       <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
+        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200 dark:border-blue-800/50 shadow-lg dark:shadow-blue-950/20">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
                 Create Resume
               </h3>
-              <p className="text-blue-700 dark:text-blue-300 text-sm">
+              <p className="text-blue-700 dark:text-blue-200 text-sm">
                 Build professional resumes with AI
               </p>
             </div>
-            <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white shadow-md">
               <Plus className="w-4 h-4 mr-2" />
               New
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
+        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 border-green-200 dark:border-green-800/50 shadow-lg dark:shadow-green-950/20">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
                 Cover Letter
               </h3>
-              <p className="text-green-700 dark:text-green-300 text-sm">
+              <p className="text-green-700 dark:text-green-200 text-sm">
                 Write compelling cover letters
               </p>
             </div>
-            <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white shadow-md">
               <Mail className="w-4 h-4 mr-2" />
               New
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
+        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 border-orange-200 dark:border-orange-800/50 shadow-lg dark:shadow-orange-950/20">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
                 CV Upload & Editor
               </h3>
-              <p className="text-orange-700 dark:text-orange-300 text-sm">
+              <p className="text-orange-700 dark:text-orange-200 text-sm">
                 AI-powered CV extraction & editing
               </p>
             </div>
-            <Button onClick={() => setShowCVUploader(true)} className="bg-orange-600 hover:bg-orange-700">
+            <Button onClick={() => setShowCVUploader(true)} className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-500 text-white shadow-md">
               <Upload className="w-4 h-4 mr-2" />
               Upload
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 border-purple-200 dark:border-purple-800/50 shadow-lg dark:shadow-purple-950/20">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
                 ATS Checker
               </h3>
-              <p className="text-purple-700 dark:text-purple-300 text-sm">
+              <p className="text-purple-700 dark:text-purple-200 text-sm">
                 AI-powered ATS analysis
               </p>
             </div>
-            <Button onClick={() => setCurrentView('ats')} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={() => setCurrentView('ats')} className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white shadow-md">
               <Brain className="w-4 h-4 mr-2" />
               Check
             </Button>
@@ -358,27 +358,27 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search and Filter with better dark mode */}
       <div className="mb-6 flex items-center space-x-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           <Input
             placeholder="Search documents..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400"
           />
         </div>
       </div>
 
-      {/* Documents Tabs */}
+      {/* Documents Tabs with improved styling */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="resumes" className="flex items-center gap-2">
+        <TabsList className="mb-6 bg-gray-100 dark:bg-gray-800/50 border dark:border-gray-700">
+          <TabsTrigger value="resumes" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
             <FileText className="w-4 h-4" />
             Resumes ({resumes.length})
           </TabsTrigger>
-          <TabsTrigger value="cover-letters" className="flex items-center gap-2">
+          <TabsTrigger value="cover-letters" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
             <Mail className="w-4 h-4" />
             Cover Letters ({coverLetters.length})
           </TabsTrigger>
@@ -386,15 +386,15 @@ const Dashboard = () => {
 
         <TabsContent value="resumes">
           {filteredResumes.length === 0 ? (
-            <Card className="p-12 text-center">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Card className="p-12 text-center bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg">
+              <FileText className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No resumes yet
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Create your first resume to get started
               </p>
-              <Button onClick={createNewResume}>
+              <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Resume
               </Button>
@@ -402,17 +402,17 @@ const Dashboard = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredResumes.map((resume) => (
-                <Card key={resume.id} className="hover:shadow-lg transition-shadow">
+                <Card key={resume.id} className="hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-1">{resume.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2">
+                        <CardTitle className="text-lg mb-1 text-gray-900 dark:text-white">{resume.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                           <Calendar className="h-3 w-3" />
                           Updated {new Date(resume.updated_at).toLocaleDateString()}
                         </CardDescription>
                       </div>
-                      <Badge variant="outline">Template {resume.template_id + 1}</Badge>
+                      <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">Template {resume.template_id + 1}</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -422,6 +422,7 @@ const Dashboard = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/builder?id=${resume.id}`)}
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
@@ -430,6 +431,7 @@ const Dashboard = () => {
                           size="sm" 
                           variant="outline"
                           onClick={() => previewResume(resume)}
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                           <Eye className="w-3 h-3 mr-1" />
                           Preview
@@ -439,7 +441,7 @@ const Dashboard = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteResume(resume.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -453,15 +455,15 @@ const Dashboard = () => {
 
         <TabsContent value="cover-letters">
           {filteredCoverLetters.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Card className="p-12 text-center bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg">
+              <Mail className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No cover letters yet
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Create your first cover letter to get started
               </p>
-              <Button onClick={createNewCoverLetter}>
+              <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Cover Letter
               </Button>
@@ -469,12 +471,12 @@ const Dashboard = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCoverLetters.map((coverLetter) => (
-                <Card key={coverLetter.id} className="hover:shadow-lg transition-shadow">
+                <Card key={coverLetter.id} className="hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-1">{coverLetter.title}</CardTitle>
-                        <CardDescription className="space-y-1">
+                        <CardTitle className="text-lg mb-1 text-gray-900 dark:text-white">{coverLetter.title}</CardTitle>
+                        <CardDescription className="space-y-1 text-gray-600 dark:text-gray-300">
                           {coverLetter.company_name && (
                             <div className="flex items-center gap-2">
                               <Building className="h-3 w-3" />
@@ -502,6 +504,7 @@ const Dashboard = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/cover-letter-builder?id=${coverLetter.id}`)}
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
@@ -510,6 +513,7 @@ const Dashboard = () => {
                           size="sm" 
                           variant="outline"
                           onClick={() => previewCoverLetter(coverLetter)}
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                           <Eye className="w-3 h-3 mr-1" />
                           Preview
@@ -519,7 +523,7 @@ const Dashboard = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteCoverLetter(coverLetter.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -536,9 +540,9 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <Card className="p-8 text-center shadow-2xl">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900">
+        <Card className="p-8 text-center shadow-2xl bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading your workspace...</p>
         </Card>
       </div>
@@ -546,25 +550,25 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Enhanced Header */}
-      <header className="bg-white/80 backdrop-blur-md dark:bg-gray-800/80 border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-950 dark:to-blue-950">
+      {/* Enhanced Header with better dark mode */}
+      <header className="bg-white/80 backdrop-blur-md dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-40 shadow-sm dark:shadow-gray-950/20">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
                   <Briefcase className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
                     Resume Builder Pro
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">AI-Powered Career Tools</p>
                 </div>
               </div>
               
-              {/* Navigation */}
+              {/* Navigation with improved dark mode */}
               <nav className="hidden lg:flex items-center space-x-1">
                 {[
                   { id: 'overview', label: 'Overview', icon: Briefcase },
@@ -580,7 +584,11 @@ const Dashboard = () => {
                     variant={currentView === id ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setCurrentView(id)}
-                    className="flex items-center gap-2"
+                    className={`flex items-center gap-2 ${
+                      currentView === id 
+                        ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-400' 
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                    }`}
                   >
                     <Icon className="w-4 h-4" />
                     {label}
@@ -590,16 +598,16 @@ const Dashboard = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              <Badge variant="secondary" className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 border-0">
+              <Badge variant="secondary" className="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/50 dark:to-blue-900/50 text-green-800 dark:text-green-300 border-0 shadow-sm">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Pro
               </Badge>
               
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="rounded-full">
+              <Button variant="ghost" size="sm" onClick={toggleTheme} className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
               
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1 border dark:border-gray-700">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">{user?.email}</span>
               </div>
@@ -608,7 +616,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => signOut()}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -617,8 +625,8 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Mobile Navigation */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2">
+      {/* Mobile Navigation with better dark mode */}
+      <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-2 shadow-sm dark:shadow-gray-950/20">
         <div className="flex space-x-1 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview', icon: Briefcase },
@@ -634,7 +642,11 @@ const Dashboard = () => {
               variant={currentView === id ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setCurrentView(id)}
-              className="flex items-center gap-2 whitespace-nowrap"
+              className={`flex items-center gap-2 whitespace-nowrap ${
+                currentView === id 
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white' 
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+              }`}
             >
               <Icon className="w-4 h-4" />
               <span className="text-xs">{label}</span>

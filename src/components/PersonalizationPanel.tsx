@@ -78,79 +78,79 @@ const PersonalizationPanel = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <User className="w-6 h-6" />
+        <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Personalization</h2>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="w-5 h-5" />
+      <Card className="bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-xl">
+        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <Palette className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             Display Preferences
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
+              <Label htmlFor="theme" className="text-gray-700 dark:text-gray-300 font-medium">Theme</Label>
               <Select 
                 value={preferences.theme} 
                 onValueChange={(value) => updatePreference('theme', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="auto">Auto</SelectItem>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                  <SelectItem value="light" className="hover:bg-gray-100 dark:hover:bg-gray-700">Light</SelectItem>
+                  <SelectItem value="dark" className="hover:bg-gray-100 dark:hover:bg-gray-700">Dark</SelectItem>
+                  <SelectItem value="auto" className="hover:bg-gray-100 dark:hover:bg-gray-700">Auto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="defaultTemplate">Default Template</Label>
+              <Label htmlFor="defaultTemplate" className="text-gray-700 dark:text-gray-300 font-medium">Default Template</Label>
               <Select 
                 value={preferences.defaultTemplate.toString()} 
                 onValueChange={(value) => updatePreference('defaultTemplate', parseInt(value))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Modern Professional</SelectItem>
-                  <SelectItem value="1">Executive Leadership</SelectItem>
-                  <SelectItem value="2">Classic Corporate</SelectItem>
-                  <SelectItem value="3">Creative Designer</SelectItem>
-                  <SelectItem value="4">Tech Specialist</SelectItem>
-                  <SelectItem value="5">Minimalist</SelectItem>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                  <SelectItem value="0" className="hover:bg-gray-100 dark:hover:bg-gray-700">Modern Professional</SelectItem>
+                  <SelectItem value="1" className="hover:bg-gray-100 dark:hover:bg-gray-700">Executive Leadership</SelectItem>
+                  <SelectItem value="2" className="hover:bg-gray-100 dark:hover:bg-gray-700">Classic Corporate</SelectItem>
+                  <SelectItem value="3" className="hover:bg-gray-100 dark:hover:bg-gray-700">Creative Designer</SelectItem>
+                  <SelectItem value="4" className="hover:bg-gray-100 dark:hover:bg-gray-700">Tech Specialist</SelectItem>
+                  <SelectItem value="5" className="hover:bg-gray-100 dark:hover:bg-gray-700">Minimalist</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
+              <Label htmlFor="language" className="text-gray-700 dark:text-gray-300 font-medium">Language</Label>
               <Select 
                 value={preferences.language} 
                 onValueChange={(value) => updatePreference('language', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  <SelectItem value="de">German</SelectItem>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                  <SelectItem value="en" className="hover:bg-gray-100 dark:hover:bg-gray-700">English</SelectItem>
+                  <SelectItem value="es" className="hover:bg-gray-100 dark:hover:bg-gray-700">Spanish</SelectItem>
+                  <SelectItem value="fr" className="hover:bg-gray-100 dark:hover:bg-gray-700">French</SelectItem>
+                  <SelectItem value="de" className="hover:bg-gray-100 dark:hover:bg-gray-700">German</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-600">
               <div>
-                <Label>Auto Save</Label>
+                <Label className="text-gray-900 dark:text-white font-medium">Auto Save</Label>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Automatically save changes as you type
                 </p>
@@ -158,12 +158,13 @@ const PersonalizationPanel = () => {
               <Switch 
                 checked={preferences.autoSave}
                 onCheckedChange={(checked) => updatePreference('autoSave', checked)}
+                className="data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500"
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-600">
               <div>
-                <Label>Notifications</Label>
+                <Label className="text-gray-900 dark:text-white font-medium">Notifications</Label>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Receive notifications about updates
                 </p>
@@ -171,6 +172,7 @@ const PersonalizationPanel = () => {
               <Switch 
                 checked={preferences.notifications}
                 onCheckedChange={(checked) => updatePreference('notifications', checked)}
+                className="data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500"
               />
             </div>
           </div>
@@ -178,7 +180,7 @@ const PersonalizationPanel = () => {
           <Button 
             onClick={savePreferences} 
             disabled={saving}
-            className="w-full md:w-auto"
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white shadow-md"
           >
             <Save className="w-4 h-4 mr-2" />
             {saving ? 'Saving...' : 'Save Preferences'}
