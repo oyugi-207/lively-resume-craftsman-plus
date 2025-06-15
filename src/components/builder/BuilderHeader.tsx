@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, Brain, Sparkles, Target, Code2, Upload, ScanLine } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Brain, Sparkles, Target, Code2, Upload, ScanLine, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BuilderHeaderProps {

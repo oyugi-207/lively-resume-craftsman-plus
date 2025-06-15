@@ -1,23 +1,16 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from 'lucide-react';
 
-// Import form components
-import PersonalInfoForm from '@/components/forms/PersonalInfoForm';
-import ExperienceForm from '@/components/forms/ExperienceForm';
-import EducationForm from '@/components/forms/EducationForm';
-import SkillsForm from '@/components/forms/SkillsForm';
-import ProjectsForm from '@/components/forms/ProjectsForm';
-import CertificationsForm from '@/components/forms/CertificationsForm';
-import LanguagesForm from '@/components/forms/LanguagesForm';
-import InterestsForm from '@/components/forms/InterestsForm';
-import ReferencesForm from '@/components/forms/ReferencesForm';
+// Import working form components
+import EducationForm from '@/components/EducationForm';
 import EnhancedSkillsForm from '@/components/EnhancedSkillsForm';
-import CertificationsFormEnhanced from '@/components/CertificationsFormEnhanced';
-import LanguagesFormEnhanced from '@/components/LanguagesFormEnhanced';
-import InterestsFormEnhanced from '@/components/InterestsFormEnhanced';
-import ReferencesFormEnhanced from '@/components/ReferencesFormEnhanced';
+import CertificationsFormEnhanced from '@/components/enhanced-forms/CertificationsFormEnhanced';
+import LanguagesFormEnhanced from '@/components/enhanced-forms/LanguagesFormEnhanced';
+import InterestsFormEnhanced from '@/components/enhanced-forms/InterestsFormEnhanced';
+import ReferencesFormEnhanced from '@/components/enhanced-forms/ReferencesFormEnhanced';
 import PersonalInfoFormEnhanced from '@/components/enhanced-forms/PersonalInfoFormEnhanced';
 import ExperienceFormEnhanced from '@/components/enhanced-forms/ExperienceFormEnhanced';
 import ProjectsFormEnhanced from '@/components/enhanced-forms/ProjectsFormEnhanced';
