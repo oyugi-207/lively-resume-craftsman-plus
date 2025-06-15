@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,97 +21,96 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
   const [currentStep, setCurrentStep] = useState<'upload' | 'view' | 'parsed'>('upload');
   const [enhancing, setEnhancing] = useState(false);
 
-  const extractTextFromFile = async (file: File): Promise<string> => {
+  // Enhanced PDF extraction using modern browser APIs and better parsing
+  const extractPDFText = async (file: File): Promise<string> => {
+    try {
+      // Try using a more sophisticated approach with PDF.js library
+      const pdfjsLib = (window as any).pdfjsLib;
+      
+      if (pdfjsLib) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+          fullText += pageText + '\n';
+        }
+        
+        return fullText.trim();
+      } else {
+        // Fallback to improved binary parsing
+        return await extractPDFTextFallback(file);
+      }
+    } catch (error) {
+      console.error('PDF extraction error:', error);
+      return await extractPDFTextFallback(file);
+    }
+  };
+
+  // Improved fallback PDF text extraction
+  const extractPDFTextFallback = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
           let text = '';
           
-          if (file.type === 'text/plain') {
-            text = e.target?.result as string;
-          } else if (file.type === 'application/pdf') {
-            // For PDF files, we'll try to extract basic text
-            const arrayBuffer = e.target?.result as ArrayBuffer;
-            const uint8Array = new Uint8Array(arrayBuffer);
-            
-            // Simple PDF text extraction (basic approach)
-            let pdfText = '';
-            let inTextObject = false;
-            let currentText = '';
-            
-            for (let i = 0; i < uint8Array.length - 1; i++) {
-              const char = String.fromCharCode(uint8Array[i]);
-              const nextChar = String.fromCharCode(uint8Array[i + 1]);
+          // More sophisticated PDF parsing
+          let i = 0;
+          while (i < uint8Array.length - 3) {
+            // Look for text objects and streams
+            if (uint8Array[i] === 0x42 && uint8Array[i + 1] === 0x54) { // "BT" - Begin Text
+              i += 2;
+              let textContent = '';
+              let inParentheses = false;
+              let parenDepth = 0;
               
-              // Look for text objects in PDF
-              if (char === 'B' && nextChar === 'T') {
-                inTextObject = true;
-                continue;
-              }
-              if (char === 'E' && nextChar === 'T') {
-                inTextObject = false;
-                if (currentText.trim()) {
-                  pdfText += currentText.trim() + ' ';
-                  currentText = '';
+              while (i < uint8Array.length - 1) {
+                const byte = uint8Array[i];
+                const char = String.fromCharCode(byte);
+                
+                if (char === '(') {
+                  inParentheses = true;
+                  parenDepth++;
+                } else if (char === ')') {
+                  parenDepth--;
+                  if (parenDepth <= 0) {
+                    inParentheses = false;
+                    if (textContent.trim()) {
+                      text += textContent.trim() + ' ';
+                      textContent = '';
+                    }
+                  }
+                } else if (inParentheses && parenDepth > 0) {
+                  // Only capture readable characters
+                  if (byte >= 32 && byte <= 126) {
+                    textContent += char;
+                  } else if (byte === 10 || byte === 13) {
+                    textContent += ' ';
+                  }
+                } else if (char === 'E' && uint8Array[i + 1] === 84) { // "ET" - End Text
+                  break;
                 }
-                continue;
+                i++;
               }
-              
-              if (inTextObject && char.match(/[a-zA-Z0-9\s@\.\-\(\)]/)) {
-                currentText += char;
-              }
+            } else {
+              i++;
             }
-            
-            text = pdfText.replace(/\s+/g, ' ').trim();
-          } else {
-            // For Word documents and other formats, try to extract readable text
-            const arrayBuffer = e.target?.result as ArrayBuffer;
-            const uint8Array = new Uint8Array(arrayBuffer);
-            
-            // Convert to string and try to extract readable content
-            let docText = '';
-            let buffer = '';
-            
-            for (let i = 0; i < uint8Array.length; i++) {
-              const byte = uint8Array[i];
-              
-              // Skip null bytes and control characters
-              if (byte === 0 || byte < 32) {
-                if (buffer.trim().length > 2) {
-                  docText += buffer.trim() + ' ';
-                }
-                buffer = '';
-                continue;
-              }
-              
-              const char = String.fromCharCode(byte);
-              
-              // Only include printable ASCII characters and common symbols
-              if (char.match(/[a-zA-Z0-9\s@\.\-\(\)\+\=\&\%\$\#\!\?\,\;\:\'\"]/) || 
-                  char.charCodeAt(0) > 127) { // Allow unicode characters
-                buffer += char;
-              } else {
-                if (buffer.trim().length > 2) {
-                  docText += buffer.trim() + ' ';
-                }
-                buffer = '';
-              }
-            }
-            
-            // Add any remaining buffer
-            if (buffer.trim().length > 2) {
-              docText += buffer.trim();
-            }
-            
-            // Clean up the extracted text
-            text = docText
-              .replace(/\s+/g, ' ')
-              .replace(/[^\w\s@\.\-\(\)\+\=\&\%\$\#\!\?\,\;\:\'\"]/g, ' ')
-              .replace(/\s+/g, ' ')
-              .trim();
           }
+          
+          // Clean up the extracted text
+          text = text
+            .replace(/\s+/g, ' ')
+            .replace(/[^\x20-\x7E\n]/g, ' ')
+            .trim();
           
           resolve(text);
         } catch (error) {
@@ -120,14 +118,111 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
         }
       };
       
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      
-      if (file.type === 'application/pdf' || file.type.includes('document')) {
-        reader.readAsArrayBuffer(file);
-      } else {
-        reader.readAsText(file, 'UTF-8');
-      }
+      reader.onerror = () => reject(new Error('Failed to read PDF file'));
+      reader.readAsArrayBuffer(file);
     });
+  };
+
+  // Enhanced DOCX extraction
+  const extractDOCXText = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Look for document.xml content in the DOCX zip structure
+          const decoder = new TextDecoder('utf-8');
+          const content = decoder.decode(uint8Array);
+          
+          // Extract text between XML tags
+          const xmlPattern = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+          let match;
+          let text = '';
+          
+          while ((match = xmlPattern.exec(content)) !== null) {
+            if (match[1]) {
+              text += match[1] + ' ';
+            }
+          }
+          
+          // Also try to extract from plain text sections
+          const textPattern = />[^<]{3,}</g;
+          const textMatches = content.match(textPattern);
+          if (textMatches) {
+            textMatches.forEach(match => {
+              const cleanText = match.replace(/[><]/g, '').trim();
+              if (cleanText.length > 2 && /[a-zA-Z]/.test(cleanText)) {
+                text += cleanText + ' ';
+              }
+            });
+          }
+          
+          resolve(text.trim());
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => reject(new Error('Failed to read DOCX file'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  // Main text extraction function
+  const extractTextFromFile = async (file: File): Promise<string> => {
+    console.log('Extracting text from file:', file.name, 'Type:', file.type);
+    
+    try {
+      let text = '';
+      
+      if (file.type === 'application/pdf') {
+        console.log('Processing PDF file...');
+        text = await extractPDFText(file);
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        console.log('Processing DOCX file...');
+        text = await extractDOCXText(file);
+      } else if (file.type === 'text/plain') {
+        console.log('Processing text file...');
+        text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      } else {
+        // Generic text extraction for other formats
+        console.log('Processing generic file...');
+        text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const content = e.target?.result as string;
+              // Try to extract readable text
+              const cleanText = content
+                .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              resolve(cleanText);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      }
+      
+      console.log('Extracted text length:', text.length);
+      console.log('Text preview:', text.substring(0, 200));
+      
+      return text;
+    } catch (error) {
+      console.error('Text extraction failed:', error);
+      throw new Error(`Failed to extract text from ${file.type || 'file'}. The file might be corrupted or in an unsupported format.`);
+    }
   };
 
   const parseExtractedText = (text: string) => {
@@ -281,18 +376,20 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     setCurrentStep('upload');
     
     try {
+      console.log('Starting file processing...');
       const text = await extractTextFromFile(file);
       
       if (!text || text.length < 10) {
-        throw new Error('Could not extract readable text from the file. Please try a different format or check if the file is not corrupted.');
+        throw new Error('Could not extract readable text from the file. Please ensure the file contains text content and try again.');
       }
 
+      console.log('Text extraction successful, setting extracted text...');
       setExtractedText(text);
       setCurrentStep('view');
       toast.success('Document content extracted successfully!');
     } catch (error: any) {
       console.error('Error processing file:', error);
-      toast.error(error.message || 'Failed to extract data from document. Please try a different file.');
+      toast.error(error.message || 'Failed to extract data from document. Please try a different file or format.');
     } finally {
       setProcessing(false);
     }
@@ -369,6 +466,22 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
     setCurrentStep('upload');
   };
 
+  // Load PDF.js library for better PDF support
+  React.useEffect(() => {
+    const loadPDFJS = () => {
+      if (!(window as any).pdfjsLib) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        script.onload = () => {
+          (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        };
+        document.head.appendChild(script);
+      }
+    };
+    
+    loadPDFJS();
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
@@ -377,10 +490,10 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            CV Document Reader
+            Enhanced CV Document Reader
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            First view your document content, then extract and structure the data
+            Advanced document parsing - Extract clean, readable content from PDFs, DOCX, and text files
           </p>
         </CardHeader>
         
@@ -435,10 +548,13 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
                   
                   <div>
                     <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
-                      {processing ? 'Reading your document...' : 'Upload your CV document'}
+                      {processing ? 'Processing your document...' : 'Upload your CV document'}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {processing ? 'Please wait while we extract the content' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
+                      {processing ? 'Using advanced parsing technology for clean text extraction' : 'Drag & drop or click to select PDF, DOC, DOCX, or TXT files'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Enhanced PDF.js technology for accurate PDF reading
                     </p>
                   </div>
                 </div>
@@ -447,7 +563,7 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
               {uploadedFile && (
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
                   <CheckCircle className="w-5 h-5" />
-                  <span>Uploaded: {uploadedFile.name}</span>
+                  <span>Processing: {uploadedFile.name} ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                 </div>
               )}
             </>
@@ -480,20 +596,21 @@ const CVDataExtractor: React.FC<CVDataExtractorProps> = ({ onDataExtracted, onCl
 
               <Card className="bg-gray-50 dark:bg-gray-800">
                 <CardHeader>
-                  <CardTitle className="text-base text-gray-900 dark:text-white">Raw Document Text</CardTitle>
+                  <CardTitle className="text-base text-gray-900 dark:text-white">Clean Extracted Text</CardTitle>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    This is exactly what was extracted from your document. Review it to ensure all important information is captured.
+                    This is the clean, readable text extracted from your document using advanced parsing technology.
                   </p>
                 </CardHeader>
                 <CardContent>
                   <Textarea
                     value={extractedText}
-                    readOnly
+                    onChange={(e) => setExtractedText(e.target.value)}
                     className="min-h-[400px] font-mono text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                    placeholder="Document content will appear here..."
+                    placeholder="Extracted document content will appear here..."
                   />
-                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    {extractedText.length} characters extracted
+                  <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>{extractedText.length} characters extracted</span>
+                    <span>You can edit the text above if needed</span>
                   </div>
                 </CardContent>
               </Card>
