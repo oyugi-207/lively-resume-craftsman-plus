@@ -17,11 +17,76 @@ serve(async (req) => {
     let allJobs: any[] = []
     let dataSources: string[] = []
     
-    // Try RemoteOK API first (great for remote jobs)
+    // Try RapidAPI JSearch first (for Indeed, LinkedIn, etc.)
+    try {
+      const rapidApiKey = Deno.env.get('RAPIDAPI_KEY')
+      
+      if (rapidApiKey) {
+        console.log('Fetching from RapidAPI JSearch...')
+        const searchQuery = remote ? `${query} remote` : `${query} ${location}`.trim()
+        const jsearchUrl = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(searchQuery)}&page=1&num_pages=1&date_posted=all&remote_jobs_only=${remote ? 'true' : 'false'}`
+        
+        const jsearchResponse = await fetch(jsearchUrl, {
+          headers: {
+            'X-RapidAPI-Key': rapidApiKey,
+            'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
+          }
+        })
+        
+        if (jsearchResponse.ok) {
+          const jsearchData = await jsearchResponse.json()
+          console.log('JSearch response status:', jsearchData.status)
+          
+          if (jsearchData.status === 'OK' && jsearchData.data) {
+            const jsearchJobs = jsearchData.data.slice(0, Math.floor(limit / 3)).map((job: any) => ({
+              id: job.job_id || Math.random().toString(36).substr(2, 9),
+              title: job.job_title || 'No title available',
+              company: job.employer_name || 'Company not specified',
+              location: job.job_is_remote 
+                ? 'Remote' 
+                : job.job_city && job.job_state 
+                  ? `${job.job_city}, ${job.job_state}` 
+                  : job.job_country || location || 'Location not specified',
+              remote: job.job_is_remote || false,
+              salary: job.job_min_salary && job.job_max_salary
+                ? `$${Math.round(job.job_min_salary).toLocaleString()} - $${Math.round(job.job_max_salary).toLocaleString()}`
+                : job.job_min_salary
+                  ? `From $${Math.round(job.job_min_salary).toLocaleString()}`
+                  : job.job_salary_period && job.job_salary_currency
+                    ? `${job.job_salary_currency} ${job.job_salary_period}`
+                    : 'Salary not specified',
+              description: job.job_description?.substring(0, 200) + '...' || 'No description available',
+              requirements: job.job_required_skills?.slice(0, 5) || job.job_required_experience ? [job.job_required_experience] : ['Not specified'],
+              posted: job.job_posted_at ? new Date(job.job_posted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              url: job.job_apply_link || job.job_google_link || '#',
+              source: 'JSearch (Indeed/LinkedIn)'
+            }))
+            
+            allJobs.push(...jsearchJobs)
+            if (jsearchJobs.length > 0) dataSources.push('JSearch')
+            console.log(`Found ${jsearchJobs.length} jobs from JSearch`)
+          } else {
+            console.log('JSearch API returned no data or error status')
+          }
+        } else {
+          console.log('JSearch API response not ok:', jsearchResponse.status)
+        }
+      } else {
+        console.log('No RapidAPI key found')
+      }
+    } catch (error) {
+      console.error('JSearch API error:', error)
+    }
+
+    // Try RemoteOK API (great for remote jobs)
     try {
       console.log('Fetching from RemoteOK API...')
       const remoteOkUrl = 'https://remoteok.com/api'
-      const remoteOkResponse = await fetch(remoteOkUrl)
+      const remoteOkResponse = await fetch(remoteOkUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; JobSearch/1.0)'
+        }
+      })
       
       if (remoteOkResponse.ok) {
         const remoteOkData = await remoteOkResponse.json()
@@ -50,57 +115,6 @@ serve(async (req) => {
       }
     } catch (error) {
       console.error('RemoteOK API error:', error)
-    }
-
-    // Try RapidAPI JSearch (Indeed, LinkedIn, etc.)
-    try {
-      const rapidApiKey = Deno.env.get('RAPIDAPI_KEY')
-      
-      if (rapidApiKey) {
-        console.log('Fetching from RapidAPI JSearch...')
-        const searchQuery = remote ? `${query} remote` : `${query} ${location}`.trim()
-        const jsearchUrl = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(searchQuery)}&page=1&num_pages=1&date_posted=all&remote_jobs_only=${remote}`
-        
-        const jsearchResponse = await fetch(jsearchUrl, {
-          headers: {
-            'X-RapidAPI-Key': rapidApiKey,
-            'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
-          }
-        })
-        
-        if (jsearchResponse.ok) {
-          const jsearchData = await jsearchResponse.json()
-          const jsearchJobs = jsearchData.data?.slice(0, Math.floor(limit / 2)).map((job: any) => ({
-            id: job.job_id || Math.random().toString(36).substr(2, 9),
-            title: job.job_title || 'No title available',
-            company: job.employer_name || 'Company not specified',
-            location: job.job_is_remote 
-              ? 'Remote' 
-              : job.job_city && job.job_state 
-                ? `${job.job_city}, ${job.job_state}` 
-                : job.job_country || location || 'Location not specified',
-            remote: job.job_is_remote || false,
-            salary: job.job_min_salary && job.job_max_salary
-              ? `$${Math.round(job.job_min_salary).toLocaleString()} - $${Math.round(job.job_max_salary).toLocaleString()}`
-              : job.job_min_salary
-                ? `From $${Math.round(job.job_min_salary).toLocaleString()}`
-                : job.job_salary_period && job.job_salary_currency
-                  ? `${job.job_salary_currency} ${job.job_salary_period}`
-                  : 'Salary not specified',
-            description: job.job_description?.substring(0, 200) + '...' || 'No description available',
-            requirements: job.job_required_skills?.slice(0, 5) || job.job_required_experience ? [job.job_required_experience] : ['Not specified'],
-            posted: job.job_posted_at ? new Date(job.job_posted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            url: job.job_apply_link || job.job_google_link || '#',
-            source: 'JSearch'
-          })) || []
-          
-          allJobs.push(...jsearchJobs)
-          if (jsearchJobs.length > 0) dataSources.push('JSearch')
-          console.log(`Found ${jsearchJobs.length} jobs from JSearch`)
-        }
-      }
-    } catch (error) {
-      console.error('JSearch API error:', error)
     }
 
     // Try Adzuna API
