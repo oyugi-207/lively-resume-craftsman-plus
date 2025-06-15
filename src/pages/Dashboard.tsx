@@ -286,81 +286,81 @@ const Dashboard = () => {
   };
 
   const renderOverview = () => (
-    <>
-      {/* Quick Actions with improved dark mode */}
-      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200 dark:border-blue-800/50 shadow-lg dark:shadow-blue-950/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      {/* Quick Actions with improved responsiveness */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <Card className="p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200 dark:border-blue-800/50 shadow-lg dark:shadow-blue-950/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-blue-900 dark:text-blue-100 mb-1 sm:mb-2 truncate">
                 Create Resume
               </h3>
-              <p className="text-blue-700 dark:text-blue-200 text-sm">
+              <p className="text-blue-700 dark:text-blue-200 text-xs sm:text-sm lg:text-base line-clamp-2">
                 Build professional resumes with AI
               </p>
             </div>
-            <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white shadow-md">
-              <Plus className="w-4 h-4 mr-2" />
-              New
+            <Button onClick={createNewResume} size="sm" className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white shadow-md text-xs sm:text-sm shrink-0">
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">New</span>
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 border-green-200 dark:border-green-800/50 shadow-lg dark:shadow-green-950/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
+        <Card className="p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 border-green-200 dark:border-green-800/50 shadow-lg dark:shadow-green-950/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-green-900 dark:text-green-100 mb-1 sm:mb-2 truncate">
                 Cover Letter
               </h3>
-              <p className="text-green-700 dark:text-green-200 text-sm">
+              <p className="text-green-700 dark:text-green-200 text-xs sm:text-sm lg:text-base line-clamp-2">
                 Write compelling cover letters
               </p>
             </div>
-            <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white shadow-md">
-              <Mail className="w-4 h-4 mr-2" />
-              New
+            <Button onClick={createNewCoverLetter} size="sm" className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white shadow-md text-xs sm:text-sm shrink-0">
+              <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">New</span>
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 border-orange-200 dark:border-orange-800/50 shadow-lg dark:shadow-orange-950/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
+        <Card className="p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 border-orange-200 dark:border-orange-800/50 shadow-lg dark:shadow-orange-950/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-orange-900 dark:text-orange-100 mb-1 sm:mb-2 truncate">
                 CV Upload & Editor
               </h3>
-              <p className="text-orange-700 dark:text-orange-200 text-sm">
+              <p className="text-orange-700 dark:text-orange-200 text-xs sm:text-sm lg:text-base line-clamp-2">
                 AI-powered CV extraction & editing
               </p>
             </div>
-            <Button onClick={() => setShowCVUploader(true)} className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-500 text-white shadow-md">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload
+            <Button onClick={() => setShowCVUploader(true)} size="sm" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-500 text-white shadow-md text-xs sm:text-sm shrink-0">
+              <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Upload</span>
             </Button>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 border-purple-200 dark:border-purple-800/50 shadow-lg dark:shadow-purple-950/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
+        <Card className="p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 border-purple-200 dark:border-purple-800/50 shadow-lg dark:shadow-purple-950/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-purple-900 dark:text-purple-100 mb-1 sm:mb-2 truncate">
                 ATS Checker
               </h3>
-              <p className="text-purple-700 dark:text-purple-200 text-sm">
+              <p className="text-purple-700 dark:text-purple-200 text-xs sm:text-sm lg:text-base line-clamp-2">
                 AI-powered ATS analysis
               </p>
             </div>
-            <Button onClick={() => setCurrentView('ats')} className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white shadow-md">
-              <Brain className="w-4 h-4 mr-2" />
-              Check
+            <Button onClick={() => setCurrentView('ats')} size="sm" className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white shadow-md text-xs sm:text-sm shrink-0">
+              <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Check</span>
             </Button>
           </div>
         </Card>
       </div>
 
-      {/* Search and Filter with better dark mode */}
-      <div className="mb-6 flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
+      {/* Search and Filter with responsive design */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+        <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           <Input
             placeholder="Search documents..."
@@ -371,27 +371,27 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Documents Tabs with improved styling */}
+      {/* Documents Tabs with improved mobile layout */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 bg-gray-100 dark:bg-gray-800/50 border dark:border-gray-700">
-          <TabsTrigger value="resumes" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
-            <FileText className="w-4 h-4" />
-            Resumes ({resumes.length})
+        <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-gray-100 dark:bg-gray-800/50 border dark:border-gray-700 h-auto p-1">
+          <TabsTrigger value="resumes" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
+            <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>Resumes ({resumes.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="cover-letters" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
-            <Mail className="w-4 h-4" />
-            Cover Letters ({coverLetters.length})
+          <TabsTrigger value="cover-letters" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
+            <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>Cover Letters ({coverLetters.length})</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumes">
           {filteredResumes.length === 0 ? (
-            <Card className="p-12 text-center bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg">
-              <FileText className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <Card className="p-6 sm:p-8 lg:p-12 text-center bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg">
+              <FileText className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No resumes yet
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
                 Create your first resume to get started
               </p>
               <Button onClick={createNewResume} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white">
@@ -400,48 +400,48 @@ const Dashboard = () => {
               </Button>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {filteredResumes.map((resume) => (
                 <Card key={resume.id} className="hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-1 text-gray-900 dark:text-white">{resume.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                          <Calendar className="h-3 w-3" />
-                          Updated {new Date(resume.updated_at).toLocaleDateString()}
+                  <CardHeader className="pb-2 sm:pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm sm:text-base lg:text-lg mb-1 text-gray-900 dark:text-white truncate">{resume.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Updated {new Date(resume.updated_at).toLocaleDateString()}</span>
                         </CardDescription>
                       </div>
-                      <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">Template {resume.template_id + 1}</Badge>
+                      <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs shrink-0">Template {resume.template_id + 1}</Badge>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
+                  <CardContent className="pt-0">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                      <div className="flex gap-1 sm:gap-2 flex-1">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/builder?id=${resume.id}`)}
-                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs flex-1 sm:flex-none"
                         >
                           <Edit className="w-3 h-3 mr-1" />
-                          Edit
+                          <span>Edit</span>
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
                           onClick={() => previewResume(resume)}
-                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs flex-1 sm:flex-none"
                         >
                           <Eye className="w-3 h-3 mr-1" />
-                          Preview
+                          <span>Preview</span>
                         </Button>
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteResume(resume.id)}
-                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-xs"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -455,12 +455,12 @@ const Dashboard = () => {
 
         <TabsContent value="cover-letters">
           {filteredCoverLetters.length === 0 ? (
-            <Card className="p-12 text-center bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg">
-              <Mail className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <Card className="p-6 sm:p-8 lg:p-12 text-center bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 shadow-lg">
+              <Mail className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No cover letters yet
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
                 Create your first cover letter to get started
               </p>
               <Button onClick={createNewCoverLetter} className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white">
@@ -469,61 +469,61 @@ const Dashboard = () => {
               </Button>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {filteredCoverLetters.map((coverLetter) => (
                 <Card key={coverLetter.id} className="hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-1 text-gray-900 dark:text-white">{coverLetter.title}</CardTitle>
-                        <CardDescription className="space-y-1 text-gray-600 dark:text-gray-300">
+                  <CardHeader className="pb-2 sm:pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm sm:text-base lg:text-lg mb-1 text-gray-900 dark:text-white truncate">{coverLetter.title}</CardTitle>
+                        <CardDescription className="space-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
                           {coverLetter.company_name && (
-                            <div className="flex items-center gap-2">
-                              <Building className="h-3 w-3" />
-                              {coverLetter.company_name}
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <Building className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{coverLetter.company_name}</span>
                             </div>
                           )}
                           {coverLetter.position_title && (
-                            <div className="flex items-center gap-2">
-                              <Briefcase className="h-3 w-3" />
-                              {coverLetter.position_title}
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <Briefcase className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{coverLetter.position_title}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3" />
-                            Updated {new Date(coverLetter.updated_at).toLocaleDateString()}
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <Clock className="h-3 w-3 shrink-0" />
+                            <span className="truncate">Updated {new Date(coverLetter.updated_at).toLocaleDateString()}</span>
                           </div>
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
+                  <CardContent className="pt-0">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                      <div className="flex gap-1 sm:gap-2 flex-1">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/cover-letter-builder?id=${coverLetter.id}`)}
-                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs flex-1 sm:flex-none"
                         >
                           <Edit className="w-3 h-3 mr-1" />
-                          Edit
+                          <span>Edit</span>
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
                           onClick={() => previewCoverLetter(coverLetter)}
-                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs flex-1 sm:flex-none"
                         >
                           <Eye className="w-3 h-3 mr-1" />
-                          Preview
+                          <span>Preview</span>
                         </Button>
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteCoverLetter(coverLetter.id)}
-                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-xs"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -535,15 +535,15 @@ const Dashboard = () => {
           )}
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900">
-        <Card className="p-8 text-center shadow-2xl bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your workspace...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 p-4">
+        <Card className="p-6 sm:p-8 text-center shadow-2xl bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 w-full max-w-sm">
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Loading your workspace...</p>
         </Card>
       </div>
     );
@@ -551,25 +551,25 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-950 dark:to-blue-950">
-      {/* Enhanced Header with better dark mode */}
+      {/* Enhanced Header with better mobile responsiveness */}
       <header className="bg-white/80 backdrop-blur-md dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-40 shadow-sm dark:shadow-gray-950/20">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Briefcase className="w-6 h-6 text-white" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 min-w-0 flex-1">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                  <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
                     Resume Builder Pro
                   </h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">AI-Powered Career Tools</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden sm:block">AI-Powered Career Tools</p>
                 </div>
               </div>
               
-              {/* Navigation with improved dark mode */}
-              <nav className="hidden lg:flex items-center space-x-1">
+              {/* Desktop Navigation */}
+              <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2">
                 {[
                   { id: 'overview', label: 'Overview', icon: Briefcase },
                   { id: 'ats', label: 'ATS Checker', icon: Brain },
@@ -584,50 +584,51 @@ const Dashboard = () => {
                     variant={currentView === id ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setCurrentView(id)}
-                    className={`flex items-center gap-2 ${
+                    className={`flex items-center gap-1 xl:gap-2 text-xs xl:text-sm px-2 xl:px-3 ${
                       currentView === id 
                         ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-400' 
                         : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    {label}
+                    <Icon className="w-3 h-3 xl:w-4 xl:h-4" />
+                    <span className="hidden xl:inline">{label}</span>
                   </Button>
                 ))}
               </nav>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Badge variant="secondary" className="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/50 dark:to-blue-900/50 text-green-800 dark:text-green-300 border-0 shadow-sm">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 shrink-0">
+              <Badge variant="secondary" className="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/50 dark:to-blue-900/50 text-green-800 dark:text-green-300 border-0 shadow-sm text-xs hidden sm:flex">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Pro
               </Badge>
               
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <Button variant="ghost" size="sm" onClick={toggleTheme} className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 p-2">
+                {theme === 'light' ? <Moon className="h-3 w-3 sm:h-4 sm:w-4" /> : <Sun className="h-3 w-3 sm:h-4 sm:w-4" />}
               </Button>
               
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1 border dark:border-gray-700">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{user?.email}</span>
+              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 sm:px-3 py-1 border dark:border-gray-700 max-w-[120px] sm:max-w-none">
+                <User className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline truncate">{user?.email}</span>
+                <span className="sm:hidden">User</span>
               </div>
               
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => signOut()}
-                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 p-2"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Mobile Navigation with better dark mode */}
-      <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-2 shadow-sm dark:shadow-gray-950/20">
-        <div className="flex space-x-1 overflow-x-auto">
+      {/* Mobile Navigation */}
+      <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-2 shadow-sm dark:shadow-gray-950/20">
+        <div className="flex space-x-1 overflow-x-auto hide-scrollbar">
           {[
             { id: 'overview', label: 'Overview', icon: Briefcase },
             { id: 'ats', label: 'ATS', icon: Brain },
@@ -642,20 +643,20 @@ const Dashboard = () => {
               variant={currentView === id ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setCurrentView(id)}
-              className={`flex items-center gap-2 whitespace-nowrap ${
+              className={`flex items-center gap-1 whitespace-nowrap text-xs px-2 sm:px-3 py-1 sm:py-2 ${
                 currentView === id 
                   ? 'bg-blue-600 dark:bg-blue-500 text-white' 
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
             >
-              <Icon className="w-4 h-4" />
-              <span className="text-xs">{label}</span>
+              <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>{label}</span>
             </Button>
           ))}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6">
         {renderCurrentView()}
       </div>
 
