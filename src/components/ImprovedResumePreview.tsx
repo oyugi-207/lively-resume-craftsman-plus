@@ -32,7 +32,7 @@ interface ResumeData {
     courses?: string;
     honors?: string;
   }>;
-  skills: string[];
+  skills: string[] | Array<{name: string; level: string; category: string}>;
   certifications: Array<{
     id: number;
     name: string;
@@ -87,6 +87,18 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
   const formatBulletPoints = (description: string) => {
     if (!description) return [];
     return description.split('\n').filter(line => line.trim()).map(line => line.replace(/^[•·‣▪▫-]\s*/, ''));
+  };
+
+  const getSkillNames = (skills: string[] | Array<{name: string; level: string; category: string}>) => {
+    if (!skills || skills.length === 0) return [];
+    
+    // Check if it's an array of strings
+    if (typeof skills[0] === 'string') {
+      return skills as string[];
+    }
+    
+    // If it's an array of objects, extract the name property
+    return (skills as Array<{name: string; level: string; category: string}>).map(skill => skill.name);
   };
 
   return (
@@ -212,7 +224,7 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
         </div>
       )}
 
-      {/* Key Projects - Now using actual data */}
+      {/* Key Projects - Only show if projects exist */}
       {data.projects && data.projects.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-bold text-blue-800 mb-4 border-b border-gray-300 pb-1">
@@ -263,9 +275,9 @@ const ImprovedResumePreview: React.FC<ImprovedResumePreviewProps> = ({
             TECHNICAL SKILLS
           </h2>
           <div className="flex flex-wrap gap-2">
-            {data.skills.map((skill, index) => (
+            {getSkillNames(data.skills).map((skillName, index) => (
               <Badge key={index} variant="outline" className="text-gray-700 border-gray-400">
-                {skill}
+                {skillName}
               </Badge>
             ))}
           </div>
