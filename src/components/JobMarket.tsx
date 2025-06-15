@@ -22,7 +22,10 @@ import {
   Star,
   Calendar,
   Users,
-  TrendingUp
+  TrendingUp,
+  Globe,
+  Database,
+  AlertCircle
 } from 'lucide-react';
 
 interface Job {
@@ -38,6 +41,15 @@ interface Job {
   url: string;
 }
 
+interface JobResponse {
+  jobs: Job[];
+  total: number;
+  query: string;
+  location: string;
+  remote: boolean;
+  source?: string;
+}
+
 const JobMarket: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +57,7 @@ const JobMarket: React.FC = () => {
   const [location, setLocation] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [dataSource, setDataSource] = useState<string>('');
 
   const searchJobs = async () => {
     if (!searchQuery.trim()) {
@@ -65,45 +78,27 @@ const JobMarket: React.FC = () => {
 
       if (error) throw error;
 
-      setJobs(data.jobs || []);
-      setTotalJobs(data.total || 0);
+      const response: JobResponse = data;
+      setJobs(response.jobs || []);
+      setTotalJobs(response.total || 0);
+      setDataSource(response.source || 'unknown');
       
-      if (data.jobs?.length === 0) {
+      if (response.jobs?.length === 0) {
         toast.info('No jobs found matching your criteria');
       } else {
-        toast.success(`Found ${data.jobs?.length} jobs!`);
+        const sourceMessage = response.source === 'api' 
+          ? 'Found live job listings!' 
+          : response.source === 'mixed'
+            ? 'Found jobs from multiple sources!'
+            : 'Showing sample jobs - configure API keys for live data';
+        toast.success(`${sourceMessage} (${response.jobs?.length} jobs)`);
       }
     } catch (error: any) {
       console.error('Error searching jobs:', error);
       toast.error('Failed to search jobs. Please try again.');
-      // Fallback to mock data
-      setJobs([
-        {
-          id: '1',
-          title: 'Frontend Developer',
-          company: 'TechCorp',
-          location: 'San Francisco, CA',
-          remote: true,
-          salary: '$80,000 - $120,000',
-          description: 'We are looking for a talented frontend developer to join our growing team...',
-          requirements: ['React', 'TypeScript', 'CSS', 'JavaScript'],
-          posted: '2024-01-15',
-          url: '#'
-        },
-        {
-          id: '2',
-          title: 'Full Stack Engineer',
-          company: 'StartupXYZ',
-          location: 'Remote',
-          remote: true,
-          salary: '$90,000 - $140,000',
-          description: 'Join our innovative startup as a full stack engineer...',
-          requirements: ['Node.js', 'React', 'PostgreSQL', 'AWS'],
-          posted: '2024-01-14',
-          url: '#'
-        }
-      ]);
-      setTotalJobs(2);
+      setJobs([]);
+      setTotalJobs(0);
+      setDataSource('error');
     } finally {
       setLoading(false);
     }
@@ -127,6 +122,32 @@ const JobMarket: React.FC = () => {
     }
   };
 
+  const getDataSourceIcon = () => {
+    switch (dataSource) {
+      case 'api':
+        return <Globe className="w-4 h-4 text-green-600" />;
+      case 'mixed':
+        return <Database className="w-4 h-4 text-blue-600" />;
+      case 'mock':
+        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      default:
+        return <Database className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getDataSourceText = () => {
+    switch (dataSource) {
+      case 'api':
+        return 'Live job data';
+      case 'mixed':
+        return 'Mixed sources';
+      case 'mock':
+        return 'Sample data';
+      default:
+        return 'Job data';
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
@@ -141,6 +162,23 @@ const JobMarket: React.FC = () => {
           </CardDescription>
         </CardHeader>
       </Card>
+
+      {/* API Configuration Notice */}
+      {dataSource === 'mock' && totalJobs > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-yellow-800 mb-1">Using Sample Data</h4>
+                <p className="text-sm text-yellow-700">
+                  Configure API keys in Settings to access live job listings from Adzuna or JSearch APIs.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search Section */}
       <Card>
@@ -213,10 +251,16 @@ const JobMarket: React.FC = () => {
                 <TrendingUp className="w-5 h-5" />
                 Job Results
               </CardTitle>
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Star className="w-3 h-3" />
-                {totalJobs} jobs found
-              </Badge>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  {getDataSourceIcon()}
+                  {getDataSourceText()}
+                </div>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Star className="w-3 h-3" />
+                  {totalJobs} jobs found
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
