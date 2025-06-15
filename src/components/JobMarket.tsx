@@ -47,6 +47,7 @@ interface JobResponse {
   query: string;
   location: string;
   remote: boolean;
+  sources?: string[];
   source?: string;
 }
 
@@ -57,7 +58,7 @@ const JobMarket: React.FC = () => {
   const [location, setLocation] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [totalJobs, setTotalJobs] = useState(0);
-  const [dataSource, setDataSource] = useState<string>('');
+  const [dataSources, setDataSources] = useState<string[]>([]);
 
   const searchJobs = async () => {
     if (!searchQuery.trim()) {
@@ -72,7 +73,7 @@ const JobMarket: React.FC = () => {
           query: searchQuery,
           location: location,
           remote: remoteOnly,
-          limit: 20
+          limit: 25
         }
       });
 
@@ -81,24 +82,23 @@ const JobMarket: React.FC = () => {
       const response: JobResponse = data;
       setJobs(response.jobs || []);
       setTotalJobs(response.total || 0);
-      setDataSource(response.source || 'unknown');
+      setDataSources(response.sources || []);
       
       if (response.jobs?.length === 0) {
-        toast.info('No jobs found matching your criteria');
+        toast.info('No jobs found matching your criteria. Try different keywords or remove location filters.');
       } else {
-        const sourceMessage = response.source === 'api' 
-          ? 'Found live job listings!' 
-          : response.source === 'mixed'
-            ? 'Found jobs from multiple sources!'
-            : 'Showing sample jobs - configure API keys for live data';
-        toast.success(`${sourceMessage} (${response.jobs?.length} jobs)`);
+        const sourcesList = response.sources?.join(', ') || 'unknown sources';
+        const message = response.sources?.includes('Mock') 
+          ? `Found ${response.jobs?.length} sample jobs. Add API keys in Settings for live data.`
+          : `Found ${response.jobs?.length} live jobs from ${sourcesList}!`;
+        toast.success(message);
       }
     } catch (error: any) {
       console.error('Error searching jobs:', error);
       toast.error('Failed to search jobs. Please try again.');
       setJobs([]);
       setTotalJobs(0);
-      setDataSource('error');
+      setDataSources([]);
     } finally {
       setLoading(false);
     }
@@ -123,29 +123,24 @@ const JobMarket: React.FC = () => {
   };
 
   const getDataSourceIcon = () => {
-    switch (dataSource) {
-      case 'api':
-        return <Globe className="w-4 h-4 text-green-600" />;
-      case 'mixed':
-        return <Database className="w-4 h-4 text-blue-600" />;
-      case 'mock':
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
-      default:
-        return <Database className="w-4 h-4 text-gray-600" />;
+    if (dataSources.includes('JSearch') || dataSources.includes('RemoteOK') || dataSources.includes('Adzuna')) {
+      return <Globe className="w-4 h-4 text-green-600" />;
     }
+    if (dataSources.includes('Mock')) {
+      return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+    }
+    return <Database className="w-4 h-4 text-gray-600" />;
   };
 
   const getDataSourceText = () => {
-    switch (dataSource) {
-      case 'api':
-        return 'Live job data';
-      case 'mixed':
-        return 'Mixed sources';
-      case 'mock':
-        return 'Sample data';
-      default:
-        return 'Job data';
+    if (dataSources.length > 1 && !dataSources.includes('Mock')) {
+      return `Live data from ${dataSources.length} sources`;
     }
+    if (dataSources.includes('JSearch')) return 'Live data (Indeed, LinkedIn)';
+    if (dataSources.includes('RemoteOK')) return 'Live remote jobs';
+    if (dataSources.includes('Adzuna')) return 'Live job data';
+    if (dataSources.includes('Mock')) return 'Sample data';
+    return 'Job data';
   };
 
   return (
@@ -158,13 +153,13 @@ const JobMarket: React.FC = () => {
             Job Market
           </CardTitle>
           <CardDescription className="text-blue-100">
-            Discover thousands of job opportunities from across the web
+            Search jobs from LinkedIn, Indeed, RemoteOK, and more sources
           </CardDescription>
         </CardHeader>
       </Card>
 
       {/* API Configuration Notice */}
-      {dataSource === 'mock' && totalJobs > 0 && (
+      {dataSources.includes('Mock') && totalJobs > 0 && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
@@ -172,7 +167,7 @@ const JobMarket: React.FC = () => {
               <div>
                 <h4 className="font-medium text-yellow-800 mb-1">Using Sample Data</h4>
                 <p className="text-sm text-yellow-700">
-                  Configure API keys in Settings to access live job listings from Adzuna or JSearch APIs.
+                  Configure API keys in Settings to access live job listings from multiple job boards including LinkedIn, Indeed, and specialized remote job sites.
                 </p>
               </div>
             </div>
@@ -187,6 +182,9 @@ const JobMarket: React.FC = () => {
             <Search className="w-5 h-5" />
             Search Jobs
           </CardTitle>
+          <CardDescription>
+            Search across multiple job boards including LinkedIn, Indeed, RemoteOK, and more
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -195,7 +193,7 @@ const JobMarket: React.FC = () => {
                 <Label htmlFor="job-search">Job Title or Keywords</Label>
                 <Input
                   id="job-search"
-                  placeholder="e.g. Software Engineer, Marketing Manager"
+                  placeholder="e.g. Software Engineer, Product Manager, Designer"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -206,7 +204,7 @@ const JobMarket: React.FC = () => {
                 <Label htmlFor="location-search">Location</Label>
                 <Input
                   id="location-search"
-                  placeholder="e.g. New York, Remote"
+                  placeholder="e.g. New York, San Francisco, or leave empty for anywhere"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -262,6 +260,11 @@ const JobMarket: React.FC = () => {
                 </Badge>
               </div>
             </div>
+            {dataSources.length > 1 && (
+              <CardDescription>
+                Results from: {dataSources.filter(s => s !== 'Mock').join(', ')}
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[600px]">
@@ -275,9 +278,16 @@ const JobMarket: React.FC = () => {
                             {job.company[0]}
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                              {job.title}
-                            </h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                {job.title}
+                              </h3>
+                              {(job as any).source && (
+                                <Badge variant="outline" className="text-xs">
+                                  {(job as any).source}
+                                </Badge>
+                              )}
+                            </div>
                             <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                               <div className="flex items-center gap-1">
                                 <Building className="w-4 h-4" />
@@ -331,10 +341,10 @@ const JobMarket: React.FC = () => {
                           onClick={() => window.open(job.url, '_blank')}
                         >
                           <ExternalLink className="w-4 h-4" />
-                          View Job
+                          Apply Now
                         </Button>
                         <Button size="sm" variant="outline">
-                          Save
+                          Save Job
                         </Button>
                       </div>
                     </div>
@@ -346,15 +356,15 @@ const JobMarket: React.FC = () => {
         </Card>
       )}
 
-      {/* Featured Jobs */}
+      {/* Featured Jobs - Updated for remote focus */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            Featured Opportunities
+            Featured Remote Opportunities
           </CardTitle>
           <CardDescription>
-            Hand-picked jobs from top companies
+            Hand-picked remote and hybrid positions from top companies
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -362,46 +372,44 @@ const JobMarket: React.FC = () => {
             {[
               {
                 title: 'Senior React Developer',
-                company: 'Google',
-                location: 'Mountain View, CA',
-                salary: '$150K - $200K',
+                company: 'Remote Tech Co',
+                location: 'Remote Worldwide',
+                salary: '$120K - $160K',
                 remote: true
               },
               {
                 title: 'Product Manager',
-                company: 'Microsoft',
-                location: 'Seattle, WA',
-                salary: '$130K - $180K',
-                remote: false
+                company: 'Global Startup',
+                location: 'Remote (US/EU)',
+                salary: '$110K - $150K',
+                remote: true
               },
               {
                 title: 'UI/UX Designer',
-                company: 'Apple',
-                location: 'Cupertino, CA',
-                salary: '$120K - $160K',
+                company: 'Design Agency',
+                location: 'Remote',
+                salary: '$90K - $130K',
                 remote: true
               }
             ].map((job, index) => (
               <Card key={index} className="border-2 hover:border-blue-300 transition-colors cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
                       {job.company[0]}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-1">{job.title}</h4>
                       <p className="text-sm text-gray-600 mb-2">{job.company}</p>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                        <MapPin className="w-3 h-3" />
+                        <Globe className="w-3 h-3" />
                         {job.location}
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-green-600">{job.salary}</span>
-                        {job.remote && (
-                          <Badge className="bg-green-100 text-green-800 text-xs">
-                            Remote
-                          </Badge>
-                        )}
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          Remote
+                        </Badge>
                       </div>
                     </div>
                   </div>
